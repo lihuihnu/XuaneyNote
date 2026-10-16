@@ -17,8 +17,6 @@ jobs:
       SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       TESTED_SHA: ${{ github.sha }}
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
-      GRADLE_USER_HOME: ${{ runner.temp }}/xuaney-gradle
-      XUANEY_BOOTSTRAP_DIR: ${{ runner.temp }}/xuaney-bootstrap
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -28,6 +26,8 @@ jobs:
         id: scope
         shell: bash
         run: |
+          echo "GRADLE_USER_HOME=$RUNNER_TEMP/xuaney-gradle" >> "$GITHUB_ENV"
+          echo "XUANEY_BOOTSTRAP_DIR=$RUNNER_TEMP/xuaney-bootstrap" >> "$GITHUB_ENV"
           mkdir -p ci-out/logs ci-out/status
           test "$(git rev-parse HEAD)" = "$TESTED_SHA"
           if [[ -n "$BASE_SHA" ]]; then

@@ -11,6 +11,9 @@ versions = tomllib.loads((root / 'gradle/libs.versions.toml').read_text())
 for name, version in versions['versions'].items():
     assert '+' not in version and 'SNAPSHOT' not in version, f'Unpinned dependency: {name}'
 workflow = (root / '.github/workflows/ci.yml').read_text()
+# job 级 env 在分配 Runner 前求值，不能使用 runner/steps/job/env 上下文。
+job_header = workflow.split('    steps:', 1)[0]
+assert not re.search(r'\$\{\{\s*(runner|steps|job|env)\.', job_header), 'Runner context is only valid inside execution steps'
 assert 'runs-on: ubuntu-24.04' in workflow
 assert 'contents: read' in workflow and 'contents: write' not in workflow
 for forbidden in ('pull_request_target:', 'upload-artifact@', 'download-artifact@', 'self-hosted', 'schedule:', 'push:'):

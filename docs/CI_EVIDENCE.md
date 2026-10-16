@@ -43,3 +43,9 @@ python3 tools/evidence.py unpack job.log evidence-out \
 成功或失败均先收集并校验必要证据传输包，再清理本 job 的 build、Gradle 工作目录、发行包临时目录和 AVD；官方临时 VM 最终销毁。初期维护者在 job 结束后完成仓库写入，所以在远端读回完成之前始终标记 `transported-not-yet-repository-verified`，不把“已清理临时产物”包装成“已交付”。强制取消导致包不完整时报告真实缺口，不补造通过结果。
 
 不得删除历史证据、用户笔记、外部导出文件、正式签名密钥或未知缓存目录。仓库完整历史 250 MiB 是预警预算；从工作树删除大文件不等于清除历史。
+
+## 首轮配置校验修复记录
+
+源码 `761ce57eaa5e16969a2212f28a30ead7eae87b90` 的首条记录 `38938316977` 在 GitHub 端即时失败，jobs 列表为空，未开始 Android 构建；该记录不是一次运行过的模拟器测试。检查发现 job 级 env 使用了不被允许的 `runner.temp` 上下文。修复将临时目录的设置放入第一个执行步骤，通过 `$RUNNER_TEMP` 写入 `$GITHUB_ENV`，并增加源文件回归检查。
+
+依据：GitHub 官方 Context availability 表，`jobs.<job_id>.env` 允许 github/needs/strategy/matrix/vars/secrets/inputs，不含 runner： https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#context-availability 。旧本地证据保持原 SHA 不改写；该修复不改 Android/Kotlin 应用代码，修复后的实际 Runner 结果另按新 source/tested SHA 归档。
