@@ -1,0 +1,12 @@
+PASS unicode_note_validation
+PASS restore_into_empty
+PASS reject_duplicate_ids
+PASS reject_invalid_time
+PASS conflict_keeps_both
+PASS repeat_import_idempotent
+PASS modified_copy_is_preserved
+PASS coalesces_and_flushes
+PASS failure_not_reported_as_saved
+PASS failed_write_retry
+PASS old_completion_cannot_mark_new_revision_saved
+RESULT 11/11 passed; supplemental local JVM smoke only

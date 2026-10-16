@@ -1,0 +1,70 @@
+{
+  "android_build": "not-run",
+  "archive_status": "transported-not-yet-repository-verified",
+  "checked_model_sources": {
+    "core/model/src/main/kotlin/io/github/lihuihnu/xuaneynote/model/AutosaveQueue.kt": "4adc3d6bdf2cfe3c282e165933f512525c8ee6728d2e7d49955871f37ee08d70",
+    "core/model/src/main/kotlin/io/github/lihuihnu/xuaneynote/model/Note.kt": "4774fe684e23de8178d40a353958f9cc32499096976c64c846709f232522edd6",
+    "tools/model_smoke.kt": "372e0eb6cd0695f2f69f586cb59c2dc2fc1d58d6905a88249d3ba4e865b4a0cf"
+  },
+  "controlled_failure_expected_exit_code": 17,
+  "emulator": "not-run",
+  "gates": [
+    {
+      "command": [
+        "bash",
+        "-c",
+        "printf \"EXPECTED controlled failure: exit 17\\n\"; exit 17"
+      ],
+      "conclusion": "failure",
+      "duration_seconds": 2,
+      "exit_code": 17,
+      "gate": "controlled-failure"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/test_evidence.py"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 4,
+      "exit_code": 0,
+      "gate": "evidence-protocol"
+    },
+    {
+      "command": [
+        "java",
+        "-cp",
+        "/mnt/data/xuaney-local-check/smoke.jar:/root/.sdkman/candidates/kotlin/current/lib/kotlinx-coroutines-core-jvm.jar",
+        "Model_smokeKt"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 2,
+      "exit_code": 0,
+      "gate": "model-smoke"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/check_repo.py"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 5,
+      "exit_code": 0,
+      "gate": "structure"
+    }
+  ],
+  "identity_verification": "local-computed-Git-tree-matched-remote-create-tree-result",
+  "job_status_at_collection": "not-a-runner-job",
+  "kind": "supplemental-local-checks-not-android-ci",
+  "omissions": [],
+  "real_device_acceptance": "pending",
+  "repository": "lihuihnu/XuaneyNote",
+  "run_attempt": "1",
+  "run_id": "local-pr-a",
+  "runner": "local",
+  "runner_image": "not-recorded",
+  "source_sha": "761ce57eaa5e16969a2212f28a30ead7eae87b90",
+  "source_tree_sha": "52f88e9bf45378dabbe73f3ad59193e15753dfc6",
+  "temporary_apks": [],
+  "tested_sha": "761ce57eaa5e16969a2212f28a30ead7eae87b90"
+}

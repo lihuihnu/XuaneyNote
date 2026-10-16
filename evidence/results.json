@@ -1,0 +1,89 @@
+{
+  "gates": [
+    {
+      "command": [
+        "bash",
+        "-c",
+        "printf \"EXPECTED controlled failure: exit 17\\n\"; exit 17"
+      ],
+      "conclusion": "failure",
+      "duration_seconds": 2,
+      "exit_code": 17,
+      "gate": "controlled-failure"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/test_evidence.py"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 4,
+      "exit_code": 0,
+      "gate": "evidence-protocol"
+    },
+    {
+      "command": [
+        "java",
+        "-cp",
+        "/mnt/data/xuaney-local-check/smoke.jar:/root/.sdkman/candidates/kotlin/current/lib/kotlinx-coroutines-core-jvm.jar",
+        "Model_smokeKt"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 2,
+      "exit_code": 0,
+      "gate": "model-smoke"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/check_repo.py"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 5,
+      "exit_code": 0,
+      "gate": "structure"
+    }
+  ],
+  "files": [
+    {
+      "original_sha256": "2041835807e4f454b091b24d58393a4b94e80c127e001c1d3694b20202ce13d9",
+      "original_size": 37,
+      "path": "logs/controlled-failure.log",
+      "sha256": "2041835807e4f454b091b24d58393a4b94e80c127e001c1d3694b20202ce13d9",
+      "size": 37,
+      "truncated": false
+    },
+    {
+      "original_sha256": "1bf5d3a6b4dffed1b51e875f6d5cb89f10a175dac35f2ab9c636a9975c8a6476",
+      "original_size": 124,
+      "path": "logs/structure.log",
+      "sha256": "1bf5d3a6b4dffed1b51e875f6d5cb89f10a175dac35f2ab9c636a9975c8a6476",
+      "size": 124,
+      "truncated": false
+    },
+    {
+      "original_sha256": "887878e1b97b622591e533f9aa64a2d67698162e5e910bb6590999022e13dda5",
+      "original_size": 445,
+      "path": "logs/toolchain.log",
+      "sha256": "887878e1b97b622591e533f9aa64a2d67698162e5e910bb6590999022e13dda5",
+      "size": 445,
+      "truncated": false
+    },
+    {
+      "original_sha256": "b0668f01e053d0694684c4e2c176ccf94c7a9af51def28297e8641a996a4a22c",
+      "original_size": 383,
+      "path": "logs/model-smoke.log",
+      "sha256": "b0668f01e053d0694684c4e2c176ccf94c7a9af51def28297e8641a996a4a22c",
+      "size": 383,
+      "truncated": false
+    },
+    {
+      "original_sha256": "fa30d141086009874ca405dc0f88a16cf7da671d6c0fd93159a9da80a6655c36",
+      "original_size": 791,
+      "path": "logs/evidence-protocol.log",
+      "sha256": "fa30d141086009874ca405dc0f88a16cf7da671d6c0fd93159a9da80a6655c36",
+      "size": 791,
+      "truncated": false
+    }
+  ]
+}
