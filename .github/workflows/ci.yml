@@ -1,0 +1,97 @@
+name: XuaneyNote PR gate
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: xuaneynote-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  gate:
+    name: PR-A local notes gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      TESTED_SHA: ${{ github.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      GRADLE_USER_HOME: ${{ runner.temp }}/xuaney-gradle
+      XUANEY_BOOTSTRAP_DIR: ${{ runner.temp }}/xuaney-bootstrap
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Classify paths without skipping the required gate
+        id: scope
+        shell: bash
+        run: |
+          mkdir -p ci-out/logs ci-out/status
+          test "$(git rev-parse HEAD)" = "$TESTED_SHA"
+          if [[ -n "$BASE_SHA" ]]; then
+            git cat-file -e "$BASE_SHA^{commit}" || git fetch --no-tags --depth=1 origin "$BASE_SHA"
+            git diff --name-only "$BASE_SHA" HEAD > ci-out/changed-paths.txt
+          else
+            git ls-files > ci-out/changed-paths.txt
+          fi
+          python3 - <<'PY'
+          import os, pathlib
+          paths = pathlib.Path('ci-out/changed-paths.txt').read_text().splitlines()
+          android = any(not (p.endswith('.md') or p.startswith('docs/')) for p in paths)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f'android={str(android).lower()}\n')
+          PY
+      - name: Fast repository and evidence-protocol tests
+        run: |
+          bash tools/run_gate.sh structure python3 tools/check_repo.py
+          bash tools/run_gate.sh evidence-protocol python3 tools/test_evidence.py
+      - name: JDK 17
+        if: steps.scope.outputs.android == 'true'
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK and toolchain identity
+        if: steps.scope.outputs.android == 'true'
+        shell: bash
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;35.0.0'
+          { java -version; echo "Runner image: ${ImageVersion:-unknown}"; } > ci-out/logs/toolchain.log 2>&1
+      - name: Unit tests, lint, APK, release Manifest and official Wrapper generation
+        if: steps.scope.outputs.android == 'true'
+        run: |
+          bash tools/run_gate.sh build bash tools/gradle.sh --no-daemon --console=plain \
+            wrapper --gradle-version 8.13 --distribution-type bin \
+            --gradle-distribution-sha256-sum 20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78 \
+            :core:model:test :core:data:assembleDebugAndroidTest :app:assembleDebug \
+            :app:assembleDebugAndroidTest :app:lintDebug :app:processReleaseMainManifest
+          bash tools/run_gate.sh privacy python3 tools/check_repo.py --merged
+      - name: Phone, tablet window, Room backup and real process restart
+        if: steps.scope.outputs.android == 'true'
+        run: bash tools/run_gate.sh devices bash tools/device_gate.sh
+      - name: Emit bounded verifiable evidence (no repository write token)
+        if: always()
+        env:
+          CI_JOB_STATUS: ${{ job.status }}
+        run: |
+          python3 tools/evidence.py emit
+          echo 'Evidence transport emitted; maintainer repository write/read-back is still required.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Clean only this job's temporary products
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, shutil
+          root = pathlib.Path.cwd().resolve()
+          for name in ('app/build', 'core/model/build', 'core/data/build', 'core/designsystem/build', '.gradle', '.kotlin'):
+              path = (root / name).resolve()
+              assert path.is_relative_to(root) and path != root
+              if path.exists(): shutil.rmtree(path)
+          temporary = pathlib.Path(os.environ['RUNNER_TEMP']).resolve()
+          for name in ('xuaney-gradle', 'xuaney-bootstrap', 'xuaney-avd'):
+              path = (temporary / name).resolve()
+              assert path.parent == temporary
+              if path.exists(): shutil.rmtree(path)
+          PY

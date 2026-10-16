@@ -1,0 +1,9 @@
+<resources>
+  <style name="Theme.XuaneyNote" parent="android:style/Theme.Material.Light.NoActionBar">
+    <item name="android:fontFamily">sans</item>
+    <item name="android:windowLightStatusBar">true</item>
+    <item name="android:windowActionModeOverlay">true</item>
+    <item name="android:colorAccent">#4C6653</item>
+    <item name="android:windowBackground">#F9F8F4</item>
+  </style>
+</resources>
