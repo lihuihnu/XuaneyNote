@@ -155,15 +155,15 @@ class PrivateAttachmentFiles(
     /** Picker/SAF 返回的一次性 content URI；只读取原始字节，绝不持久化 URI。 */
     suspend fun importFromUri(noteId: String, uri: Uri): AttachmentEntity {
         require(uri.scheme == "content") { "仅接受系统内容提供方" }
-        val input = withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.IO) {
             requireNotNull(appContext.contentResolver.openInputStream(uri)) { "图片无法读取" }
+                .use { importStream(noteId, it) }
         }
-        return importStream(noteId, input)
     }
 
     /** 调用方移交流的所有权，本函数无论成功失败均关闭流。 */
     suspend fun importStream(noteId: String, input: InputStream): AttachmentEntity =
-        withContext(Dispatchers.IO) {
+        try { withContext(Dispatchers.IO) {
             gate.withLock {
                 ensureDirs()
                 val stage = File.createTempFile("stage-", ".part", staging)
@@ -204,7 +204,7 @@ class PrivateAttachmentFiles(
                     }
                 }
             }
-        }
+        } } finally { runCatching { input.close() } }
 
     /** 将同一原图关联到第二篇正常笔记；不复制原图。 */
     suspend fun linkExisting(noteId: String, attachmentId: String) =
