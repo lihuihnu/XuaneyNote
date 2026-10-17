@@ -16,7 +16,8 @@ import io.github.lihuihnu.xuaneynote.model.SaveState
 
 @Composable
 fun NoteEditor(note: Note, state: SaveState, busy: Boolean, onTitle: (String) -> Unit,
-    onBody: (String) -> Unit, onRetry: () -> Unit, modifier: Modifier = Modifier) {
+    onBody: (String) -> Unit, onRetry: () -> Unit, onTrash: () -> Unit,
+    modifier: Modifier = Modifier) {
     // Bundle 只保存光标，不保存长正文，避免旋转时 TransactionTooLargeException。
     var titleCursor by rememberSaveable(note.id) { mutableIntStateOf(0) }
     var bodyCursor by rememberSaveable(note.id) { mutableIntStateOf(0) }
@@ -32,7 +33,15 @@ fun NoteEditor(note: Note, state: SaveState, busy: Boolean, onTitle: (String) ->
             Text(stringResource(status), style = MaterialTheme.typography.labelMedium,
                 color = if (state is SaveState.Failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.testTag("save-state"))
-            if (state is SaveState.Failed) TextButton(onClick = onRetry) { Text(stringResource(R.string.retry)) }
+            Row {
+                if (state is SaveState.Failed) TextButton(onClick = onRetry) {
+                    Text(stringResource(R.string.retry))
+                }
+                TextButton(onClick = onTrash, enabled = !busy,
+                    modifier = Modifier.testTag("trash-current-note")) {
+                    Text(stringResource(R.string.move_to_trash))
+                }
+            }
         }
         Spacer(Modifier.height(12.dp))
         OutlinedTextField(value = title, onValueChange = { value ->

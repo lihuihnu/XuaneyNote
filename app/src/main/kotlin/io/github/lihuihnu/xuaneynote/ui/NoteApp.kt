@@ -39,6 +39,8 @@ import java.time.LocalDate
 fun NoteApp(vm: NotesViewModel = viewModel()) {
     val listing by vm.listing.collectAsStateWithLifecycle()
     val searchText by vm.searchText.collectAsStateWithLifecycle()
+    val trashOpen by vm.trashOpen.collectAsStateWithLifecycle()
+    val trashNotes by vm.trashNotes.collectAsStateWithLifecycle()
     val searchPending = searchText.trim() != listing.keyword
     val note by vm.note.collectAsStateWithLifecycle()
     val theme by vm.theme.collectAsStateWithLifecycle()
@@ -48,6 +50,8 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
     val backup by vm.pendingImport.collectAsStateWithLifecycle()
     var settings by rememberSaveable { mutableStateOf(false) }
     var exportWarning by rememberSaveable { mutableStateOf(false) }
+    var moveToTrashRequest by rememberSaveable { mutableStateOf<String?>(null) }
+    var permanentDeleteRequest by rememberSaveable { mutableStateOf<String?>(null) }
     var page by rememberSaveable { mutableIntStateOf(1) }
     val snackbar = remember { SnackbarHostState() }
     val export = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) {
@@ -57,8 +61,13 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
         it?.let(vm::inspectBackup)
     }
     LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it); vm.clearMessage() } }
-    LaunchedEffect(page) { if (page == 0) vm.updateSearchText("") }
-    BackHandler(enabled = note != null && !settings && backup == null && !exportWarning) { if (!busy) vm.closeNote() }
+    LaunchedEffect(page) { if (page == 0) { vm.updateSearchText(""); vm.leaveTrash() } }
+    BackHandler(enabled = note != null && !settings && backup == null && !exportWarning) {
+        if (!busy) vm.closeNote()
+    }
+    BackHandler(enabled = trashOpen && note == null && !settings && backup == null && !exportWarning) {
+        if (!busy) vm.leaveTrash()
+    }
 
     XuaneyTheme(theme) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -110,25 +119,34 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
                             }
                         }
                         if (wide || note == null) {
-                            NoteList(
-                                notes = if (page == 1 && searchPending) emptyList() else listing.items,
-                                selected = note?.id, busy = busy, today = page == 0,
-                                searchText = searchText, searchPending = page == 1 && searchPending,
-                                onSearchChange = vm::updateSearchText,
-                                onClearSearch = { vm.updateSearchText("") },
-                                onCreate = { vm.updateSearchText(""); vm.createNote() },
-                                onOpen = vm::openNote,
-                                modifier = if (wide) Modifier.width(320.dp) else Modifier.weight(1f)
-                            )
+                            val panelModifier = if (wide) Modifier.width(320.dp) else Modifier.weight(1f)
+                            if (trashOpen && page == 1) {
+                                TrashList(trashNotes, busy, vm::leaveTrash, vm::restoreFromTrash,
+                                    { permanentDeleteRequest = it }, panelModifier)
+                            } else {
+                                NoteList(
+                                    notes = if (page == 1 && searchPending) emptyList() else listing.items,
+                                    selected = note?.id, busy = busy, today = page == 0,
+                                    searchText = searchText, searchPending = page == 1 && searchPending,
+                                    onSearchChange = vm::updateSearchText,
+                                    onClearSearch = { vm.updateSearchText("") },
+                                    onCreate = { vm.updateSearchText(""); vm.createNote() },
+                                    onOpen = vm::openNote, trashCount = trashNotes.size,
+                                    onOpenTrash = vm::openTrash,
+                                    modifier = panelModifier
+                                )
+                            }
                         }
                         if (wide) VerticalDivider()
                         val selected = note
-                        if (selected != null) {
+                        if (selected != null && !trashOpen) {
                             NoteEditor(selected, states[selected.id] ?: SaveState.Saved(selected.revision), busy,
-                                vm::editTitle, vm::editBody, vm::retrySaves, Modifier.weight(1f))
+                                vm::editTitle, vm::editBody, vm::retrySaves,
+                                { moveToTrashRequest = selected.id }, Modifier.weight(1f))
                         } else if (wide) {
                             Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
-                                Text(stringResource(R.string.pick_note), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(if (trashOpen) R.string.trash_detail_hint else R.string.pick_note),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
@@ -147,6 +165,39 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
                 export.launch("XuaneyNote-${LocalDate.now()}.xuaney.json")
             }) { Text(stringResource(R.string.choose_file)) } },
             dismissButton = { TextButton(onClick = { exportWarning = false }) { Text(stringResource(R.string.cancel)) } })
+
+        moveToTrashRequest?.let { id ->
+            AlertDialog(onDismissRequest = { moveToTrashRequest = null },
+                title = { Text(stringResource(R.string.trash_confirm_title)) },
+                text = { Text(stringResource(R.string.trash_confirm_text)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        moveToTrashRequest = null
+                        vm.moveToTrash(id)
+                    }, enabled = !busy, modifier = Modifier.testTag("confirm-trash-move")) {
+                        Text(stringResource(R.string.move_to_trash))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { moveToTrashRequest = null }) { Text(stringResource(R.string.cancel)) }
+                })
+        }
+        permanentDeleteRequest?.let { id ->
+            AlertDialog(onDismissRequest = { permanentDeleteRequest = null },
+                title = { Text(stringResource(R.string.trash_permanent_title)) },
+                text = { Text(stringResource(R.string.trash_permanent_notice)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        permanentDeleteRequest = null
+                        vm.permanentlyDeleteTrashed(id)
+                    }, enabled = !busy, modifier = Modifier.testTag("confirm-permanent-delete")) {
+                        Text(stringResource(R.string.trash_permanent))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { permanentDeleteRequest = null }) { Text(stringResource(R.string.cancel)) }
+                })
+        }
         backup?.let { validated ->
             AlertDialog(onDismissRequest = vm::cancelRestore,
                 title = { Text(stringResource(R.string.restore_title)) },
@@ -162,7 +213,8 @@ private fun NoteList(
     notes: List<NoteSummary>, selected: String?, busy: Boolean, today: Boolean,
     searchText: String, searchPending: Boolean,
     onSearchChange: (String) -> Unit, onClearSearch: () -> Unit,
-    onCreate: () -> Unit, onOpen: (String) -> Unit, modifier: Modifier
+    onCreate: () -> Unit, onOpen: (String) -> Unit,
+    trashCount: Int, onOpenTrash: () -> Unit, modifier: Modifier
 ) {
     val searching = !today && searchText.isNotBlank()
     val visible = if (searching) notes.take(NoteStore.SEARCH_VISIBLE_LIMIT) else notes
@@ -183,6 +235,10 @@ private fun NoteList(
             },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp).testTag("note-search")
         )
+        if (!today) TextButton(onClick = onOpenTrash, enabled = !busy,
+            modifier = Modifier.testTag("open-trash")) {
+            Text(stringResource(R.string.trash_open_count, trashCount))
+        }
         Text(
             when {
                 searchPending -> stringResource(R.string.search_in_progress)
@@ -227,6 +283,61 @@ private fun NoteList(
                             if (item.preview.isNotBlank()) Text(item.preview, maxLines = 2, overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.padding(top = 8.dp), color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun TrashList(
+    notes: List<NoteSummary>, busy: Boolean, onBack: () -> Unit,
+    onRestore: (String) -> Unit, onPermanent: (String) -> Unit, modifier: Modifier
+) {
+    Column(modifier.fillMaxHeight().padding(horizontal = 16.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.trash_title),
+                style = MaterialTheme.typography.headlineSmall)
+            TextButton(onClick = onBack, enabled = !busy,
+                modifier = Modifier.testTag("back-from-trash")) {
+                Text(stringResource(R.string.back))
+            }
+        }
+        Text(stringResource(R.string.trash_count, notes.size),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (notes.isEmpty()) {
+            Box(Modifier.fillMaxWidth().padding(vertical = 48.dp),
+                contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.trash_empty), modifier = Modifier.testTag("trash-empty"))
+            }
+        } else {
+            LazyColumn(Modifier.weight(1f).testTag("trash-list"),
+                contentPadding = PaddingValues(vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(notes, key = { it.id }) { item ->
+                    Card(shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(12.dp)) {
+                            Text(item.title.ifBlank { stringResource(R.string.untitled) },
+                                style = MaterialTheme.typography.titleMedium)
+                            if (item.preview.isNotBlank()) Text(item.preview, maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.bodyMedium)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                TextButton(onClick = { onRestore(item.id) }, enabled = !busy,
+                                    modifier = Modifier.testTag("trash-restore")) {
+                                    Text(stringResource(R.string.trash_restore))
+                                }
+                                TextButton(onClick = { onPermanent(item.id) }, enabled = !busy,
+                                    modifier = Modifier.testTag("trash-permanent")) {
+                                    Text(stringResource(R.string.trash_permanent))
+                                }
+                            }
                         }
                     }
                 }

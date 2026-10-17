@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import io.github.lihuihnu.xuaneynote.data.BackupCodec
 import io.github.lihuihnu.xuaneynote.data.NoteBackup
 import io.github.lihuihnu.xuaneynote.data.NoteStore
+import io.github.lihuihnu.xuaneynote.data.LegacyBackupWouldOmitTrash
 import io.github.lihuihnu.xuaneynote.model.Note
 import io.github.lihuihnu.xuaneynote.model.NoteSummary
 import io.github.lihuihnu.xuaneynote.model.SaveState
@@ -32,6 +33,11 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
     private val mutableImport = MutableStateFlow<NoteBackup?>(null)
     private val mutableSearchText = MutableStateFlow(savedState.get<String>("note_search").orEmpty())
     val searchText = mutableSearchText.asStateFlow()
+    private val mutableTrashOpen = MutableStateFlow(savedState.get<Boolean>("trash_open") ?: false)
+    val trashOpen = mutableTrashOpen.asStateFlow()
+    val trashNotes = data.notes.trashSummaries
+        .catch { mutableMessage.value = "读取回收站失败，已有笔记仍保留在本机。" }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val note = mutableNote.asStateFlow()
     val busy = mutableBusy.asStateFlow()
     val message = mutableMessage.asStateFlow()
@@ -67,6 +73,7 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
         viewModelScope.launch {
             try { block() }
             catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: LegacyBackupWouldOmitTrash) { mutableMessage.value = error.message }
             catch (_: Exception) { mutableMessage.value = "操作未完成。请检查文件、权限或可用空间后重试；已有笔记不会被清空。" }
             finally { mutableBusy.value = false }
         }
@@ -86,6 +93,37 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
         if (value.length > NoteStore.SEARCH_MAX_LENGTH) return
         mutableSearchText.value = value
         savedState["note_search"] = value
+    }
+
+    fun openTrash() = operation {
+        requireSaved()
+        select(null)
+        mutableTrashOpen.value = true
+        savedState["trash_open"] = true
+    }
+    fun leaveTrash() {
+        if (mutableBusy.value) return
+        mutableTrashOpen.value = false
+        savedState["trash_open"] = false
+    }
+    fun moveToTrash(id: String) = operation {
+        requireSaved()
+        check(data.notes.moveToTrash(id)) { "未找到可删除笔记" }
+        if (mutableNote.value?.id == id) select(null)
+        mutableMessage.value = "已移入回收站，仍可以恢复。"
+    }
+    fun restoreFromTrash(id: String) = operation {
+        requireSaved()
+        check(data.notes.restoreFromTrash(id)) { "笔记已恢复或不存在" }
+        mutableTrashOpen.value = false
+        savedState["trash_open"] = false
+        select(data.notes.get(id))
+        mutableMessage.value = "笔记已从回收站恢复。"
+    }
+    fun permanentlyDeleteTrashed(id: String) = operation {
+        requireSaved()
+        check(data.notes.permanentlyDelete(id)) { "只有回收站中的笔记才能永久删除" }
+        mutableMessage.value = "本机笔记已删除；此前导出的外部备份不会自动清除。"
     }
 
     fun createNote() = operation { requireSaved(); select(data.notes.create()) }
