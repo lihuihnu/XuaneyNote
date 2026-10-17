@@ -1,7 +1,7 @@
 # B1：中文与英文笔记搜索
 
 **阶段**：PR-B 数据安全与资料管理，分支 `feat/pr-b-data-safety`，目标 `main`。
-**当前状态**：已准备数据库查询、状态流、手机/平板搜索 UI 和设备测试候选；**在最新源码的 GitHub 官方 CI 成功前不得宣称 B1 完成**。
+**当前状态**：源代码 `6e4d1c4d850cf4230e646e0b73bbae0f54921a0f` 已通过 [官方 Run 39002603730](https://github.com/lihuihnu/XuaneyNote/actions/runs/39002603730)（completed/success）。B1 的已验证范围是 API35 模拟器查询和 UI 功能，不是已达到真机 P95 性能门槛。
 
 ## 需求与查询合同
 
@@ -23,3 +23,11 @@
 ## 范围边界
 
 不增加搜索远程服务、账号、广告或运行时 INTERNET 权限；不引入尚未验证的 FTS 分词、拼音搜索、OCR、标签、附件、回收站管理或正式发布签名。用户当前保存的笔记及 v1 备份不可被破坏性转换或静默清除。
+
+## 验收记录（2026-10-17）
+
+- 测试源 SHA `6e4d1c4d850cf4230e646e0b73bbae0f54921a0f`，tested merge SHA `a43065b8ab0502ee151c06b2695cce84f77cca38`。
+- GitHub Actions [Run 39002603730](https://github.com/lihuihnu/XuaneyNote/actions/runs/39002603730) completed/success，Model 9/9、Room/迁移/搜索 9/9、手机 3/3、平板 3/3，全部 failures/errors=0。
+- [已归档可读证据](https://github.com/lihuihnu/XuaneyNote/tree/ab98bd010f184fe14713ad72e13270fe5026d6e5/evidence)：27 文件，含测试 XML、KSP schemas 及独立核验清单。它是可读子集，不冒充完整二进制封装。
+- 10,000 条合成数据和 7 次采样的测试流程执行成功，但本轮被保留的可读报告未携带各次检索时间；**250ms P95 是待真实设备实测的性能预算，而非本次通过结论**。
+- 下一步 B2 回收站；修改源码后必须按新的 PR HEAD 再跑 CI，不能复用本轮结论。

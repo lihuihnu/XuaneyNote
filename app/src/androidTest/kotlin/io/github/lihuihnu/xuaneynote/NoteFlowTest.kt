@@ -61,6 +61,64 @@ class NoteFlowTest {
         compose.onNodeWithTag("clear-note-search").performClick()
         compose.waitUntil(15_000) { compose.onAllNodesWithText("B1 搜索合成记录").fetchSemanticsNodes().isNotEmpty() }
     }
+    @Test fun moveToTrashRestoreAndPermanentDelete() {
+        compose.waitUntil(15_000) { compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty() }
+        if (compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isEmpty()) {
+            compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+            compose.waitUntil(12_000) {
+                compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isNotEmpty()
+            }
+        }
+        compose.onNodeWithTag("new-note").performClick()
+        compose.waitUntil(12_000) {
+            compose.onAllNodesWithTag("note-body").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("note-title").performTextReplacement("B2 回收站 UI 测试")
+        compose.onNodeWithTag("note-body").performTextReplacement("重开后应能恢复的合成正文🙂")
+        compose.waitUntil(15_000) {
+            compose.onAllNodes(hasTestTag("save-state") and hasText("已保存")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("trash-current-note").performClick()
+        compose.onNodeWithTag("confirm-trash-move").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("open-trash").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("open-trash").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("trash-restore").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("trash-restore").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("note-body").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("note-body").assertTextContains("重开后应能恢复的合成正文🙂")
+        compose.activityRule.scenario.recreate()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("trash-current-note").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("trash-current-note").performClick()
+        compose.onNodeWithTag("confirm-trash-move").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("open-trash").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("open-trash").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("trash-permanent").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("trash-permanent").performClick()
+        compose.onNodeWithTag("confirm-permanent-delete").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("trash-empty").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+    }
     @Test fun applicationHasNoNetworkPermissionsOrAutomaticBackup() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         @Suppress("DEPRECATION")
