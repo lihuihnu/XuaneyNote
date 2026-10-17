@@ -1,6 +1,6 @@
 # XuaneyNote 开发执行约定
 
-先读 `docs/PROJECT_PLAN.md`、`docs/PR_A.md` 和 `docs/CI_EVIDENCE.md`。初始化规划原文保留；当前实现状态以 README 和 PR-A 验收表为准。时间统一 Asia/Tokyo，与初始化规划基线保持一致。
+先读 `docs/PROJECT_PLAN.md`、`docs/PR_B.md`、`docs/BACKUP_V1.md`、`docs/PR_A.md` 和 `docs/CI_EVIDENCE.md`。原始规划基线不改写；当前实现状态以 README、最新活动 PR 和代码为准。时间统一 Asia/Tokyo，与初始化规划基线保持一致。
 
 只推进一个主线活动开发 PR；开工前核对远端 main、活动 PR、HEAD。功能修改不直推 main。只认可最终源码与实际 tested SHA 的证据，未运行不能写成通过；不导入其他私有项目的代码、配置、地址或数据。
 
@@ -10,4 +10,4 @@
 
 普通 CI 只读、无签名密钥，无 Actions Artifact 和持久缓存。证据是数据而非可执行脚本；维护者先核验身份与容量，再写独立 evidence 引用并远端读回。禁止给 fork 或普通构建放开写权限、禁止 force-push 证据。清理仅限本 job 的已知临时目录，不动用户资料、历史证据或签名密钥。
 
-PR-A 合并前必须取回真实生成的官方 Gradle Wrapper、Room schema，完成成功/受控失败证据入库演练，以及手机/平板窗口、重启与备份验收。真机性能、IME、大字体、TalkBack 未验证时明确标记待验收。
+PR-A 已在 2026-10-17 合并为 `b85e27d5c004f978850badc4865dea821c0b44d1`；用户报告手机验收无异常，未提交逐项真机性能、独立平板等记录的测试不可冒称通过。PR-B 活动分支为 `feat/pr-b-data-safety`，冻结目标见 `docs/PR_B.md`：先 v1→v2 显式迁移，再做搜索、回收站、图片附件、完整 v2 备份与密码保护。新增实体必须同一阶段扩展备份；绝对不能破坏旧 v1 数据、旧备份、自动保存及离线隐私边界。仅目标冻结时，不得称 PR-B 功能已开发或 CI 通过。
