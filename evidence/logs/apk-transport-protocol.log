@@ -1,0 +1,16 @@
+test_reject_duplicate_chunk (__main__.TransportTest.test_reject_duplicate_chunk) ... ok
+test_reject_forged_metadata (__main__.TransportTest.test_reject_forged_metadata) ... ok
+test_reject_mismatched_end_index (__main__.TransportTest.test_reject_mismatched_end_index) ... ok
+test_reject_missing_chunk (__main__.TransportTest.test_reject_missing_chunk) ... ok
+test_reject_package_identity_mismatch (__main__.TransportTest.test_reject_package_identity_mismatch) ... ok
+test_reject_tamper_chunk (__main__.TransportTest.test_reject_tamper_chunk) ... ok
+test_reject_truncated_envelope (__main__.TransportTest.test_reject_truncated_envelope) ... ok
+test_reject_unsigned_package (__main__.TransportTest.test_reject_unsigned_package) ... ok
+test_reject_wrong_run_or_source (__main__.TransportTest.test_reject_wrong_run_or_source) ... ok
+test_roundtrip_and_sha256 (__main__.TransportTest.test_roundtrip_and_sha256) ... ok
+test_zip_rejected (__main__.TransportTest.test_zip_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.015s
+
+OK
