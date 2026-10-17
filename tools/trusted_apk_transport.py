@@ -26,8 +26,8 @@ MAX_APK_BYTES = 24 * 1024 * 1024
 MAX_COMPRESSED_BYTES = 24 * 1024 * 1024
 MAX_LOG_BYTES = 48 * 1024 * 1024
 EXPECTED_PACKAGE = "io.github.lihuihnu.xuaneynote.debug"
-EXPECTED_VERSION_CODE = "1"
-EXPECTED_VERSION_NAME = "0.1.0-pr-a-debug"
+EXPECTED_VERSION_CODE = "2"
+EXPECTED_VERSION_NAME = "0.2.0-pr-b-debug"
 EXPECTED_MIN_SDK = "26"
 EXPECTED_TARGET_SDK = "36"
 EXPECTED_SHA256 = re.compile(r"[0-9a-f]{64}\Z")
@@ -115,7 +115,7 @@ def build_bundle(apk: bytes, signer_report: str, badging_report: str,
         "tested_sha": tested_sha,
         "run_id": str(int(run_id)),
         "run_attempt": str(int(run_attempt)),
-        "apk_filename": f"XuaneyNote-0.1.0-pr-a-{source_sha[:12]}-debug.apk",
+        "apk_filename": f"XuaneyNote-0.2.0-pr-b-{source_sha[:12]}-debug.apk",
         "apk_size": len(apk),
         "apk_sha256": digest(apk),
         "compression": "zlib",
@@ -207,12 +207,12 @@ def unpack_lines(lines: list[str], source_sha: str, tested_sha: str,
     if len(raw) != meta.get("apk_size") or digest(raw) != meta.get("apk_sha256"):
         raise ValueError("APK payload checksum/size mismatch")
     if (meta.get("application_id") != EXPECTED_PACKAGE or meta.get("version_name") != EXPECTED_VERSION_NAME
-            or meta.get("version_code") != 1 or meta.get("min_sdk") != 26 or meta.get("target_sdk") != 36
+            or meta.get("version_code") != 2 or meta.get("min_sdk") != 26 or meta.get("target_sdk") != 36
             or not isinstance(meta.get("verified_signature_schemes"), list)
             or not set(meta.get("verified_signature_schemes", [])) & {"v2", "v3", "v4"}
             or not EXPECTED_SHA256.fullmatch(str(meta.get("signer_certificate_sha256", "")))):
         raise ValueError("Unexpected signing or version manifest")
-    if not re.fullmatch(r"XuaneyNote-0\.1\.0-pr-a-[a-f0-9]{12}-debug\.apk", str(meta.get("apk_filename", ""))):
+    if not re.fullmatch(r"XuaneyNote-0\.2\.0-pr-b-[a-f0-9]{12}-debug\.apk", str(meta.get("apk_filename", ""))):
         raise ValueError("Unsafe destination filename")
     validate_zip(raw)
     return meta, raw

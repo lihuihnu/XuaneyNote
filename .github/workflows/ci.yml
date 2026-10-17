@@ -79,7 +79,9 @@ jobs:
             github.actor == 'lihuihnu' &&
             github.event.pull_request.user.login == 'lihuihnu' &&
             github.event.pull_request.head.repo.full_name == github.repository &&
-            github.event.pull_request.head.ref == 'feat/pr-a-local-notes' &&
+            github.event.pull_request.number == 2 &&
+            github.event.pull_request.base.ref == 'main' &&
+            github.event.pull_request.head.ref == 'feat/pr-b-data-safety' &&
             contains(github.event.pull_request.labels.*.name, 'trusted-test-apk-once')
           }}
         env:
