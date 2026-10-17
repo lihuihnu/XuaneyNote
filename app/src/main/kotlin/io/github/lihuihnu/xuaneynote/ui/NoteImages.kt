@@ -71,6 +71,7 @@ private fun ImagePreview(
  * 可单独 Compose 测试的图片列表，不依赖外部 URI，不持久化 Bitmap 至 SavedState。
  * 正式 NoteApp 目前由 USER_ENTRY_ENABLED=false 隐藏，解除须另一次人工验收和代码审查。
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun NoteImageStrip(
     attachments: List<AttachmentEntity>,

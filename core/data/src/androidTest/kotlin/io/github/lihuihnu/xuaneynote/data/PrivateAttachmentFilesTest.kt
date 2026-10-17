@@ -252,11 +252,20 @@ class PrivateAttachmentFilesTest {
         try {
             NoteStore(db).restore(listOf(first))
             val store = PrivateAttachmentFiles(ctx, db, folder)
-            val image = store.importStream(first.id, ByteArrayInputStream(picture(Bitmap.CompressFormat.PNG)))
+            // 足够大的合成 PNG 才能覆盖真实缩小采样，而不是只有 4×3 的小图。
+            val large = Bitmap.createBitmap(960, 640, Bitmap.Config.ARGB_8888)
+            val bytes = try {
+                val out = ByteArrayOutputStream()
+                check(large.compress(Bitmap.CompressFormat.PNG, 100, out))
+                out.toByteArray()
+            } finally {
+                large.recycle()
+            }
+            val image = store.importStream(first.id, ByteArrayInputStream(bytes))
             val bitmap = store.thumbnail(image.id, 256)
             try {
-                assertEquals(4, bitmap.width)
-                assertEquals(3, bitmap.height)
+                assertTrue(bitmap.width in 1..256)
+                assertTrue(bitmap.height in 1..256)
             } finally {
                 bitmap.recycle()
             }
