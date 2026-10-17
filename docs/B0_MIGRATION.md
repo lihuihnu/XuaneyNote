@@ -2,7 +2,7 @@
 
 **实施日期**：2026-10-17，仓库遵循 Asia/Tokyo 日期口径。
 **代码基线**：PR-A #1 的合并提交 `b85e27d5c004f978850badc4865dea821c0b44d1`。
-**状态**：候选源码与回归测试已加入 PR #2；尚未取得新源码的官方 Android CI 结果，**不得宣称 B0 已通过**。
+**状态**：首轮候选源码 Android CI 已完成且成功，Room v2 schema 由真实 KSP 输出核验回填；**回填后新 HEAD 的最终 CI 尚待验证，不得宣称 B0 已最终完成**。
 
 ## 冻结变更范围
 
@@ -29,6 +29,16 @@
 从 `src/androidTest/assets/pr_a_v1_export.xuaney.json` 读取 PR-A 格式的**固定合成样本**（未包含私人资料），其 UTF-8 `payload_bytes=617`、内层 payload SHA-256 为 `1c2573cd0c4e1cdec13eb7bcc01044139fa414f832c4169df83cfddb31090c0f`；导入新 v2 数据库，确认两条笔记逐字相等、重复导入幂等、改写/损坏文件会被拒绝且已保存数据库不变。
 
 **原有测试回归**：`DataContractTest`、模型单测、手机/平板 Compose 自动保存与重启、Lint/最终 Manifest 隐私门禁必须继续通过。
+
+
+## 首轮官方 CI 实际结果（回填前）
+
+- [GitHub Actions Run 38999957010](https://github.com/lihuihnu/XuaneyNote/actions/runs/38999957010) 为 **completed/success**，job `117300594503`，attempt `1`。
+- 源码 SHA `426b44a9e0ee75549f2c1b58e3f968855f76bc36`；tested merge SHA `cbfd9eff24e6ff01b5205adba6866896eb51fa75`，两者不可混用。
+- 实际 XML：Room / 数据合约 / B0 三项迁移 7/7、模型 9/9、手机 Compose 2/2、平板 Compose 2/2；所有报告错误和失败数为 0。两类窗口是在同一 API35 模拟器顺序运行，并非实机覆盖。
+- KSP 实际输出 `schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/2.json`，字节数 2659，SHA-256 `9ba603f08bc9e08eb5eee97cb6600c9aaa2fd90540cf16722184d5a9389ed445`，Room identityHash `3d28b225caeebc999ac8666827d96b7a`。未手动填写身份哈希。
+- 经过原始日志可读证据协议的完整 digest 与逐文件 SHA-256 校验，25 份关键文本/Schema/XML 已单独归档并读回至 [固定证据提交 `6dfea983`](https://github.com/lihuihnu/XuaneyNote/tree/6dfea983a8fbfbda3e3303e0bebc6cde6df7cf9d/evidence)，该归档**明确仅是可读子集**，不冒充全部二进制/长日志。
+- 本提交将实际 v2 schema 字节回填到 `core/data/schemas/.../2.json`，并在 `tools/check_repo.py` 中固定 KSP 生成文件的真实 SHA-256。**必须对回填后的新 HEAD 再做官方 CI**；通过前不进入 B1。
 
 ## CI / Schema 交付闸门
 

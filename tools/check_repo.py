@@ -47,7 +47,17 @@ assert schema.is_file(), 'Frozen Room v1 schema missing'
 schema_json = json.loads(schema.read_text(encoding='utf-8'))
 assert schema_json['database']['version'] == 1 and len(schema_json['database']['identityHash']) == 32
 assert hashlib.sha256(schema.read_bytes()).hexdigest() == '6c8b9e2ea45c170c1b81df901e748377fa109e7a0a74f96c1b17e2e144ae5e99', 'Frozen Room schema changed'
-print('PASS source/privacy / pinned dependencies / verified official Wrapper and frozen Room v1 schema / read-only CI')
+
+schema2 = root / 'core/data/schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/2.json'
+assert schema2.is_file(), 'Real KSP-generated Room v2 schema missing'
+schema2_json = json.loads(schema2.read_text(encoding='utf-8'))
+assert schema2_json['database']['version'] == 2
+assert [f['columnName'] for f in schema2_json['database']['entities'][0]['fields']] == [
+    'id', 'title', 'body', 'createdAt', 'updatedAt', 'revision', 'bodyFormat', 'bodyVersion', 'deletedAt'
+], 'Unexpected v1 to v2 column set'
+assert hashlib.sha256(schema2.read_bytes()).hexdigest() == '9ba603f08bc9e08eb5eee97cb6600c9aaa2fd90540cf16722184d5a9389ed445', 'Frozen real Room v2 schema changed'
+
+print('PASS source/privacy / pinned dependencies / verified official Wrapper and frozen Room v1/v2 schemas / read-only CI')
 if '--merged' in sys.argv:
     manifests = list((root / 'app/build/intermediates').glob('**/AndroidManifest.xml'))
     assert any('release' in str(p).lower() for p in manifests), 'No release merged manifest'
