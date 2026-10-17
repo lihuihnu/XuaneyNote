@@ -20,6 +20,10 @@
 `DatabaseMigrationTest.prAV1SchemaMigratesWithoutChangingNotesOrPreferences`
 用 `MigrationTestHelper` 按已提交且 SHA-256 固定的 `.../1.json` 创建原版 Room v1 数据库，注入两条包含中文、Emoji、换行、Markdown 和非零修订的合成记录；在 `runMigrationsAndValidate(2, true, MIGRATION_1_2)` 验证真实 v2 schema 后逐个断言八列原值、`deletedAt = NULL`、数据条数，随后通过应用真实 `NoteDatabase.open` 重开、编辑、拒绝旧修订覆盖、再重开，确认主题和选中项保留。
 
+**生产路径自动升级测试**：
+`DatabaseMigrationTest.productionOpenAutomaticallyUpgradesTheOriginalV1Database`
+再次用冻结 `1.json` 创建含真实 v1 数据的旧库，**不调用测试工具的迁移函数**，直接经应用 `NoteDatabase.open` 打开并查询，要求 Room 自动升至版本 2、原文逐字相等；防止只测试了迁移 SQL，却忘记在生产数据库构建器注册迁移。
+
 **旧备份测试**：
 `DatabaseMigrationTest.frozenPrAV1BackupRestoresIntoV2Idempotently`
 从 `src/androidTest/assets/pr_a_v1_export.xuaney.json` 读取 PR-A 格式的**固定合成样本**（未包含私人资料），其 UTF-8 `payload_bytes=617`、内层 payload SHA-256 为 `1c2573cd0c4e1cdec13eb7bcc01044139fa414f832c4169df83cfddb31090c0f`；导入新 v2 数据库，确认两条笔记逐字相等、重复导入幂等、改写/损坏文件会被拒绝且已保存数据库不变。

@@ -111,6 +111,37 @@ class DatabaseMigrationTest {
     }
 
     @Test
+    fun productionOpenAutomaticallyUpgradesTheOriginalV1Database() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val name = "pr-a-production-open-${UUID.randomUUID()}.db"
+        try {
+            helper.createDatabase(name, 1).use { legacy ->
+                val note = prARecords[0]
+                legacy.execSQL(
+                    "INSERT INTO `notes` " +
+                        "(`id`, `title`, `body`, `createdAt`, `updatedAt`, " +
+                        "`revision`, `bodyFormat`, `bodyVersion`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    arrayOf(note.id, note.title, note.body, note.createdAt, note.updatedAt,
+                        note.revision, note.bodyFormat, note.bodyVersion)
+                )
+            }
+            // 这次不提前调用 MigrationTestHelper 的迁移器：
+            // 必须由生产 Room.databaseBuilder 的注册路径实际执行自动升级。
+            val live = NoteDatabase.open(context, name)
+            try {
+                assertEquals(listOf(prARecords[0]), NoteStore(live).snapshot())
+                @Suppress("DEPRECATION")
+                val upgradedVersion = live.openHelper.readableDatabase.version
+                assertEquals(2, upgradedVersion)
+            } finally {
+                live.close()
+            }
+        } finally {
+            context.deleteDatabase(name)
+        }
+    }
+
+    @Test
     fun frozenPrAV1BackupRestoresIntoV2Idempotently() = runBlocking {
         val instrument = InstrumentationRegistry.getInstrumentation()
         val context = ApplicationProvider.getApplicationContext<Context>()
