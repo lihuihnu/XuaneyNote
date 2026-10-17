@@ -1,0 +1,284 @@
+{
+  "source_sha": "6614745c341bcd84019a40af2ab57d4ab7ee22b4",
+  "tested_sha": "1896431055156954d8c1e2761ef02daa469fb41c",
+  "run_id": 39035771479,
+  "attempt": 1,
+  "conclusion": "success",
+  "tests": {
+    "model": {
+      "path": "reports/model/test/TEST-io.github.lihuihnu.xuaneynote.model.ModelTest.xml",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0
+    },
+    "room": {
+      "path": "reports/phone/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml",
+      "tests": 38,
+      "failures": 0,
+      "errors": 0
+    },
+    "phone": {
+      "path": "reports/phone/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0
+    },
+    "tablet": {
+      "path": "reports/tablet/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0
+    }
+  },
+  "gates": [
+    {
+      "gate": "apk-transport-protocol",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "command": [
+        "python3",
+        "-S",
+        "tools/test_trusted_apk_transport.py"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "build",
+      "exit_code": 0,
+      "duration_seconds": 244,
+      "command": [
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        ":core:model:test",
+        ":core:data:assembleDebugAndroidTest",
+        ":app:assembleDebug",
+        ":app:assembleDebugAndroidTest",
+        ":app:lintDebug",
+        ":app:processReleaseMainManifest"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "device-probe-script",
+      "exit_code": 0,
+      "duration_seconds": 3,
+      "command": [
+        "python3",
+        "-S",
+        "tools/test_device_probe.py"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "devices",
+      "exit_code": 0,
+      "duration_seconds": 312,
+      "command": [
+        "bash",
+        "tools/device_gate.sh"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "evidence-protocol",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "command": [
+        "python3",
+        "tools/test_evidence.py"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "phone-probe",
+      "exit_code": 0,
+      "duration_seconds": 17,
+      "command": [
+        "bash",
+        "tools/post_test_probe.sh",
+        "phone"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "phone",
+      "exit_code": 0,
+      "duration_seconds": 136,
+      "command": [
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        "--no-parallel",
+        ":core:data:connectedDebugAndroidTest",
+        ":app:connectedDebugAndroidTest",
+        "-Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "privacy",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "command": [
+        "python3",
+        "tools/check_repo.py",
+        "--merged"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "readable-evidence",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "command": [
+        "python3",
+        "-S",
+        "tools/test_evidence_text.py"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "structure",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "command": [
+        "python3",
+        "tools/check_repo.py"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "tablet-probe",
+      "exit_code": 0,
+      "duration_seconds": 17,
+      "command": [
+        "bash",
+        "tools/post_test_probe.sh",
+        "tablet"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "tablet",
+      "exit_code": 0,
+      "duration_seconds": 65,
+      "command": [
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        "--no-parallel",
+        ":app:connectedDebugAndroidTest",
+        "-Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe"
+      ],
+      "conclusion": "success"
+    }
+  ],
+  "apk_identity": {
+    "apk_filename": "XuaneyNote-0.2.0-pr-b-6614745c341b-debug.apk",
+    "apk_sha256": "07e3c53bea21768f936431e514e91f4dd4eeed0fd8490df800ccc53ab0aa687c",
+    "apk_size": 11187305,
+    "application_id": "io.github.lihuihnu.xuaneynote.debug",
+    "chunks": 3473,
+    "compressed_sha256": "16af9e9385acc5aec21a1a38cbd351b8e67a85f07bc054f147c895bc56824ee1",
+    "compressed_size": 10666489,
+    "compression": "zlib",
+    "distribution": "maintainer verification required; no Actions Artifact; no release at CI stage",
+    "min_sdk": 26,
+    "protocol": "XuaneyNote.test-apk-handoff-v1",
+    "run_attempt": "1",
+    "run_id": "39035771479",
+    "signer_certificate_sha256": "23cc82196fa887bab92a2a09db11b41eeb0628dd0603d45ef48d5062920bc484",
+    "signing_policy": "ephemeral-runner-debug-key; not stable for upgrades; test data only",
+    "source_sha": "6614745c341bcd84019a40af2ab57d4ab7ee22b4",
+    "target_sdk": 36,
+    "tested_sha": "1896431055156954d8c1e2761ef02daa469fb41c",
+    "verified_signature_schemes": [
+      "v2"
+    ],
+    "version_code": 2,
+    "version_name": "0.2.0-pr-b-debug"
+  },
+  "original_omissions": [
+    {
+      "path": "logs/build.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/device-probe-script.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/devices.log",
+      "reason": "readable-file-budget"
+    },
+    {
+      "path": "logs/emulator.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/evidence-protocol.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/phone-probe.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/phone-restart-seed.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/phone-restart-verify.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/phone-start.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/phone.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/privacy.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/readable-evidence.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/structure.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/tablet-probe-apks.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/tablet-probe.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/tablet-restart-seed.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/tablet-restart-verify.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/tablet-start.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/tablet.log",
+      "reason": "readable-total-budget"
+    },
+    {
+      "path": "logs/toolchain.log",
+      "reason": "readable-total-budget"
+    }
+  ]
+}

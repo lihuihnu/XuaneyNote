@@ -1,0 +1,25 @@
+{
+  "apk_filename": "XuaneyNote-0.2.0-pr-b-6614745c341b-debug.apk",
+  "apk_sha256": "07e3c53bea21768f936431e514e91f4dd4eeed0fd8490df800ccc53ab0aa687c",
+  "apk_size": 11187305,
+  "application_id": "io.github.lihuihnu.xuaneynote.debug",
+  "chunks": 3473,
+  "compressed_sha256": "16af9e9385acc5aec21a1a38cbd351b8e67a85f07bc054f147c895bc56824ee1",
+  "compressed_size": 10666489,
+  "compression": "zlib",
+  "distribution": "maintainer verification required; no Actions Artifact; no release at CI stage",
+  "min_sdk": 26,
+  "protocol": "XuaneyNote.test-apk-handoff-v1",
+  "run_attempt": "1",
+  "run_id": "39035771479",
+  "signer_certificate_sha256": "23cc82196fa887bab92a2a09db11b41eeb0628dd0603d45ef48d5062920bc484",
+  "signing_policy": "ephemeral-runner-debug-key; not stable for upgrades; test data only",
+  "source_sha": "6614745c341bcd84019a40af2ab57d4ab7ee22b4",
+  "target_sdk": 36,
+  "tested_sha": "1896431055156954d8c1e2761ef02daa469fb41c",
+  "verified_signature_schemes": [
+    "v2"
+  ],
+  "version_code": 2,
+  "version_name": "0.2.0-pr-b-debug"
+}
