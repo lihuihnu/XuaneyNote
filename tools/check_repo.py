@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Fast source/permission/workflow checks; standard library only, no SDK downloads."""
 from pathlib import Path
+import hashlib
+import json
 import re
 import sys
 import tomllib
@@ -34,7 +36,18 @@ assert not manifest.findall('uses-permission'), 'PR-A must not request permissio
 android = '{http://schemas.android.com/apk/res/android}'
 assert manifest.find('application').get(android+'allowBackup') == 'false'
 assert 'fallbackToDestructiveMigration' not in (root / 'core/data/src/main/kotlin/io/github/lihuihnu/xuaneynote/data/NoteDatabase.kt').read_text()
-print('PASS source XML / pinned versions / read-only official CI / no artifact / no runtime permissions / no destructive migration')
+wrapper = root / 'gradle/wrapper/gradle-wrapper.jar'
+assert wrapper.is_file(), 'Official Gradle Wrapper missing'
+assert hashlib.sha256(wrapper.read_bytes()).hexdigest() == '81a82aaea5abcc8ff68b3dfcb58b3c3c429378efd98e7433460610fecd7ae45f', 'Gradle Wrapper JAR digest mismatch'
+properties = (root / 'gradle/wrapper/gradle-wrapper.properties').read_text(encoding='utf-8')
+assert 'gradle-8.13-bin.zip' in properties
+assert 'distributionSha256Sum=20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78' in properties
+schema = root / 'core/data/schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/1.json'
+assert schema.is_file(), 'Frozen Room v1 schema missing'
+schema_json = json.loads(schema.read_text(encoding='utf-8'))
+assert schema_json['database']['version'] == 1 and len(schema_json['database']['identityHash']) == 32
+assert hashlib.sha256(schema.read_bytes()).hexdigest() == '6c8b9e2ea45c170c1b81df901e748377fa109e7a0a74f96c1b17e2e144ae5e99', 'Frozen Room schema changed'
+print('PASS source/privacy / pinned dependencies / verified official Wrapper and frozen Room v1 schema / read-only CI')
 if '--merged' in sys.argv:
     manifests = list((root / 'app/build/intermediates').glob('**/AndroidManifest.xml'))
     assert any('release' in str(p).lower() for p in manifests), 'No release merged manifest'

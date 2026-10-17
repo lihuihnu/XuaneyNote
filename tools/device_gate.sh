@@ -25,14 +25,14 @@ adb shell wm size 1080x1920
 adb shell wm density 420
 sleep 2
 # 共用一个模拟器时串行测试模块，避免两个安装/卸载生命周期交错。
-bash tools/run_gate.sh phone bash tools/gradle.sh --no-daemon --console=plain --no-parallel :core:data:connectedDebugAndroidTest :app:connectedDebugAndroidTest \
+bash tools/run_gate.sh phone ./gradlew --no-daemon --console=plain --no-parallel :core:data:connectedDebugAndroidTest :app:connectedDebugAndroidTest \
     -Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe
 python3 tools/collect_device_reports.py phone
 bash tools/run_gate.sh phone-probe bash tools/post_test_probe.sh phone
 adb shell wm size 1600x2560
 adb shell wm density 240
 sleep 2
-bash tools/run_gate.sh tablet bash tools/gradle.sh --no-daemon --console=plain --no-parallel :app:connectedDebugAndroidTest \
+bash tools/run_gate.sh tablet ./gradlew --no-daemon --console=plain --no-parallel :app:connectedDebugAndroidTest \
     -Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe
 python3 tools/collect_device_reports.py tablet
 bash tools/run_gate.sh tablet-probe bash tools/post_test_probe.sh tablet

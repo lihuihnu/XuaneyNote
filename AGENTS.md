@@ -1,6 +1,6 @@
 # XuaneyNote 开发执行约定
 
-先读 `docs/PROJECT_PLAN.md`、`docs/PR_A.md` 和 `docs/CI_EVIDENCE.md`。初始化规划原文保留；当前实现状态以 README 和 PR-A 验收表为准。时间统一 Asia/Singapore；历史规划头部 Asia/Tokyo 仅是原文保留，不作为执行时区。
+先读 `docs/PROJECT_PLAN.md`、`docs/PR_A.md` 和 `docs/CI_EVIDENCE.md`。初始化规划原文保留；当前实现状态以 README 和 PR-A 验收表为准。时间统一 Asia/Tokyo，与初始化规划基线保持一致。
 
 只推进一个主线活动开发 PR；开工前核对远端 main、活动 PR、HEAD。功能修改不直推 main。只认可最终源码与实际 tested SHA 的证据，未运行不能写成通过；不导入其他私有项目的代码、配置、地址或数据。
 

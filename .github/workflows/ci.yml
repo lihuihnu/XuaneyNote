@@ -61,12 +61,10 @@ jobs:
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;35.0.0'
           { java -version; echo "Runner image: ${ImageVersion:-unknown}"; } > ci-out/logs/toolchain.log 2>&1
-      - name: Unit tests, lint, APK, release Manifest and official Wrapper generation
+      - name: Unit tests, lint, APK and release Manifest with verified official Wrapper
         if: steps.scope.outputs.android == 'true'
         run: |
-          bash tools/run_gate.sh build bash tools/gradle.sh --no-daemon --console=plain \
-            wrapper --gradle-version 8.13 --distribution-type bin \
-            --gradle-distribution-sha256-sum 20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78 \
+          bash tools/run_gate.sh build ./gradlew --no-daemon --console=plain \
             :core:model:test :core:data:assembleDebugAndroidTest :app:assembleDebug \
             :app:assembleDebugAndroidTest :app:lintDebug :app:processReleaseMainManifest
           bash tools/run_gate.sh privacy python3 tools/check_repo.py --merged

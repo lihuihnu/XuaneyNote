@@ -49,3 +49,10 @@ python3 tools/evidence.py unpack job.log evidence-out \
 源码 `761ce57eaa5e16969a2212f28a30ead7eae87b90` 的首条记录 `38938316977` 在 GitHub 端即时失败，jobs 列表为空，未开始 Android 构建；该记录不是一次运行过的模拟器测试。检查发现 job 级 env 使用了不被允许的 `runner.temp` 上下文。修复将临时目录的设置放入第一个执行步骤，通过 `$RUNNER_TEMP` 写入 `$GITHUB_ENV`，并增加源文件回归检查。
 
 依据：GitHub 官方 Context availability 表，`jobs.<job_id>.env` 允许 github/needs/strategy/matrix/vars/secrets/inputs，不含 runner： https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#context-availability 。旧本地证据保持原 SHA 不改写；该修复不改 Android/Kotlin 应用代码，修复后的实际 Runner 结果另按新 source/tested SHA 归档。
+
+## Run #3：完整成功证据归档
+
+- 本次官方运行 [38988757189](https://github.com/lihuihnu/XuaneyNote/actions/runs/38988757189) 为 `success`，源码 `06ae6fc4b49a2c8f7b5b854e94b7e6de54251e37`，实际 tested merge `ed076740e734641c1e0d3b6870b47714a461a208`。
+- 从 job 日志 157 块封装完整恢复，封装 SHA-256 `e697c2cc1a6864896ecc61305aee1ef3cbcd2b32032419b4911a55d5e3676897`。36 个原始载荷逐一核对大小与 SHA-256，包含原始 XML、日志、截图、Room schema、Gradle Wrapper。
+- 证据分支 `evidence/pr-a/38988757189-a1-06ae6fc4`，固定证据提交 `e8b18d257dff10a332ee769a60db08ef27bb63e9`、文件树 `0e2e43207e8777cb9d8049a8a177250f572fc2bb`，已从远端读取并核对树与摘要/schema；原始 `manifest.json` 的 job 时点 `transported-not-yet-repository-verified` 不被篡改。
+- 生成的 Wrapper/schema 作为**完全相同的 Git blob** 回填到开发分支。回填后的 SHA 须重新 CI；真机与 SAF 文件选择器手工测试仍未通过验收，不得宣布 V1 已发布。
