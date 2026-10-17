@@ -7,6 +7,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import io.github.lihuihnu.xuaneynote.data.BackupCodec
 import io.github.lihuihnu.xuaneynote.data.NoteBackup
+import io.github.lihuihnu.xuaneynote.data.InspectedBundle
+import io.github.lihuihnu.xuaneynote.data.BundleSnapshot
 import io.github.lihuihnu.xuaneynote.data.NoteStore
 import io.github.lihuihnu.xuaneynote.data.LegacyBackupWouldOmitTrash
 import io.github.lihuihnu.xuaneynote.data.LegacyBackupWouldOmitAttachments
@@ -22,6 +24,17 @@ import kotlinx.coroutines.withContext
 
 data class NoteListing(val keyword: String, val items: List<NoteSummary>)
 
+/** 私有 ZIP 验证沙箱仅保存在内存中，不会写入 SavedState Bundle。 */
+data class BundleRestorePreview(
+    val noteCount: Int,
+    val trashedCount: Int,
+    val imageCount: Int,
+    val linkCount: Int,
+    val exportedTheme: ThemeMode,
+    val sampleTitles: List<String>
+)
+
+
 /** B1: 防抖并取消过时查询，数据库 I/O 不进入 Compose 编辑主线程。 */
 @OptIn(kotlinx.coroutines.FlowPreview::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class NotesViewModel(application: Application, private val savedState: SavedStateHandle) : AndroidViewModel(application) {
@@ -32,6 +45,9 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
     private val mutableBusy = MutableStateFlow(false)
     private val mutableMessage = MutableStateFlow<String?>(null)
     private val mutableImport = MutableStateFlow<NoteBackup?>(null)
+    private val mutableBundleReview = MutableStateFlow<BundleRestorePreview?>(null)
+    val pendingBundleReview = mutableBundleReview.asStateFlow()
+    private var verifiedBundle: InspectedBundle? = null
     private val mutableSearchText = MutableStateFlow(savedState.get<String>("note_search").orEmpty())
     val searchText = mutableSearchText.asStateFlow()
     private val mutableTrashOpen = MutableStateFlow(savedState.get<Boolean>("trash_open") ?: false)
@@ -194,4 +210,98 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
         mutableMessage.value = "已恢复 ${result.inserts.size} 条，跳过 ${result.skipped} 条，冲突 ${result.conflicts} 条。" +
             if (settingsRestored) "" else "笔记已恢复，但主题设置失败；可再次导入重试。"
     }
+    /** 保存屏障成功后，才让系统弹出 ZIP 目标选择器。 */
+    fun prepareBundleExport(onReady: () -> Unit) = operation {
+        requireSaved()
+        onReady()
+    }
+
+    /** SAF 写入关闭后必须用同一目标重新读取并完整校验，才能反馈成功。 */
+    fun exportBundle(uri: Uri) = operation {
+        requireSaved()
+        try {
+            withContext(Dispatchers.IO) {
+                require(uri.scheme == "content") { "备份目标必须来自系统文件选择器" }
+                val resolver = app.contentResolver
+                val themeNow = data.preferences.theme.first()
+                val recorded = requireNotNull(resolver.openOutputStream(uri, "wt")) {
+                    "无法打开备份输出"
+                }.use { stream -> data.bundle.export(stream, themeNow) }
+                val verified = requireNotNull(resolver.openInputStream(uri)) {
+                    "备份文件提供者不支持读取校验"
+                }.use { input -> data.bundle.inspect(input) }
+                verified.use { bundle ->
+                    check(bundle.snapshot == recorded) { "ZIP 备份关闭后读回的资料不完整" }
+                }
+            }
+            mutableMessage.value = "ZIP v2 完整备份已关闭并读回校验。它是未加密明文，请保管好文件。"
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) {
+            mutableMessage.value =
+                "ZIP 备份未通过完整写入与回读校验，目标可能是不完整文件，请勿用其恢复。本机资料未被清除。"
+        }
+    }
+
+    /** 未确认时仅解包在私有沙箱，不能写回 Room。 */
+    fun inspectBundle(uri: Uri) = operation {
+        requireSaved()
+        check(uri.scheme == "content") { "仅接受系统选择器返回的文件" }
+        val inspected = withContext(Dispatchers.IO) {
+            requireNotNull(app.contentResolver.openInputStream(uri)) {
+                "ZIP 文件无法读取"
+            }.use { input -> data.bundle.inspect(input) }
+        }
+        val previous = verifiedBundle
+        verifiedBundle = inspected
+        val s: BundleSnapshot = inspected.snapshot
+        mutableBundleReview.value = BundleRestorePreview(
+            noteCount = s.notes.size,
+            trashedCount = s.notes.count { it.deletedAt != null },
+            imageCount = s.attachments.size,
+            linkCount = s.links.size,
+            exportedTheme = s.theme,
+            sampleTitles = s.notes.take(5).map { it.title.ifBlank { "未命名笔记" }.take(60) }
+        )
+        if (previous != null) withContext(Dispatchers.IO) {
+            runCatching { previous.close() }
+        }
+    }
+
+    /** 取消只清除本次新建沙箱，不动数据库。 */
+    fun cancelBundleRestore() {
+        if (mutableBusy.value) return
+        val old = verifiedBundle
+        verifiedBundle = null
+        mutableBundleReview.value = null
+        if (old != null) viewModelScope.launch(Dispatchers.IO) {
+            runCatching { old.close() }
+        }
+    }
+
+    fun confirmBundleRestore() = operation {
+        requireSaved()
+        val inspected = verifiedBundle ?: return@operation
+        val result = withContext(Dispatchers.IO) { data.bundle.restore(inspected) }
+        verifiedBundle = null
+        mutableBundleReview.value = null
+        withContext(Dispatchers.IO) { runCatching { inspected.close() } }
+        // Room 数据与 DataStore 主题无法跨存储原子提交，失败时单独报告。
+        val themeRestored = try {
+            data.preferences.setTheme(inspected.snapshot.theme)
+            true
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { false }
+        mutableMessage.value =
+            "ZIP 已恢复：新增 ${result.insertedNotes} 条，跳过 ${result.skippedNotes} 条，冲突 ${result.conflicts} 条，新图片 ${result.newAttachments} 张。" +
+            if (themeRestored) "" else "笔记和图片已保留，但主题设置失败；请手动重试。"
+    }
+
+    override fun onCleared() {
+        val old = verifiedBundle
+        verifiedBundle = null
+        // 强制杀死进程不执行 onCleared，Application 下次启动仍会清理受控缓存。
+        if (old != null) runCatching { old.close() }
+        super.onCleared()
+    }
+
 }
