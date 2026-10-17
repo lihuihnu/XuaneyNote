@@ -1,0 +1,97 @@
+{
+  "protocol": "XuaneyNote.test-apk-handoff-v1",
+  "archive_kind": "verified-split-zlib-debug-apk",
+  "archive_status": "compressed-pieces-uploaded; APK assembly + final hash verification required",
+  "run_id": "39035771479",
+  "run_attempt": "1",
+  "source_sha": "6614745c341bcd84019a40af2ab57d4ab7ee22b4",
+  "tested_sha": "1896431055156954d8c1e2761ef02daa469fb41c",
+  "apk_filename": "XuaneyNote-0.2.0-pr-b-6614745c341b-debug.apk",
+  "apk_size": 11187305,
+  "apk_sha256": "07e3c53bea21768f936431e514e91f4dd4eeed0fd8490df800ccc53ab0aa687c",
+  "application_id": "io.github.lihuihnu.xuaneynote.debug",
+  "version_code": 2,
+  "version_name": "0.2.0-pr-b-debug",
+  "min_sdk": 26,
+  "target_sdk": 36,
+  "signer_certificate_sha256": "23cc82196fa887bab92a2a09db11b41eeb0628dd0603d45ef48d5062920bc484",
+  "verified_signature_schemes": [
+    "v2"
+  ],
+  "signing_policy": "ephemeral-runner-debug-key; NOT stable for upgrades; synthetic test data only",
+  "compression": "zlib",
+  "compressed_size": 10666489,
+  "compressed_sha256": "16af9e9385acc5aec21a1a38cbd351b8e67a85f07bc054f147c895bc56824ee1",
+  "part_group_size_transport_chunks": 320,
+  "transport_chunks": 3473,
+  "part_count": 11,
+  "parts": [
+    {
+      "path": "parts/apk.zlib.part-00",
+      "size": 983040,
+      "sha256": "c09bc13b975e5c814dedcbd90889139ce4346c7b95b1392cf4167c413177b2c2",
+      "git_sha1": "0b0daa64199d8524302d54a0d600c1c3068af299"
+    },
+    {
+      "path": "parts/apk.zlib.part-01",
+      "size": 983040,
+      "sha256": "dfc6fc51ac8174c25eaef8f1e300ab2231f36db10ab568661eaee80574b4cefb",
+      "git_sha1": "d04b0a7c5496279c0cb73853ffa990634d35158e"
+    },
+    {
+      "path": "parts/apk.zlib.part-02",
+      "size": 983040,
+      "sha256": "4733beef785cca5d9debda72a18f239168a23ec6c952eac07b30b37dbd67cfd2",
+      "git_sha1": "e183fb93071b73bb2368b5078f683fc7a8dfd7ea"
+    },
+    {
+      "path": "parts/apk.zlib.part-03",
+      "size": 983040,
+      "sha256": "408426ad06693b60642d5ab9b5437b69464140d5677d8b4a2939dcba673d1551",
+      "git_sha1": "66821d52323a2c3d0c0c3b4bdad420b1d3f48ac6"
+    },
+    {
+      "path": "parts/apk.zlib.part-04",
+      "size": 983040,
+      "sha256": "3ec4c57ee32a344199442a785b77cbfca62694f85da53578c3a2e11eedf82eb8",
+      "git_sha1": "1afe27f79736c5678a5a2266542ec5126b729f88"
+    },
+    {
+      "path": "parts/apk.zlib.part-05",
+      "size": 983040,
+      "sha256": "0b0dddfc62d0b2942a9be854b81876756ed40cb8f568032a2231447358ee3761",
+      "git_sha1": "2b2bedebd66d1a771cf2989d6c3c330ecd058c62"
+    },
+    {
+      "path": "parts/apk.zlib.part-06",
+      "size": 983040,
+      "sha256": "f70a3eec2a0b9286ce92ccc271783dcbd193a771a7eb8965eaf159f75cea3117",
+      "git_sha1": "95223bf0232fce9e39daada24a8ba02aa2b48463"
+    },
+    {
+      "path": "parts/apk.zlib.part-07",
+      "size": 983040,
+      "sha256": "53e4fa6e405e2c2ed97ab9f3a9358eb49b0939431ecc77e71bf167c9e07877a1",
+      "git_sha1": "7a0b1654ede4d80f17c213006f1685b5db831df2"
+    },
+    {
+      "path": "parts/apk.zlib.part-08",
+      "size": 983040,
+      "sha256": "68ad9ae979652d8e3848e098e7ac5f839458796993a43bba3c6e8a41f98c212a",
+      "git_sha1": "b3504e35f3620b1cd7e2dd8af60ec85e213a7d99"
+    },
+    {
+      "path": "parts/apk.zlib.part-09",
+      "size": 983040,
+      "sha256": "2f2e908be80cfc2ba5b19ccb18a612af19d2bb2a915c76bfc8593cdbcff6c285",
+      "git_sha1": "5863911d0bbea136ca7a6d3d25d96e3081957a35"
+    },
+    {
+      "path": "parts/apk.zlib.part-10",
+      "size": 836089,
+      "sha256": "c2a0be3a2c0095f8cda5891cb748bcfd0da49a5e7896a68f68ab826f697694ae",
+      "git_sha1": "a8195c3aa2f667be496a635b2a8a8db43be2296a"
+    }
+  ],
+  "notes": "One-time official CI signed APK. Raw zlib payload bytes were independently SHA-256-checked before Git blob upload; reconstruct and check full APK SHA-256 before installation."
+}

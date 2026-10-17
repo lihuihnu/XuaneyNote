@@ -1,49 +1,31 @@
-# XuaneyNote
+# XuaneyNote PR-B — verified one-time test APK handoff
 
-**专注当下，记录生活。** 面向 Android 手机和平板的完全本地、免费、无需登录的笔记、日记、手账、备忘录与番茄专注应用。
+**Status:** The official GitHub-hosted run completed successfully. Eleven compressed binary pieces of the original APK have been extracted from the exact trusted log transport, independently SHA-256-verified and stored here as Git objects. This is **not** a one-file APK download or a formal app release.
 
-> **当前状态（2026-10-17）**：PR-A [#1](https://github.com/lihuihnu/XuaneyNote/pull/1) 已合并至 `main`（`b85e27d5c004f978850badc4865dea821c0b44d1`），交付最小原生笔记闭环。PR-B 数据安全与资料管理已在 `feat/pr-b-data-safety` **冻结目标，B0 已完成最终 CI 验收；B1 中文搜索已通过官方 CI，B2 回收站已通过官方 CI；B3.1/B3.2/B4.1/B4.2a/B4.2b 均通过官方自动化 CI；B3.3 只读图片预览已通过官方 CI；现准备受信任的 PR-B 单次手机验收 APK，图片编辑入口仍关闭，真机 SAF 与 B5 加密尚未完成**。这仍不是正式 V1 发布。
+**Source SHA:** `6614745c341bcd84019a40af2ab57d4ab7ee22b4`. **Tested merge SHA:** `1896431055156954d8c1e2761ef02daa469fb41c`. [CI Run 39035771479](https://github.com/lihuihnu/XuaneyNote/actions/runs/39035771479) passed all required Android checks and executed the owner-only APK transfer step.
 
-## 已实现：PR-A 基础笔记
+## Create the APK without an Android SDK
 
-- Kotlin / Jetpack Compose / Material 3，手机单栏、达到 840dp 的宽窗口列表—编辑双栏，明暗主题；
-- Room 本地文本笔记、自动保存状态、进程终止后重开找回，空库而非演示内容；
-- 系统文件选择器（SAF）手动导出/验证与冲突保留式 JSON v1 恢复；此格式**未加密，且不支持附件**；
-- 完全离线、免登录，没有应用运行时 INTERNET / ACCESS_NETWORK_STATE、广告或遥测。
+1. Download the [PR-B test-package ZIP](https://github.com/lihuihnu/XuaneyNote/archive/refs/heads/testing-apks/pr-b-6614745c341b.zip) and extract it on a computer. The 11 binary files in `parts/` must remain present.
+2. **Windows:** double-click `assemble_test_apk.cmd`. The bundled PowerShell script verifies each compressed part, reconstructs the original signed APK, verifies its full SHA-256 and checks the APK ZIP structure.
+3. **macOS/Linux/Windows with Python 3:** run `python3 assemble_test_apk.py` (Windows: `py -3 assemble_test_apk.py`). This verifies zlib, every piece, the entire APK SHA-256 and the APK ZIP CRC. Works offline from the extracted folder.
+4. When the script reports success, copy `XuaneyNote-0.2.0-pr-b-6614745c341b-debug.apk` to the Android test device and install it. Never install a partial file. Do not delete an installed app containing the only copy of real notes.
 
-## 开发中：PR-B 冻结目标
+## Verified binary identity
 
-[**PR-B 目标与数据合同（docs/PR_B.md）**](docs/PR_B.md) 固定六项闭环：Room v1→v2 显式安全迁移、中文/英文搜索、回收站、私有图片附件、包含附件的备份 v2、可选密码保护的加密备份。**B0 [Run 39001250626](https://github.com/lihuihnu/XuaneyNote/actions/runs/39001250626)、B1 [Run 39002603730](https://github.com/lihuihnu/XuaneyNote/actions/runs/39002603730) 已通过；B2 [Run 39005974577](https://github.com/lihuihnu/XuaneyNote/actions/runs/39005974577) 已通过；B3.1 最终 [Run 39009835439](https://github.com/lihuihnu/XuaneyNote/actions/runs/39009835439) success；B3.2 [Run 39012222967](https://github.com/lihuihnu/XuaneyNote/actions/runs/39012222967) 已通过；B4.1 [Run 39018703459](https://github.com/lihuihnu/XuaneyNote/actions/runs/39018703459) 已通过；B4.2a [Run 39021083940](https://github.com/lihuihnu/XuaneyNote/actions/runs/39021083940) 已通过；B4.2b [Run 39032360669](https://github.com/lihuihnu/XuaneyNote/actions/runs/39032360669) 自动化已通过；B3.3 只读图片组件为最新待 CI 候选。JSON v1 继续兼容，图片新增操作仍关闭。** 见 [B1 搜索](docs/B1_SEARCH.md)、[B2 回收站](docs/B2_TRASH.md)、[B3 图片](docs/B3_ATTACHMENTS.md)、[B3.3 受控图片面板](docs/B3_3_IMAGE_UI.md)和[B4 ZIP 备份合同](docs/B4_BUNDLE_V2.md)。
+- Original APK SHA-256: `07e3c53bea21768f936431e514e91f4dd4eeed0fd8490df800ccc53ab0aa687c`.
+- Original APK size: **11,187,305 bytes**.
+- Reconstructed compressed stream SHA-256: `16af9e9385acc5aec21a1a38cbd351b8e67a85f07bc054f147c895bc56824ee1` (**10,666,489 bytes**).
+- CI temporary debug signing-certificate SHA-256: `23cc82196fa887bab92a2a09db11b41eeb0628dd0603d45ef48d5062920bc484`, verified by original Android Build Tools `apksigner` (APK Signature Scheme v2).
+- Package ID: `io.github.lihuihnu.xuaneynote.debug`. Version: `0.2.0-pr-b-debug` (versionCode 2). Android 8+ (minSdk 26), targetSdk 36.
+- Exact Git blob SHA-1 and SHA-256/size for each part are in `manifest.json`. The full APK digest is verified *again* locally before the script produces the installable file.
 
-计划顺序：B0 数据迁移 → B1 搜索 → B2 回收站 → B3 图片 → B4 完整备份 → B5 密码备份。每一步单独补齐验证，最后以最新源码 SHA 的官方 CI 与手工文件选择器回归验收。此阶段不提前开发番茄钟、日记或手账画布。
+## Safety and actual acceptance boundary
 
-## 最新 PR-A 验证记录与边界
+- **Different GitHub runs use ephemeral debug signing keys.** Even with versionCode 2, the PR-B APK may not install over a PR-A debug APK signed by a different certificate. Do not force it by uninstalling an app holding unbacked-up data. Use a separate disposable test device/profile.
+- B3.3 supports **read-only previews of restored images**. Adding or removing images stays disabled until a separate human SAF/Photo Picker acceptance and CI. This APK is not a full release.
+- ZIP v2 backups are **plaintext**; users choose their own SAF storage provider. The app does not automatically upload, but a manually selected provider may be a cloud service.
+- Before changing or deleting anything, follow the [B4.2b synthetic-note real-phone SAF checklist](https://github.com/lihuihnu/XuaneyNote/blob/6614745c341bcd84019a40af2ab57d4ab7ee22b4/docs/B4_2B_SAF_ACCEPTANCE.md). Neither the previous emulator tests nor this APK transfer constitutes completed manual device acceptance.
+- Ordinary CI had read-only repository access, no Actions Artifact, no distribution signing key. APK file bytes are on this dedicated download branch only as compressed split binary blobs, never in `main`.
 
-- 官方标准 GitHub-hosted `ubuntu-24.04` 的 [Run 38995733428](https://github.com/lihuihnu/XuaneyNote/actions/runs/38995733428) 为 **completed/success**；源码 `19532a929475e9ce5e9f7fb2589654fb67f101d1`，实际 tested merge `3f049fd689016b0766f25018db541b2158b31da2`。构建、Lint、Room、API35 模拟手机/平板窗口与进程重启测试通过；最终合并 Manifest 隐私检查通过。
-- 用户反馈：已完成**手机实机验收、没有发现问题**。未附具体型号、逐项录屏、独立实体平板验收和可量化性能证据，故不冒称这些项目全部通过。
-- 一次性测试 APK 已归档为**校验后可拼接的分片**，独立于 `main`；查看 [测试包 README](https://github.com/lihuihnu/XuaneyNote/tree/testing-apks/pr-a-19532a929475)。临时 CI 调试证书不等于正式可更新签名；不要用该调试版承载资料唯一副本。
-- 官方 Wrapper、Room v1 schema 和成功/受控失败 CI 证据已按原始 SHA 固定；具体历史见 [PR-A 归档](docs/PR_A.md) 与 [CI 证据规范](docs/CI_EVIDENCE.md)。
-
-## 文档导航
-
-- [项目完整规划基线](docs/PROJECT_PLAN.md)
-- [PR-B 目标冻结及全部验收门禁](docs/PR_B.md)
-- [PR-A 历史与合并记录](docs/PR_A.md)
-- [JSON 文本备份 v1 合同](docs/BACKUP_V1.md)
-- [CI 证据协议](docs/CI_EVIDENCE.md) / [工具链](docs/TOOLCHAIN.md)
-- [测试 APK 交付](docs/TRUSTED_TEST_APK_HANDOFF.md) / [手机验收清单](docs/REAL_DEVICE_ACCEPTANCE.md)
-- [Agent 执行约定](AGENTS.md)
-
-## 本地构建
-
-初始要求：JDK 17、Android SDK 36、Build Tools 35.0.0；`minSdk 26`。实际 Gradle Wrapper 和 Room v1 schema 均经首轮官方 CI 生成文件字节身份校验。
-
-```sh
-./gradlew --no-daemon :core:model:test :app:assembleDebug
-```
-
-调试包使用 `.debug` 的独立 applicationId；本仓库普通 PR CI 只读、仅官方 `ubuntu-24.04`、无 Actions Artifact/持久缓存，也不触发正式签名。
-
-## 许可与发布
-
-免费使用目标不变；源码许可证仍待维护者确认。**公开仓库不等于正式发行**，不擅自承诺分发许可、签名升级或未经测量的跨设备性能。
+**Important:** If the APK full-file SHA-256 differs from the pinned digest above, stop. Do not install.
