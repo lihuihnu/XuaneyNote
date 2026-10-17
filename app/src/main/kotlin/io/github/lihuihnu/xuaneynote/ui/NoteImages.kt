@@ -75,11 +75,13 @@ private fun ImagePreview(
 internal fun NoteImageStrip(
     attachments: List<AttachmentEntity>,
     busy: Boolean,
+    allowEdit: Boolean = true,
     onAdd: () -> Unit,
     onRemove: (String) -> Unit,
     loadImage: suspend (String, Int) -> Bitmap,
     modifier: Modifier = Modifier
 ) {
+    if (attachments.isEmpty() && !allowEdit) return
     var pendingRemove by rememberSaveable { mutableStateOf<String?>(null) }
     var expandedId by rememberSaveable { mutableStateOf<String?>(null) }
     Column(modifier.testTag("note-image-panel"), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -97,7 +99,7 @@ internal fun NoteImageStrip(
                         modifier = Modifier.size(112.dp).testTag("note-image-" + item.id)) {
                         ImagePreview(item, 224, loadImage, Modifier.fillMaxSize())
                     }
-                    TextButton(
+                    if (allowEdit) TextButton(
                         onClick = { pendingRemove = item.id },
                         enabled = !busy,
                         modifier = Modifier.testTag("remove-note-image-" + item.id)
@@ -106,7 +108,7 @@ internal fun NoteImageStrip(
                     }
                 }
             }
-            item {
+            if (allowEdit) item {
                 FilledTonalButton(
                     onClick = onAdd,
                     enabled = !busy,
@@ -124,7 +126,7 @@ internal fun NoteImageStrip(
     }
 
     val removeId = pendingRemove
-    if (removeId != null) {
+    if (allowEdit && removeId != null) {
         AlertDialog(
             onDismissRequest = { pendingRemove = null },
             title = { Text(stringResource(R.string.image_remove_title)) },

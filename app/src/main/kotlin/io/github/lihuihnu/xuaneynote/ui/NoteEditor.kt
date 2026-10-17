@@ -17,7 +17,8 @@ import io.github.lihuihnu.xuaneynote.model.SaveState
 @Composable
 fun NoteEditor(note: Note, state: SaveState, busy: Boolean, onTitle: (String) -> Unit,
     onBody: (String) -> Unit, onRetry: () -> Unit, onTrash: () -> Unit,
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier,
+    imageContent: @Composable (() -> Unit)? = null) {
     // Bundle 只保存光标，不保存长正文，避免旋转时 TransactionTooLargeException。
     var titleCursor by rememberSaveable(note.id) { mutableIntStateOf(0) }
     var bodyCursor by rememberSaveable(note.id) { mutableIntStateOf(0) }
@@ -59,6 +60,10 @@ fun NoteEditor(note: Note, state: SaveState, busy: Boolean, onTitle: (String) ->
         }, placeholder = { Text(stringResource(R.string.body_hint)) }, readOnly = busy,
             textStyle = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.fillMaxWidth().weight(1f).testTag("note-body"))
+        if (imageContent != null) {
+            Spacer(Modifier.height(8.dp))
+            imageContent()
+        }
         Text(stringResource(R.string.preview_stage), style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 8.dp))
     }

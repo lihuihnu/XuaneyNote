@@ -177,8 +177,8 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
         else "图片已解除关联，原图文件删除待下次启动继续清理。"
     }
 
-    suspend fun imageThumbnail(attachmentId: String): Bitmap =
-        data.attachments.thumbnail(attachmentId)
+    suspend fun imageThumbnail(attachmentId: String, maxEdgePx: Int): Bitmap =
+        data.attachments.thumbnail(attachmentId, maxEdgePx)
 
     fun createNote() = operation { requireSaved(); select(data.notes.create()) }
     fun openNote(id: String) = operation { requireSaved(); select(writes.draft(id) ?: data.notes.get(id)) }

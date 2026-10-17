@@ -2,6 +2,7 @@ package io.github.lihuihnu.xuaneynote.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -52,6 +53,7 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
     val message by vm.message.collectAsStateWithLifecycle()
     val backup by vm.pendingImport.collectAsStateWithLifecycle()
     val bundleReview by vm.pendingBundleReview.collectAsStateWithLifecycle()
+    val notePictures by vm.imageAttachments.collectAsStateWithLifecycle()
     var settings by rememberSaveable { mutableStateOf(false) }
     var exportWarning by rememberSaveable { mutableStateOf(false) }
     var bundleExportWarning by rememberSaveable { mutableStateOf(false) }
@@ -71,6 +73,11 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
     val importBundle = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { it?.let(vm::inspectBundle) }
+    // AndroidX Photo Picker 仅返回一次性只读 content URI，旧 Android 回落到 SAF。
+    // 入口由 ImageUiGate.USER_ENTRY_ENABLED 控制，手机 SAF 人工验收前保持关闭。
+    val pickPicture = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri -> uri?.let(vm::addImage) }
     LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it); vm.clearMessage() } }
     LaunchedEffect(page) { if (page == 0) { vm.updateSearchText(""); vm.leaveTrash() } }
     BackHandler(enabled = note != null && !settings && backup == null && bundleReview == null && !exportWarning && !bundleExportWarning) {
@@ -154,7 +161,24 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
                         if (selected != null && !trashOpen) {
                             NoteEditor(selected, states[selected.id] ?: SaveState.Saved(selected.revision), busy,
                                 vm::editTitle, vm::editBody, vm::retrySaves,
-                                { moveToTrashRequest = selected.id }, Modifier.weight(1f))
+                                { moveToTrashRequest = selected.id }, Modifier.weight(1f),
+                                imageContent = if (notePictures.isNotEmpty() ||
+                                    ImageUiGate.USER_ENTRY_ENABLED) {
+                                    {
+                                        NoteImageStrip(
+                                            attachments = notePictures,
+                                            busy = busy,
+                                            allowEdit = ImageUiGate.USER_ENTRY_ENABLED,
+                                            onAdd = {
+                                                pickPicture.launch(PickVisualMediaRequest(
+                                                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                                                ))
+                                            },
+                                            onRemove = vm::removeImage,
+                                            loadImage = vm::imageThumbnail
+                                        )
+                                    }
+                                } else null)
                         } else if (wide) {
                             Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
                                 Text(stringResource(if (trashOpen) R.string.trash_detail_hint else R.string.pick_note),

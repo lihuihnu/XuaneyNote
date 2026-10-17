@@ -6,6 +6,15 @@
   <string name="focus_later">专注·待开放</string>
   <string name="journal_later">手账·待开放</string>
   <string name="new_note">新建笔记</string>
+  <string name="note_images_title">本机图片</string>
+  <string name="image_loading">载入缩略图…</string>
+  <string name="image_load_failed">图片无法读取，请检查原图</string>
+  <string name="image_add">添加图片</string>
+  <string name="image_remove">移除图片</string>
+  <string name="image_remove_title">从这篇笔记移除图片？</string>
+  <string name="image_remove_body">仅解除当前笔记的图片引用；如果其他笔记还在使用，原图继续保留。已导出的外部备份不会自动更改。</string>
+  <string name="image_preview_title">本机图片预览</string>
+  <string name="image_privacy_notice">原图可能包含拍摄时间或位置等 EXIF 元数据，完整 ZIP 明文备份也会保留这些信息。添加图片功能待设备验收后开放。</string>
   <string name="empty_title">从一条记录开始</string>
   <string name="empty_description">想法、灵感与日常，都可以留在这里。
 无需登录，内容只保存在本机。</string>
@@ -31,7 +40,7 @@
   <string name="bundle_restore_summary">已验证 %1$d 条笔记，其中回收站 %2$d 条，图片 %3$d 张、图片关联 %4$d 项。</string>
   <string name="bundle_restore_theme">备份主题：%1$s</string>
   <string name="bundle_restore_preview_title">部分笔记标题</string>
-  <string name="bundle_restore_conflict_notice">确认后才写入本机资料。已有笔记不会被覆盖；同一内容跳过，不同内容保留恢复副本。图片及回收站状态会恢复，外观设置失败将单独报告。当前图片展示功能尚未开放，图片文件仍会被安全存储并包含在 ZIP 完整备份中。</string>
+  <string name="bundle_restore_conflict_notice">确认后才写入本机资料。已有笔记不会被覆盖；同一内容跳过，不同内容保留恢复副本。图片及回收站状态会恢复，外观设置失败将单独报告。图片在本机以只读缩略图形式查看，添加和移除功能待设备验收后开放；原图保留在完整 ZIP 备份中。</string>
   <string name="export_backup">导出本地备份（JSON v1，仅普通文本）</string>
   <string name="import_backup">导入旧版文本备份（JSON v1）</string>
   <string name="backup_notice">当前 v1 仅能完整备份正常笔记与主题。回收站非空时会拒绝导出，避免遗漏已删除但尚可恢复的内容；如需旧版备份，请先恢复需要保留的笔记，完整备份将在 B4 提供。单文件最多 8 MiB、10,000 条。备份是未加密明文；请保存在安全位置，应用不会自动上传。</string>
