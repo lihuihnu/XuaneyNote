@@ -15,6 +15,7 @@ import java.io.File
 import java.security.MessageDigest
 import java.util.UUID
 import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 /**
@@ -177,6 +178,54 @@ class BundleBackupV2Test {
         val zip = archive(forged, fake)
         assertTrue(runCatching {
             BundleBackupV2.inspect(ByteArrayInputStream(zip), context().cacheDir)
+        }.isFailure)
+    }
+
+
+    @Test fun tamperedNotesDigestFailsDespiteValidZipCrc() {
+        val png = png()
+        val original = archive(snapshot(png), png)
+        val modified = ByteArrayOutputStream()
+        ZipInputStream(ByteArrayInputStream(original)).use { input ->
+            ZipOutputStream(modified).use { output ->
+                while (true) {
+                    val entry = input.nextEntry ?: break
+                    val plain = input.readBytes()
+                    output.putNextEntry(ZipEntry(entry.name))
+                    // 重打包会重算 CRC，因此只能靠每条目 SHA-256 检测这一改动。
+                    output.write(if (entry.name == "notes.json") plain + ' '.code.toByte() else plain)
+                    output.closeEntry()
+                    input.closeEntry()
+                }
+            }
+        }
+        assertTrue(runCatching {
+            BundleBackupV2.inspect(ByteArrayInputStream(modified.toByteArray()), context().cacheDir)
+        }.isFailure)
+    }
+
+    @Test fun duplicateZipFilenamesAreRejectedBeforeExtraction() {
+        val firstName = "attachments/" + "a".repeat(64)
+        val nextName = "attachments/" + "b".repeat(64)
+        val original = fixtureZip(
+            "manifest.json" to "{}".toByteArray(),
+            "notes.json" to "{}".toByteArray(),
+            firstName to byteArrayOf(1),
+            nextName to byteArrayOf(2)
+        )
+        val corrupted = original.copyOf()
+        val target = nextName.toByteArray(Charsets.US_ASCII)
+        val replacement = firstName.toByteArray(Charsets.US_ASCII)
+        var rewritten = 0
+        for (i in 0..(corrupted.size - target.size)) {
+            if ((0 until target.size).all { j -> corrupted[i + j] == target[j] }) {
+                replacement.copyInto(corrupted, i)
+                rewritten++
+            }
+        }
+        assertEquals(2, rewritten) // 对应一个 ZIP local header 和 central entry
+        assertTrue(runCatching {
+            BundleBackupV2.inspect(ByteArrayInputStream(corrupted), context().cacheDir)
         }.isFailure)
     }
 
