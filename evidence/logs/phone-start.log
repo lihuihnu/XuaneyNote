@@ -1,0 +1,7 @@
+Starting: Intent { cmp=io.github.lihuihnu.xuaneynote.debug/io.github.lihuihnu.xuaneynote.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: io.github.lihuihnu.xuaneynote.debug/io.github.lihuihnu.xuaneynote.MainActivity
+TotalTime: 1912
+WaitTime: 1945
+Complete

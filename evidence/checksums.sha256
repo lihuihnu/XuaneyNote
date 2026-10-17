@@ -1,0 +1,22 @@
+308a95077874302d18b3a92eac47a326d09e3945dcc31ced3fae50bdd280311a  logs/phone-restart-seed.log
+318129e1649c2680d95fb8e42f5665be58a62fba7459f6fbd4d2f078e82c41a4  reports/phone/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml
+35c8c5ba6034d66eb339ac36113b0bed370afbe59602fd11871d9deaa28347e3  reports/model/test/TEST-io.github.lihuihnu.xuaneynote.model.ModelTest.xml
+52634669130d56b488ac0da0c6f5667269fb14103da6c9e3763fd318a7ef6251  logs/device-probe-script.log
+57931b17dd228e5c24dac90e815d0bf82477e831a4618dfab4136f5446b42a9f  bootstrap/gradlew.bat.txt
+633fbfc3b92b012914165717ce367282664c75ad9f6e533b4a1ad6e2418ec93a  logs/device-fingerprint.log
+66db6f273a22972950e94d30c2dd29fec0d459e2d94eba67278daac4d993308b  logs/apk-transport-protocol.log
+6c8b9e2ea45c170c1b81df901e748377fa109e7a0a74f96c1b17e2e144ae5e99  schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/1.json
+734b3879d3501dce471cf0522d3bcbafe76873d9fc5129345b67fb43bd15e933  bootstrap/gradlew.txt
+74a17e1d4927c22f9ed26f0298aa5d916ff32da02912840fccac6fa08a9c6777  logs/phone-probe-apks.log
+9ba603f08bc9e08eb5eee97cb6600c9aaa2fd90540cf16722184d5a9389ed445  schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/2.json
+a915075d3b9c55cfad36dc8e39e7cdead827d0cea07b9cf15d2bcf1478a39a92  logs/privacy.log
+ac52307826dbe2f31b6758a058bc6ad1f07f094228f406378c1e17c0c263efb5  logs/build.log
+b1c18fdb1651586ce7a1d7e8ef583b699a2398c8d333a5f8daf4fc9e976ea54e  reports/last-device/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml
+b1c18fdb1651586ce7a1d7e8ef583b699a2398c8d333a5f8daf4fc9e976ea54e  reports/phone/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml
+b1c18fdb1651586ce7a1d7e8ef583b699a2398c8d333a5f8daf4fc9e976ea54e  reports/tablet/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml
+c040b6ef2fb893ff5beea5a281614f2848f1c3996a7886f650b713f8240656a2  bootstrap/gradle-wrapper.properties.txt
+c47d3380af3fd471706cb9c8d454ca01d4ea2b0fd42f151bfcb7d94cc0850197  reports/last-device/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml
+c47d3380af3fd471706cb9c8d454ca01d4ea2b0fd42f151bfcb7d94cc0850197  reports/tablet/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml
+c66e491c4fa3dcb40389f45165d239e562754084cd95e1886a968336c1c06fca  logs/phone-start.log
+dc57dc1df55e8d0ae29dfebaec166c868a2076b8c869e394578638c7bc7602ed  schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/3.json
+e3c0f3b0f2d2227f8bfb429d5ea946414ba767be2d18ae28c55743a51370958d  logs/evidence-protocol.log

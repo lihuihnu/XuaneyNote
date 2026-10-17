@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="io.github.lihuihnu.xuaneynote.NoteFlowTest" tests="4" failures="0" errors="0" skipped="0" time="27.347" timestamp="2026-10-17T06:31:24" hostname="localhost">
+  <properties>
+    <property name="device" value="emulator-5554 - 15" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="applicationHasNoNetworkPermissionsOrAutomaticBackup" classname="io.github.lihuihnu.xuaneynote.NoteFlowTest" time="3.985" />
+  <testcase name="chineseBodySearchEmptyStateAndClear" classname="io.github.lihuihnu.xuaneynote.NoteFlowTest" time="7.748" />
+  <testcase name="moveToTrashRestoreAndPermanentDelete" classname="io.github.lihuihnu.xuaneynote.NoteFlowTest" time="9.436" />
+  <testcase name="createEditAutosaveAndActivityRecreation" classname="io.github.lihuihnu.xuaneynote.NoteFlowTest" time="3.271" />
+</testsuite>
