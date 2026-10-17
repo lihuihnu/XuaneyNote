@@ -170,23 +170,53 @@ private fun NoteList(
     Column(modifier.fillMaxHeight().padding(horizontal = 16.dp)) {
         Text(stringResource(if (today) R.string.recent_records else R.string.records),
             style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 16.dp))
-        Text(stringResource(R.string.notes_count, notes.size), style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 8.dp))
+        if (!today) OutlinedTextField(
+            value = searchText,
+            onValueChange = onSearchChange,
+            label = { Text(stringResource(R.string.search_notes)) },
+            singleLine = true,
+            trailingIcon = {
+                if (searchText.isNotEmpty()) TextButton(
+                    onClick = onClearSearch,
+                    modifier = Modifier.testTag("clear-note-search")
+                ) { Text(stringResource(R.string.search_clear)) }
+            },
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp).testTag("note-search")
+        )
+        Text(
+            when {
+                searchPending -> stringResource(R.string.search_in_progress)
+                searching -> stringResource(R.string.search_count, visible.size)
+                else -> stringResource(R.string.notes_count, visible.size)
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        if (hasMore) Text(
+            stringResource(R.string.search_more, NoteStore.SEARCH_VISIBLE_LIMIT),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         FilledTonalButton(onClick = onCreate, enabled = !busy,
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("new-note")) {
             Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.new_note))
         }
-        if (notes.isEmpty()) {
+        if (searchPending) {
+            Box(Modifier.fillMaxWidth().padding(vertical = 36.dp), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.search_in_progress))
+            }
+        } else if (visible.isEmpty()) {
             Column(Modifier.fillMaxWidth().padding(vertical = 48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(stringResource(R.string.empty_title), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(if (searching) R.string.search_empty else R.string.empty_title), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(12.dp))
-                Text(stringResource(R.string.empty_description), style = MaterialTheme.typography.bodyMedium,
+                if (!searching) Text(stringResource(R.string.empty_description), style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             LazyColumn(Modifier.weight(1f).testTag("note-list"), contentPadding = PaddingValues(vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(notes, key = { it.id }) { item ->
+                items(visible, key = { it.id }) { item ->
                     Card(onClick = { onOpen(item.id) }, enabled = !busy, shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = if (selected == item.id)
                             MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow),

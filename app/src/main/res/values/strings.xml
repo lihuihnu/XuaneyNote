@@ -38,4 +38,10 @@
   <string name="notes_count">%1$d 条本地笔记</string>
   <string name="working">处理中…</string>
   <string name="preview_stage">PR-A 预览版 · 请勿作为重要资料的唯一副本</string>
+    <string name="search_notes">搜索标题或正文</string>
+    <string name="search_clear">清除</string>
+    <string name="search_in_progress">正在搜索…</string>
+    <string name="search_count">搜索结果：%1$d 条</string>
+    <string name="search_empty">没有找到匹配的笔记</string>
+    <string name="search_more">只显示前 %1$d 条结果，请输入更具体的关键词</string>
 </resources>
