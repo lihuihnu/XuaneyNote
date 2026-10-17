@@ -105,7 +105,7 @@ object BundleBackupV2 {
                 "image/png" -> ".png"
                 else -> ".webp"
             }))
-            require(item.byteSize in 1..MAX_IMAGE_BYTES && item.createdAt >= 0)
+            require(item.byteSize in 1L..MAX_IMAGE_BYTES && item.createdAt >= 0)
             require(item.width != null && item.height != null &&
                 item.width in 1..16384 && item.height in 1..16384 &&
                 item.width.toLong() * item.height <= 100_000_000L)
@@ -208,9 +208,9 @@ object BundleBackupV2 {
         val entries = listOf(EntryInfo("notes.json", notes.size.toLong(), sha256(notes))) +
             physical.map { EntryInfo("attachments/" + it.sha256, it.byteSize, it.sha256) }
         require(entries.size + 1 <= MAX_ENTRIES)
-        val expanded = entries.sumOf { it.bytes } + manifest(snapshot, entries).size
-        require(expanded <= MAX_EXPANDED_BYTES) { "备份展开总量过大" }
         val header = manifest(snapshot, entries)
+        val expanded = entries.sumOf { it.bytes } + header.size
+        require(expanded <= MAX_EXPANDED_BYTES) { "备份展开总量过大" }
         ZipOutputStream(CappedOutput(output, MAX_COMPRESSED_BYTES)).use { zip ->
             zip.putNextEntry(ZipEntry("manifest.json"))
             zip.write(header)
@@ -351,7 +351,7 @@ object BundleBackupV2 {
             val name = v.string("name")
             require(name == "notes.json" || imageNamePattern.matches(name)) { "未知 ZIP 条目" }
             val size = v.long("bytes")
-            require(size in 1..(if (name == "notes.json") MAX_NOTE_BYTES else MAX_IMAGE_BYTES))
+            require(size in 1L..(if (name == "notes.json") MAX_NOTE_BYTES else MAX_IMAGE_BYTES))
             val sha = v.string("sha256")
             require(sha.matches(hashPattern))
             if (name.startsWith("attachments/")) require(sha == name.removePrefix("attachments/"))
