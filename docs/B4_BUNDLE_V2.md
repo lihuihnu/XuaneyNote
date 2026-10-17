@@ -1,8 +1,8 @@
-# B4：完整本地备份 v2 · B4.1 / B4.2a 已验收，B4.2b SAF 候选
+# B4：完整本地备份 v2 · B4.1/2a/2b 自动化通过，人工 SAF 待验收
 
 **日期**：2026-10-17，分支 feat/pr-b-data-safety，唯一活动 [PR #2](https://github.com/lihuihnu/XuaneyNote/pull/2)。
 **基线**：B3.2 官方 [Run 39012222967](https://github.com/lihuihnu/XuaneyNote/actions/runs/39012222967) completed/success，源码 ee14433061534b3d152770d4ddc3e9ab2f08c7b0，tested a4dfe66ea9480d5a5144d06f15a526cce3b81e09。关键 XML 与 Schema 已固定归档 [f4df55ce](https://github.com/lihuihnu/XuaneyNote/tree/f4df55cecc529f193f42efbe568526896ace49b4/evidence)。
-**现状**：B4.1 [Run 39018703459](https://github.com/lihuihnu/XuaneyNote/actions/runs/39018703459)、B4.2a [Run 39021083940](https://github.com/lihuihnu/XuaneyNote/actions/runs/39021083940) 均已通过官方 CI 且证据远端读回。B4.2b ZIP v2 的系统文件选择器入口、导出回读与导入预览确认正进入待 CI 候选；用户图片插入入口仍关闭。
+**现状**：B4.1 Run 39018703459、B4.2a Run 39021083940、B4.2b [Run 39032360669](https://github.com/lihuihnu/XuaneyNote/actions/runs/39032360669) 均完成且成功，证据已归档。**手机真人 SAF 文件选择验收尚未完成，不能视为已正式发行**；图片添加入口仍关闭。
 
 ## 明文 ZIP v2 格式
 
@@ -86,10 +86,18 @@
 
 ### B4.2b 自动化门禁与人工边界
 
-- [ ] `NoteFlowTest.fullZipEntryRequiresWarningAndKeepsLegacyBackup`：手机/平板各检查完整 ZIP 导出入口的提示、取消后不创建目标、保留 JSON v1 的独立入口。
-- [ ] `BundleContentResolverRoundTripTest.systemContentProviderSupportsClosedZipReadback`：使用 Android 29+ 的测试程序自行创建的系统 MediaStore `content:` URI，写入关闭后重新打开进行完整 ZIP v2 验证，并在 `finally` 删除合成文件，**不可把 MediaStore 测试冒充用户真机 SAF CreateDocument 操作**。
-- [ ] B0/B1/B2/B3.1/B3.2/B4.1/B4.2a 全部既有回归、API35 手机与宽屏模拟、进程重建、隐私和 v1/v2/v3 Schema 哈希不变；用户入口只有文本与完整 ZIP，没有图片新建按钮。
-- [ ] 最新 source/tested SHA 官方 GitHub-hosted Ubuntu24.04 CI 与关键 XML、安全证据归档远端读回成功；随后让维护者在真实手机完成 [B4.2b SAF 人工验收清单](B4_2B_SAF_ACCEPTANCE.md)，才可宣称本阶段适合保存重要资料。
+- [x] `NoteFlowTest.fullZipEntryRequiresWarningAndKeepsLegacyBackup`：手机/平板各检查完整 ZIP 导出入口的提示、取消后不创建目标、保留 JSON v1 的独立入口。
+- [x] `BundleContentResolverRoundTripTest.systemContentProviderSupportsClosedZipReadback`：使用 Android 29+ 的测试程序自行创建的系统 MediaStore `content:` URI，写入关闭后重新打开进行完整 ZIP v2 验证，并在 `finally` 删除合成文件，**不可把 MediaStore 测试冒充用户真机 SAF CreateDocument 操作**。
+- [x] B0/B1/B2/B3.1/B3.2/B4.1/B4.2a 全部既有回归、API35 手机与宽屏模拟、进程重建、隐私和 v1/v2/v3 Schema 哈希不变；用户入口只有文本与完整 ZIP，没有图片新建按钮。
+- [x] B4.2b 当前源码的官方 CI、真实 XML 和固定可读证据已归档读回（Run 39032360669）。
+- [ ] 维护者真实手机执行完整 SAF 清单，此项尚未完成。
 - [ ] B4.2b 尚未涵盖的厂商 ROM、低磁盘空间、第三方云盘 providers、应用签名升级和真机旋转/强制杀死中断，需在实际设备或后续专项门禁单独记录，不能归为已通过。
 
 **阶段界限**：即使 CI 完全通过，仍不立即合并整个 PR-B；B3.3 图片可见 UI、B5 加密保护与 PR-B 最终审阅仍待实现。
+
+### B4.2b 自动化验收档案
+
+- 官方 [Run 39032360669](https://github.com/lihuihnu/XuaneyNote/actions/runs/39032360669) `completed/success`；source `399e2959ac565e6176e8f86efa854949a740f8e1`，tested merge `0d9c651913e6e844297ee961c641a65ca578616f`。
+- Kotlin Model 10/10，Room/ZIP/合成系统 content URI 37/37，模拟手机 5/5，平板宽屏模拟 5/5，全部无错误；Room v1/v2/v3 Schema 未改。
+- [固定可读证据](https://github.com/lihuihnu/XuaneyNote/tree/e86e26877992d6dc3de69f99a673505b85c05734/evidence) 已远端校验回读；27 项可读资料，并非全部原始二进制/长日志。
+- MediaStore 合成 URI 不等于用户在真实手机点击系统 CreateDocument/OpenDocument；人工 SAF、签名一致覆盖、低存储和不同文件提供方仍需另行验证。

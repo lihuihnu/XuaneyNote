@@ -1,9 +1,9 @@
-# B3：图片附件 · B3.1/B3.2 后端已验收，待 B4 备份和 UI
+# B3：图片附件 · B3.1/B3.2 已验收，B3.3 只读预览组件候选
 
 **日期**：2026-10-17（Asia/Tokyo）。
 **分支**：`feat/pr-b-data-safety`，复用唯一活动 [PR #2](https://github.com/lihuihnu/XuaneyNote/pull/2)。
 **基线**：B2 `af36b2de2451bbd492c04ad3b8c05361319da962`，官方 [Run 39005974577](https://github.com/lihuihnu/XuaneyNote/actions/runs/39005974577) completed/success。B2 可读证据固定提交 `f4fe13a423c43b61fcdfc212e1fcb80a656cf8d9`。
-**状态**：**B3.1 Run 39009835439 与 B3.2 Run 39012222967 均 completed/success；可读证据已归档读回。** B4 完整图片备份及 B3.3 用户 UI 仍未完成，图片入口继续隐藏。
+**状态**：B3.1/B3.2 已验收，B4.1/B4.2a/B4.2b 已通过各自官方自动化 CI。**B3.3 只读缩略图为本次待 CI 候选，图片添加/移除依旧默认关闭**；真实手机 SAF 和 Photo Picker 尚未人工验收。
 
 ## B3 总体验收约束
 
@@ -78,3 +78,7 @@
 - 实际测试：Kotlin 模型 10/10、Room 和图片文件 21/21、模拟手机 4/4、模拟平板 4/4；Room v1/v2/v3 Schema 未变。
 - [B3.2 固定可读证据](https://github.com/lihuihnu/XuaneyNote/tree/f4df55cecc529f193f42efbe568526896ace49b4/evidence) 已远端读回；只含可读报告子集，不冒称全部二进制或真机验收。
 - 下一阶段需先交付 B4 完整图片/回收站备份与恢复，再开放图片界面；当前不能由普通用户插入图片。
+
+## B3.3 待验证的只读缩略图阶段
+
+详见 [B3.3 图片 UI 与解除闸门合同](B3_3_IMAGE_UI.md)。应用可为已通过 ZIP 备份恢复的私有原图显示缩略图与放大预览；添加或移除图的正式入口须在真实手机 SAF / Photo Picker 以及完整备份恢复验收后，另行解除 `ImageUiGate.USER_ENTRY_ENABLED=false` 并重新运行 CI。
