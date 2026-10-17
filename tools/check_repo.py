@@ -57,7 +57,28 @@ assert [f['columnName'] for f in schema2_json['database']['entities'][0]['fields
 ], 'Unexpected v1 to v2 column set'
 assert hashlib.sha256(schema2.read_bytes()).hexdigest() == '9ba603f08bc9e08eb5eee97cb6600c9aaa2fd90540cf16722184d5a9389ed445', 'Frozen real Room v2 schema changed'
 
-print('PASS source/privacy / pinned dependencies / verified official Wrapper and frozen Room v1/v2 schemas / read-only CI')
+
+schema3 = root / 'core/data/schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/3.json'
+assert schema3.is_file(), 'Actual KSP Room v3 schema missing'
+db3 = json.loads(schema3.read_text(encoding='utf-8'))['database']
+assert db3['version'] == 3
+assert [table['tableName'] for table in db3['entities']] == [
+    'notes', 'attachments', 'note_attachments'
+], 'Unexpected Room v3 entities'
+assert [f['columnName'] for f in db3['entities'][0]['fields']] == [
+    'id', 'title', 'body', 'createdAt', 'updatedAt', 'revision',
+    'bodyFormat', 'bodyVersion', 'deletedAt'
+], 'Room v3 changed historical note columns'
+assert sorted(foreign_key['onDelete'] for foreign_key
+    in db3['entities'][2]['foreignKeys']) == ['CASCADE', 'RESTRICT']
+assert {index['name'] for index in db3['entities'][1]['indices']} == {
+    'index_attachments_relativePath', 'index_attachments_sha256'
+}
+assert hashlib.sha256(schema3.read_bytes()).hexdigest() == (
+    'dc57dc1df55e8d0ae29dfebaec166c868a2076b8c869e394578638c7bc7602ed'
+), 'Frozen real Room v3 schema changed'
+
+print('PASS source/privacy / pinned dependencies / official Wrapper and frozen Room v1/v2/v3 schemas / read-only CI')
 if '--merged' in sys.argv:
     manifests = list((root / 'app/build/intermediates').glob('**/AndroidManifest.xml'))
     assert any('release' in str(p).lower() for p in manifests), 'No release merged manifest'
