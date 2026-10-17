@@ -119,6 +119,26 @@ class NoteFlowTest {
                 compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
         }
     }
+    @Test fun fullZipEntryRequiresWarningAndKeepsLegacyBackup() {
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("open-settings").performClick()
+        compose.onNodeWithTag("export-full-bundle").assertExists().performScrollTo().performClick()
+        compose.waitUntil(12_000) {
+            compose.onAllNodesWithTag("bundle-export-confirm").fetchSemanticsNodes().isNotEmpty()
+        }
+        // 取消后不得执行 SAF 文件创建，也不得产生已保存的成功提示。
+        compose.onNodeWithTag("bundle-export-cancel").performClick()
+        compose.waitUntil(12_000) {
+            compose.onAllNodesWithTag("bundle-export-confirm").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("open-settings").performClick()
+        compose.onNodeWithTag("import-full-bundle").assertExists()
+        compose.onNodeWithTag("import-legacy-backup").assertExists()
+        compose.onNodeWithTag("export-legacy-backup").assertExists()
+    }
+
     @Test fun applicationHasNoNetworkPermissionsOrAutomaticBackup() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         @Suppress("DEPRECATION")

@@ -245,13 +245,25 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
     /** 未确认时仅解包在私有沙箱，不能写回 Room。 */
     fun inspectBundle(uri: Uri) = operation {
         requireSaved()
-        check(uri.scheme == "content") { "仅接受系统选择器返回的文件" }
-        val inspected = withContext(Dispatchers.IO) {
-            requireNotNull(app.contentResolver.openInputStream(uri)) {
-                "ZIP 文件无法读取"
-            }.use { input -> data.bundle.inspect(input) }
-        }
+        // 新的用户选择会废止旧 ZIP 预览，即使本次新文件无法验证也不会回退展示旧候选。
         val previous = verifiedBundle
+        verifiedBundle = null
+        mutableBundleReview.value = null
+        if (previous != null) withContext(Dispatchers.IO) {
+            runCatching { previous.close() }
+        }
+        val inspected = try {
+            check(uri.scheme == "content") { "仅接受系统选择器返回的文件" }
+            withContext(Dispatchers.IO) {
+                requireNotNull(app.contentResolver.openInputStream(uri)) {
+                    "ZIP 文件无法读取"
+                }.use { input -> data.bundle.inspect(input) }
+            }
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) {
+            mutableMessage.value = "ZIP 备份未通过格式、附件和完整性校验；导入已取消，现有笔记和图片未被修改。"
+            return@operation
+        }
         verifiedBundle = inspected
         val s: BundleSnapshot = inspected.snapshot
         mutableBundleReview.value = BundleRestorePreview(
@@ -262,9 +274,6 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
             exportedTheme = s.theme,
             sampleTitles = s.notes.take(5).map { it.title.ifBlank { "未命名笔记" }.take(60) }
         )
-        if (previous != null) withContext(Dispatchers.IO) {
-            runCatching { previous.close() }
-        }
     }
 
     /** 取消只清除本次新建沙箱，不动数据库。 */
