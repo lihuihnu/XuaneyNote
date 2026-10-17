@@ -63,6 +63,7 @@
 - [ ] `corruptedAfterInspectionCannotModifyExistingDatabase`：预检后再篡改已暂存图像，恢复失败无数据库变更、无新关联和新文件残留。
 - [ ] `noteDeletionStateConflictRemainsSeparateAndIdempotent`：同 UUID 删除状态不同不得偷偷覆盖，保留原件和删除状态副本。
 - [ ] `interruptedInspectionCacheIsCleanedWithoutTouchingOtherFiles`：重启清理只扫描应用受控缓存名，不删除无关数据。
+- [ ] `repeatedRestoreDetectsDamagedExistingImageInsteadOfClaimingSuccess`：重复导入时必须核对已关联图片的物理字节，不得因元数据匹配而把丢失文件伪称已恢复。
 - [ ] 全部旧版 B0～B4.1、模拟手机/平板、进程重启、隐私门禁及 Room v1/v2/v3 Schema Hash 仍通过。
 - [ ] 真实 source/tested SHA 的 Run、JUnit 和可读证据独立归档并远端读回；通过后独立开发 **B4.2b 系统 SAF 交互、导出回读、导入预览/确认、主题失败恢复**。
 
