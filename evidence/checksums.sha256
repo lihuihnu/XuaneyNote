@@ -1,0 +1,17 @@
+6c8b9e2ea45c170c1b81df901e748377fa109e7a0a74f96c1b17e2e144ae5e99  evidence/schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/1.json
+9ba603f08bc9e08eb5eee97cb6600c9aaa2fd90540cf16722184d5a9389ed445  evidence/schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/2.json
+dc57dc1df55e8d0ae29dfebaec166c868a2076b8c869e394578638c7bc7602ed  evidence/schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/3.json
+c040b6ef2fb893ff5beea5a281614f2848f1c3996a7886f650b713f8240656a2  evidence/bootstrap/gradle-wrapper.properties.txt
+57931b17dd228e5c24dac90e815d0bf82477e831a4618dfab4136f5446b42a9f  evidence/bootstrap/gradlew.bat.txt
+734b3879d3501dce471cf0522d3bcbafe76873d9fc5129345b67fb43bd15e933  evidence/bootstrap/gradlew.txt
+fc1ee4e845162b2de749ab790888be08d5d82a5b5b2043d0c95f2274d5c161d8  evidence/reports/last-device/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml
+1a2ee4c6a9212a6b2b4db87cab126e60d2a35d45144bbdf98bfe5af741b9fafb  evidence/reports/last-device/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml
+1aea5b8b05e57210b6e1c459499f05f3a0ff73dea91c06d2ae4416656e36b96f  evidence/reports/model/test/TEST-io.github.lihuihnu.xuaneynote.model.ModelTest.xml
+5ef87164621938847f1542e5e5f52f69d9e57770168ca96f24536d42071e2c50  evidence/reports/phone/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml
+1a2ee4c6a9212a6b2b4db87cab126e60d2a35d45144bbdf98bfe5af741b9fafb  evidence/reports/phone/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml
+fc1ee4e845162b2de749ab790888be08d5d82a5b5b2043d0c95f2274d5c161d8  evidence/reports/tablet/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml
+1a2ee4c6a9212a6b2b4db87cab126e60d2a35d45144bbdf98bfe5af741b9fafb  evidence/reports/tablet/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml
+6ed2b2d8b7eea07e9164261f5b8aff6359a96d3fbff2e8e5e6a290da4af64122  evidence/logs/apk-badging.log
+a313b32215db9356cf9780b9fdf4ec00a8e1f435706bfe93f2b672ef7a5a0f54  evidence/logs/apk-signer.log
+90f828828523d22275f124b0f1ef340f27313df1f65b26514b38872b5629ae8a  evidence/logs/apk-transport-protocol.log
+633fbfc3b92b012914165717ce367282664c75ad9f6e533b4a1ad6e2418ec93a  evidence/logs/device-fingerprint.log

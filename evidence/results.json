@@ -1,0 +1,116 @@
+{
+  "source_sha": "236c322852b914a748dbd9f5b2a7b64e558ec0bf",
+  "tested_sha": "22a29b630d85e12f477ae799b57922950215c851",
+  "run_id": 39043407435,
+  "attempt": 1,
+  "conclusion": "success",
+  "tests": {
+    "model": {
+      "path": "reports/model/test/TEST-io.github.lihuihnu.xuaneynote.model.ModelTest.xml",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "room": {
+      "path": "reports/phone/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml",
+      "tests": 38,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "phone": {
+      "path": "reports/phone/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "tablet": {
+      "path": "reports/tablet/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "gates": [
+    {
+      "gate": "apk-transport-protocol",
+      "exit_code": 0,
+      "conclusion": "success",
+      "duration_seconds": 0
+    },
+    {
+      "gate": "build",
+      "exit_code": 0,
+      "conclusion": "success",
+      "duration_seconds": 225
+    },
+    {
+      "gate": "device-probe-script",
+      "exit_code": 0,
+      "conclusion": "success",
+      "duration_seconds": 3
+    },
+    {
+      "gate": "devices",
+      "exit_code": 0,
+      "conclusion": "success",
+      "duration_seconds": 308
+    },
+    {
+      "gate": "evidence-protocol",
+      "exit_code": 0,
+      "conclusion": "success",
+      "duration_seconds": 0
+    },
+    {
+      "gate": "phone-probe",
+      "exit_code": 0,
+      "conclusion": "success",
+      "duration_seconds": 16
+    },
+    {
+      "gate": "phone",
+      "exit_code": 0,
+      "conclusion": "success",
+      "duration_seconds": 121
+    },
+    {
+      "gate": "privacy",
+      "exit_code": 0,
+      "conclusion": "success",
+      "duration_seconds": 1
+    },
+    {
+      "gate": "readable-evidence",
+      "exit_code": 0,
+      "conclusion": "success",
+      "duration_seconds": 0
+    },
+    {
+      "gate": "structure",
+      "exit_code": 0,
+      "conclusion": "success",
+      "duration_seconds": 0
+    },
+    {
+      "gate": "tablet-probe",
+      "exit_code": 0,
+      "conclusion": "success",
+      "duration_seconds": 19
+    },
+    {
+      "gate": "tablet",
+      "exit_code": 0,
+      "conclusion": "success",
+      "duration_seconds": 68
+    }
+  ],
+  "notes": [
+    "Tests in API35 simulated phone/tablet windows, not physical devices.",
+    "No stable signing for in-place upgrade.",
+    "Real hardware Photo Picker acceptance pending."
+  ]
+}
