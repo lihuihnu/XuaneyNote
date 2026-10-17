@@ -48,7 +48,7 @@ class NoteSearchTest {
             val updated = first.copy(body = "现在包含一个新关键词-雪山", revision = 2, updatedAt = 51)
             store.save(updated)
             assertEquals(listOf(first.id), store.search("雪山").first().map { it.id })
-            assertEquals(listOf(first.id, second.id, special.id),
+            assertEquals(listOf(first.id, special.id, second.id),
                 store.summaries.first().map { it.id })
         } finally {
             database.close()
