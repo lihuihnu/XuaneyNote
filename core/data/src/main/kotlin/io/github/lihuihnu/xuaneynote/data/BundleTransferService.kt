@@ -222,6 +222,23 @@ class BundleTransferService(
             currentCoroutineContext().ensureActive()
             val original = snapshot(ThemeMode.SYSTEM, 0)
             val plan = plan(inspected.snapshot, original)
+            // 不能把新数据导入后制造出无法再次完整导出的库。
+            require(original.notes.size + plan.newNotes.size <= 10_000) {
+                "恢复后笔记超出完整备份上限"
+            }
+            require(original.attachments.size + plan.newAttachments.size <= 512) {
+                "恢复后图片超出完整备份上限"
+            }
+            require(original.links.size + plan.newLinks.size <= 10_000 * 128) {
+                "恢复后图片引用超出完整备份上限"
+            }
+            val textBytes = (original.notes + plan.newNotes).sumOf {
+                it.title.toByteArray(Charsets.UTF_8).size.toLong() +
+                    it.body.toByteArray(Charsets.UTF_8).size
+            }
+            require(textBytes <= 8L * 1024 * 1024) {
+                "恢复后文本超出本版可完整备份的上限"
+            }
             val created = mutableListOf<AttachmentEntity>()
             try {
                 for (already in plan.reusedAttachments) {
