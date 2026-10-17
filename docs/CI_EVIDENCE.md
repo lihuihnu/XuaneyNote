@@ -56,3 +56,7 @@ python3 tools/evidence.py unpack job.log evidence-out \
 - 从 job 日志 157 块封装完整恢复，封装 SHA-256 `e697c2cc1a6864896ecc61305aee1ef3cbcd2b32032419b4911a55d5e3676897`。36 个原始载荷逐一核对大小与 SHA-256，包含原始 XML、日志、截图、Room schema、Gradle Wrapper。
 - 证据分支 `evidence/pr-a/38988757189-a1-06ae6fc4`，固定证据提交 `e8b18d257dff10a332ee769a60db08ef27bb63e9`、文件树 `0e2e43207e8777cb9d8049a8a177250f572fc2bb`，已从远端读取并核对树与摘要/schema；原始 `manifest.json` 的 job 时点 `transported-not-yet-repository-verified` 不被篡改。
 - 生成的 Wrapper/schema 作为**完全相同的 Git blob** 回填到开发分支。回填后的 SHA 须重新 CI；真机与 SAF 文件选择器手工测试仍未通过验收，不得宣布 V1 已发布。
+
+## 受信任的一次性测试 APK 手工交付
+
+用户明确要求准备安装包后进行真实设备验收。PR #1 暂时通过标签 `trusted-test-apk-once` 激活一个**仅限同仓库本人 PR 的只读日志传输步骤**；仍为官方 `ubuntu-24.04`、`contents:read`、无任何 Actions Artifact、无签名私钥。维护者必须在 GitHub 连接器中核验完整 run/source/tested 身份及包 SHA、`apksigner` 证书信息，再存入专门的下载分支并进行远端读回。构建结束前不声称提供了 APK。交付后移除临时标签，使普通 CI 不重复输送十余 MB 二进制。细则见 `docs/TRUSTED_TEST_APK_HANDOFF.md`。

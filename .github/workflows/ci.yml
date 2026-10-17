@@ -49,6 +49,7 @@ jobs:
           bash tools/run_gate.sh evidence-protocol python3 tools/test_evidence.py
           bash tools/run_gate.sh device-probe-script python3 -S tools/test_device_probe.py
           bash tools/run_gate.sh readable-evidence python3 -S tools/test_evidence_text.py
+          bash tools/run_gate.sh apk-transport-protocol python3 -S tools/test_trusted_apk_transport.py
       - name: JDK 17
         if: steps.scope.outputs.android == 'true'
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
@@ -71,6 +72,34 @@ jobs:
       - name: Phone, tablet window, Room backup and real process restart
         if: steps.scope.outputs.android == 'true'
         run: bash tools/run_gate.sh devices bash tools/device_gate.sh
+      - name: Trusted one-time debug APK handoff (read-only)
+        if: >-
+          ${{
+            github.event_name == 'pull_request' &&
+            github.actor == 'lihuihnu' &&
+            github.event.pull_request.user.login == 'lihuihnu' &&
+            github.event.pull_request.head.repo.full_name == github.repository &&
+            github.event.pull_request.head.ref == 'feat/pr-a-local-notes' &&
+            contains(github.event.pull_request.labels.*.name, 'trusted-test-apk-once')
+          }}
+        env:
+          APK_APPROVED_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$SOURCE_SHA" = "$APK_APPROVED_SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$TESTED_SHA"
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" > ci-out/logs/apk-signer.log
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" > ci-out/logs/apk-badging.log
+          python3 -S tools/trusted_apk_transport.py emit \
+            --apk "$APK" \
+            --signer-report ci-out/logs/apk-signer.log \
+            --badging-report ci-out/logs/apk-badging.log \
+            --source-sha "$SOURCE_SHA" --tested-sha "$TESTED_SHA" \
+            --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT"
+          echo 'Debug APK bytes transported read-only; no installable download until maintainer verifies and archives them.' >> "$GITHUB_STEP_SUMMARY"
       - name: Emit bounded verifiable evidence (no repository write token)
         if: always()
         env:

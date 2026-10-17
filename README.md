@@ -18,6 +18,7 @@
 - [文本备份 v1 合同](docs/BACKUP_V1.md)。
 - [官方 Runner、证据交付和清理](docs/CI_EVIDENCE.md)。
 - [固定工具链及构建说明](docs/TOOLCHAIN.md)。
+- [测试 APK 的受信任交付流程](docs/TRUSTED_TEST_APK_HANDOFF.md)与[真实设备验收清单](docs/REAL_DEVICE_ACCEPTANCE.md)。
 - [Agent 执行约定](AGENTS.md)。
 
 ## 开发构建
