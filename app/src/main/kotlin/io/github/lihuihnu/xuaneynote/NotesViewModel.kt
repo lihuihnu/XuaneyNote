@@ -2,6 +2,7 @@ package io.github.lihuihnu.xuaneynote
 
 import android.app.Application
 import android.net.Uri
+import android.graphics.Bitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -10,6 +11,7 @@ import io.github.lihuihnu.xuaneynote.data.NoteBackup
 import io.github.lihuihnu.xuaneynote.data.InspectedBundle
 import io.github.lihuihnu.xuaneynote.data.BundleSnapshot
 import io.github.lihuihnu.xuaneynote.data.NoteStore
+import io.github.lihuihnu.xuaneynote.data.AttachmentEntity
 import io.github.lihuihnu.xuaneynote.data.LegacyBackupWouldOmitTrash
 import io.github.lihuihnu.xuaneynote.data.LegacyBackupWouldOmitAttachments
 import io.github.lihuihnu.xuaneynote.model.Note
@@ -54,6 +56,18 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
     val trashOpen = mutableTrashOpen.asStateFlow()
     val trashNotes = data.notes.trashSummaries
         .catch { mutableMessage.value = "读取回收站失败，已有笔记仍保留在本机。" }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    // 当前笔记图片是数据库响应流；切换笔记即取消旧 Flow，避免显示前一篇图片。
+    val imageAttachments = mutableNote.map { it?.id }
+        .distinctUntilChanged()
+        .flatMapLatest { id ->
+            if (id == null) flowOf(emptyList())
+            else data.attachments.observeForNote(id)
+        }
+        .catch {
+            mutableMessage.value = "图片引用读取失败；本地原图不会被修改。"
+            emit(emptyList())
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val note = mutableNote.asStateFlow()
     val busy = mutableBusy.asStateFlow()
@@ -143,6 +157,28 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
         check(data.notes.permanentlyDelete(id)) { "只有回收站中的笔记才能永久删除" }
         mutableMessage.value = "本机笔记已删除；此前导出的外部备份不会自动清除。"
     }
+
+    /** B3.3：内部图片入口接线后才可能调用；选择的是只读 content URI。 */
+    fun addImage(uri: Uri) = operation {
+        requireSaved()
+        val active = mutableNote.value ?: error("请先打开正常笔记")
+        val image = data.attachments.importFromUri(active.id, uri)
+        mutableMessage.value = "图片已保存在本机：" + image.mimeType +
+            "；原图可能包含拍摄地点等 EXIF 元信息，完整备份也会保留原图。"
+    }
+
+    fun removeImage(attachmentId: String) = operation {
+        requireSaved()
+        val active = mutableNote.value ?: error("请先打开正常笔记")
+        val result = data.attachments.unlink(active.id, attachmentId)
+        check(result.deleted) { "图片已解除关联或不存在" }
+        mutableMessage.value = if (result.pendingFileCleanup == 0)
+            "图片已从这篇笔记解除关联；其他笔记共享图片不会受影响。"
+        else "图片已解除关联，原图文件删除待下次启动继续清理。"
+    }
+
+    suspend fun imageThumbnail(attachmentId: String): Bitmap =
+        data.attachments.thumbnail(attachmentId)
 
     fun createNote() = operation { requireSaved(); select(data.notes.create()) }
     fun openNote(id: String) = operation { requireSaved(); select(writes.draft(id) ?: data.notes.get(id)) }
