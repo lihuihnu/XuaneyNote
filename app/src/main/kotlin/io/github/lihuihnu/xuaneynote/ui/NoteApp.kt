@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.lihuihnu.xuaneynote.NotesViewModel
+import io.github.lihuihnu.xuaneynote.data.NoteStore
 import io.github.lihuihnu.xuaneynote.R
 import io.github.lihuihnu.xuaneynote.designsystem.XuaneyTheme
 import io.github.lihuihnu.xuaneynote.model.NoteSummary
@@ -36,7 +37,9 @@ import java.time.LocalDate
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteApp(vm: NotesViewModel = viewModel()) {
-    val notes by vm.notes.collectAsStateWithLifecycle()
+    val listing by vm.listing.collectAsStateWithLifecycle()
+    val searchText by vm.searchText.collectAsStateWithLifecycle()
+    val searchPending = searchText.trim() != listing.keyword
     val note by vm.note.collectAsStateWithLifecycle()
     val theme by vm.theme.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
@@ -54,6 +57,7 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
         it?.let(vm::inspectBackup)
     }
     LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it); vm.clearMessage() } }
+    LaunchedEffect(page) { if (page == 0) vm.updateSearchText("") }
     BackHandler(enabled = note != null && !settings && backup == null && !exportWarning) { if (!busy) vm.closeNote() }
 
     XuaneyTheme(theme) {
