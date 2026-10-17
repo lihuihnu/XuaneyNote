@@ -36,6 +36,31 @@ class NoteFlowTest {
         compose.onNodeWithTag("note-title").assertTextContains("CI 合成笔记")
         compose.onNodeWithTag("note-body").assertTextContains("手机和平板测试\n重开后应保留🙂")
     }
+    @Test fun chineseBodySearchEmptyStateAndClear() {
+        compose.waitUntil(15_000) { compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty() }
+        if (compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isEmpty()) {
+            compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+            compose.waitUntil(12_000) { compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isNotEmpty() }
+        }
+        compose.onNodeWithTag("new-note").performClick()
+        compose.waitUntil(12_000) {
+            compose.onAllNodesWithTag("note-body").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("note-title").performTextReplacement("B1 搜索合成记录")
+        compose.onNodeWithTag("note-body").performTextReplacement("正文含有针尖词汇，供中文查询使用。")
+        compose.waitUntil(15_000) {
+            compose.onAllNodes(hasTestTag("save-state") and hasText("已保存")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+        compose.waitUntil(12_000) { compose.onAllNodesWithTag("note-search").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("note-search").performTextReplacement("针尖词汇")
+        compose.waitUntil(15_000) { compose.onAllNodesWithText("B1 搜索合成记录").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("note-search").performTextReplacement("找不到的B1词汇__不存在__")
+        compose.waitUntil(15_000) { compose.onAllNodesWithText("没有找到匹配的笔记").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("clear-note-search").performClick()
+        compose.waitUntil(15_000) { compose.onAllNodesWithText("B1 搜索合成记录").fetchSemanticsNodes().isNotEmpty() }
+    }
     @Test fun applicationHasNoNetworkPermissionsOrAutomaticBackup() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         @Suppress("DEPRECATION")
