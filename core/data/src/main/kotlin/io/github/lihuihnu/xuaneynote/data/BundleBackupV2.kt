@@ -9,7 +9,6 @@ import org.json.JSONTokener
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.FilterOutputStream
 import java.io.InputStream
@@ -224,11 +223,16 @@ object BundleBackupV2 {
                 zip.putNextEntry(ZipEntry("attachments/" + item.sha256))
                 val checksum = digest()
                 var copied = 0L
+                var emptyReads = 0
                 openImage(item).use { source ->
                     while (true) {
                         val n = source.read(buffer)
                         if (n < 0) break
-                        if (n == 0) continue
+                        if (n == 0) {
+                            check(++emptyReads < 128) { "ZIP 来源没有返回字节" }
+                            continue
+                        }
+                        emptyReads = 0
                         copied += n
                         require(copied <= item.byteSize && copied <= MAX_IMAGE_BYTES) {
                             "附件在导出时发生大小变化"
@@ -288,7 +292,7 @@ object BundleBackupV2 {
         return (v as Number).toLong()
     }
     private fun JSONObject.int(key: String): Int =
-        long(key).also { require(it in 0..Int.MAX_VALUE) }.toInt()
+        long(key).also { require(it in 0L..Int.MAX_VALUE.toLong()) }.toInt()
     private fun JSONObject.nullableLong(key: String): Long? =
         if (get(key) === JSONObject.NULL) null else long(key)
     private fun JSONObject.nullableInt(key: String): Int? =
@@ -367,10 +371,15 @@ object BundleBackupV2 {
         val output = ByteArrayOutputStream()
         val buffer = ByteArray(8192)
         var total = 0L
+        var emptyReads = 0
         while (true) {
             val count = source.read(buffer)
             if (count < 0) break
-            if (count == 0) continue
+            if (count == 0) {
+                check(++emptyReads < 128) { "数据源没有返回字节" }
+                continue
+            }
+            emptyReads = 0
             total += count
             require(total <= limit) { "ZIP 条目超出大小限制" }
             output.write(buffer, 0, count)
@@ -388,13 +397,18 @@ object BundleBackupV2 {
         val zipFile = File(stage, "bundle.zip")
         try {
             var copied = 0L
+            var emptyReads = 0
             input.use { source ->
                 FileOutputStream(zipFile).use { out ->
                     val buffer = ByteArray(8192)
                     while (true) {
                         val n = source.read(buffer)
                         if (n < 0) break
-                        if (n == 0) continue
+                        if (n == 0) {
+                            check(++emptyReads < 128) { "附件来源没有返回字节" }
+                            continue
+                        }
+                        emptyReads = 0
                         copied += n
                         require(copied <= MAX_COMPRESSED_BYTES) { "ZIP 文件超过大小上限" }
                         out.write(buffer, 0, n)
@@ -429,7 +443,7 @@ object BundleBackupV2 {
                 val manifestBytes = zip.getInputStream(zip.getEntry("manifest.json")).use {
                     limitedBytes(it, MAX_MANIFEST_BYTES)
                 }
-                val (header, expected, orderedEntries) = manifestEntries(manifestBytes)
+                    val (header, expected, _) = manifestEntries(manifestBytes)
                 require(names - "manifest.json" == expected.keys) { "ZIP 列表与 manifest 不一致" }
                 var expanded = manifestBytes.size.toLong()
                 var notesBytes: ByteArray? = null
@@ -441,6 +455,7 @@ object BundleBackupV2 {
                     val max = if (entry.name == "notes.json") MAX_NOTE_BYTES else MAX_IMAGE_BYTES
                     var entryCount = 0L
                     val hash = digest()
+                    var emptyReads = 0
                     val destinationFile = if (entry.name == "notes.json") null else
                         File(destination, entry.name.removePrefix("attachments/"))
                     val memory = if (entry.name == "notes.json") ByteArrayOutputStream() else null
@@ -451,7 +466,11 @@ object BundleBackupV2 {
                             while (true) {
                                 val count = source.read(buffer)
                                 if (count < 0) break
-                                if (count == 0) continue
+                                if (count == 0) {
+                                    check(++emptyReads < 128) { "条目没有返回字节" }
+                                    continue
+                                }
+                                emptyReads = 0
                                 entryCount += count
                                 expanded += count
                                 require(entryCount <= max && expanded <= MAX_EXPANDED_BYTES) {
