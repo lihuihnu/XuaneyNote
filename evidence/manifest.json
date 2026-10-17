@@ -1,0 +1,405 @@
+{
+  "format": "XuaneyNote.B1.ci-evidence-readable-v1",
+  "coverage": "supplemental-readable-subset-not-complete-binary-envelope",
+  "run_id": 39002603730,
+  "run_attempt": 1,
+  "job_id": 117308505337,
+  "source_sha": "6e4d1c4d850cf4230e646e0b73bbae0f54921a0f",
+  "tested_sha": "a43065b8ab0502ee151c06b2695cce84f77cca38",
+  "conclusion": "completed/success",
+  "reader": {
+    "format": "XuaneyNote.readable-evidence-v1",
+    "manifest": {
+      "repository": "lihuihnu/XuaneyNote",
+      "source_sha": "6e4d1c4d850cf4230e646e0b73bbae0f54921a0f",
+      "tested_sha": "a43065b8ab0502ee151c06b2695cce84f77cca38",
+      "run_id": "39002603730",
+      "run_attempt": "1",
+      "runner": "GitHub Actions 1000032154",
+      "runner_image": "20261012.334.1",
+      "job_status_at_collection": "success",
+      "gates": [
+        {
+          "gate": "apk-transport-protocol",
+          "exit_code": 0,
+          "duration_seconds": 0,
+          "command": [
+            "python3",
+            "-S",
+            "tools/test_trusted_apk_transport.py"
+          ],
+          "conclusion": "success"
+        },
+        {
+          "gate": "build",
+          "exit_code": 0,
+          "duration_seconds": 169,
+          "command": [
+            "./gradlew",
+            "--no-daemon",
+            "--console=plain",
+            ":core:model:test",
+            ":core:data:assembleDebugAndroidTest",
+            ":app:assembleDebug",
+            ":app:assembleDebugAndroidTest",
+            ":app:lintDebug",
+            ":app:processReleaseMainManifest"
+          ],
+          "conclusion": "success"
+        },
+        {
+          "gate": "device-probe-script",
+          "exit_code": 0,
+          "duration_seconds": 2,
+          "command": [
+            "python3",
+            "-S",
+            "tools/test_device_probe.py"
+          ],
+          "conclusion": "success"
+        },
+        {
+          "gate": "devices",
+          "exit_code": 0,
+          "duration_seconds": 203,
+          "command": [
+            "bash",
+            "tools/device_gate.sh"
+          ],
+          "conclusion": "success"
+        },
+        {
+          "gate": "evidence-protocol",
+          "exit_code": 0,
+          "duration_seconds": 0,
+          "command": [
+            "python3",
+            "tools/test_evidence.py"
+          ],
+          "conclusion": "success"
+        },
+        {
+          "gate": "phone-probe",
+          "exit_code": 0,
+          "duration_seconds": 13,
+          "command": [
+            "bash",
+            "tools/post_test_probe.sh",
+            "phone"
+          ],
+          "conclusion": "success"
+        },
+        {
+          "gate": "phone",
+          "exit_code": 0,
+          "duration_seconds": 70,
+          "command": [
+            "./gradlew",
+            "--no-daemon",
+            "--console=plain",
+            "--no-parallel",
+            ":core:data:connectedDebugAndroidTest",
+            ":app:connectedDebugAndroidTest",
+            "-Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe"
+          ],
+          "conclusion": "success"
+        },
+        {
+          "gate": "privacy",
+          "exit_code": 0,
+          "duration_seconds": 0,
+          "command": [
+            "python3",
+            "tools/check_repo.py",
+            "--merged"
+          ],
+          "conclusion": "success"
+        },
+        {
+          "gate": "readable-evidence",
+          "exit_code": 0,
+          "duration_seconds": 0,
+          "command": [
+            "python3",
+            "-S",
+            "tools/test_evidence_text.py"
+          ],
+          "conclusion": "success"
+        },
+        {
+          "gate": "structure",
+          "exit_code": 0,
+          "duration_seconds": 0,
+          "command": [
+            "python3",
+            "tools/check_repo.py"
+          ],
+          "conclusion": "success"
+        },
+        {
+          "gate": "tablet-probe",
+          "exit_code": 0,
+          "duration_seconds": 11,
+          "command": [
+            "bash",
+            "tools/post_test_probe.sh",
+            "tablet"
+          ],
+          "conclusion": "success"
+        },
+        {
+          "gate": "tablet",
+          "exit_code": 0,
+          "duration_seconds": 33,
+          "command": [
+            "./gradlew",
+            "--no-daemon",
+            "--console=plain",
+            "--no-parallel",
+            ":app:connectedDebugAndroidTest",
+            "-Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe"
+          ],
+          "conclusion": "success"
+        }
+      ],
+      "archive_status": "transported-not-yet-repository-verified",
+      "real_device_acceptance": "pending",
+      "temporary_apks": [
+        {
+          "path": "app/build/outputs/apk/debug/app-debug.apk",
+          "bytes": 11026193,
+          "sha256": "609d5beac5aa689c788ffda6125684ca74d1da5c066a7f6163ed6e44c9fdd77b",
+          "delivery": "not-published"
+        },
+        {
+          "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+          "bytes": 1079903,
+          "sha256": "9d79b326a509f3e7dd7fabe5facbe3f757b36e62ebe39d7267c357095161ac8e",
+          "delivery": "not-published"
+        }
+      ],
+      "omissions": []
+    },
+    "record_count": 23,
+    "readable_omissions": [
+      {
+        "path": "logs/devices.log",
+        "reason": "readable-file-budget"
+      },
+      {
+        "path": "logs/phone.log",
+        "reason": "readable-total-budget"
+      },
+      {
+        "path": "logs/privacy.log",
+        "reason": "readable-total-budget"
+      },
+      {
+        "path": "logs/readable-evidence.log",
+        "reason": "readable-total-budget"
+      },
+      {
+        "path": "logs/structure.log",
+        "reason": "readable-total-budget"
+      },
+      {
+        "path": "logs/tablet-probe-apks.log",
+        "reason": "readable-total-budget"
+      },
+      {
+        "path": "logs/tablet-probe.log",
+        "reason": "readable-total-budget"
+      },
+      {
+        "path": "logs/tablet-restart-seed.log",
+        "reason": "readable-total-budget"
+      },
+      {
+        "path": "logs/tablet-restart-verify.log",
+        "reason": "readable-total-budget"
+      },
+      {
+        "path": "logs/tablet-start.log",
+        "reason": "readable-total-budget"
+      },
+      {
+        "path": "logs/tablet.log",
+        "reason": "readable-total-budget"
+      },
+      {
+        "path": "logs/toolchain.log",
+        "reason": "readable-total-budget"
+      }
+    ],
+    "coverage": "supplemental-subset-not-full-envelope"
+  },
+  "readable_end_digest": "b792d5d547b3880be8ac14e9595dcdd154555dbf517b2fff86ba3a6a520883a5",
+  "full_envelope_digest_observed": "3979993641c79c7a0e923e01a8f2f72efcdb4313b6240795146c4987868eaad1",
+  "full_envelope_chunks_observed": 173,
+  "tests": {
+    "model": {
+      "file": "reports/model/test/TEST-io.github.lihuihnu.xuaneynote.model.ModelTest.xml",
+      "tests": 9,
+      "errors": 0,
+      "failures": 0
+    },
+    "database": {
+      "file": "reports/phone/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml",
+      "tests": 9,
+      "errors": 0,
+      "failures": 0
+    },
+    "phone": {
+      "file": "reports/phone/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml",
+      "tests": 3,
+      "errors": 0,
+      "failures": 0
+    },
+    "tablet": {
+      "file": "reports/tablet/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml",
+      "tests": 3,
+      "errors": 0,
+      "failures": 0
+    }
+  },
+  "files": [
+    {
+      "path": "schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/1.json",
+      "size": 2502,
+      "sha256": "6c8b9e2ea45c170c1b81df901e748377fa109e7a0a74f96c1b17e2e144ae5e99",
+      "truncated": false
+    },
+    {
+      "path": "schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/2.json",
+      "size": 2659,
+      "sha256": "9ba603f08bc9e08eb5eee97cb6600c9aaa2fd90540cf16722184d5a9389ed445",
+      "truncated": false
+    },
+    {
+      "path": "bootstrap/gradle-wrapper.properties.txt",
+      "size": 338,
+      "sha256": "c040b6ef2fb893ff5beea5a281614f2848f1c3996a7886f650b713f8240656a2",
+      "truncated": false
+    },
+    {
+      "path": "bootstrap/gradlew.bat.txt",
+      "size": 2966,
+      "sha256": "57931b17dd228e5c24dac90e815d0bf82477e831a4618dfab4136f5446b42a9f",
+      "truncated": false
+    },
+    {
+      "path": "bootstrap/gradlew.txt",
+      "size": 8752,
+      "sha256": "734b3879d3501dce471cf0522d3bcbafe76873d9fc5129345b67fb43bd15e933",
+      "truncated": false
+    },
+    {
+      "path": "reports/last-device/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml",
+      "size": 809,
+      "sha256": "3c495c27528b2dc36454e4ed1bcab7c3b3654c26b9602fe2da5f0cf62be00522",
+      "truncated": false
+    },
+    {
+      "path": "reports/last-device/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml",
+      "size": 1746,
+      "sha256": "b3de1fc13fe33fc475d6c2aef268e87bf23de13f751df399fbdefe36ed0fdbfb",
+      "truncated": false
+    },
+    {
+      "path": "reports/model/test/TEST-io.github.lihuihnu.xuaneynote.model.ModelTest.xml",
+      "size": 1379,
+      "sha256": "e4d5df0dc67b6f62e8c7730238e034380ae50c33f459e2731603c473dc64d998",
+      "truncated": false
+    },
+    {
+      "path": "reports/phone/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml",
+      "size": 807,
+      "sha256": "ddefe2d804adb84d1d2b9ae279abafce19b2838769ebac81880fba7dea0180da",
+      "truncated": false
+    },
+    {
+      "path": "reports/phone/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml",
+      "size": 1746,
+      "sha256": "b3de1fc13fe33fc475d6c2aef268e87bf23de13f751df399fbdefe36ed0fdbfb",
+      "truncated": false
+    },
+    {
+      "path": "reports/tablet/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml",
+      "size": 809,
+      "sha256": "3c495c27528b2dc36454e4ed1bcab7c3b3654c26b9602fe2da5f0cf62be00522",
+      "truncated": false
+    },
+    {
+      "path": "reports/tablet/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml",
+      "size": 1746,
+      "sha256": "b3de1fc13fe33fc475d6c2aef268e87bf23de13f751df399fbdefe36ed0fdbfb",
+      "truncated": false
+    },
+    {
+      "path": "logs/apk-transport-protocol.log",
+      "size": 1079,
+      "sha256": "90f828828523d22275f124b0f1ef340f27313df1f65b26514b38872b5629ae8a",
+      "truncated": false
+    },
+    {
+      "path": "logs/build.log",
+      "size": 13604,
+      "sha256": "21e1a25f23a5ce34a294e41d392eb77f419ba9d39764507d0d8bf62aa6ebb697",
+      "truncated": false
+    },
+    {
+      "path": "logs/device-fingerprint.log",
+      "size": 82,
+      "sha256": "633fbfc3b92b012914165717ce367282664c75ad9f6e533b4a1ad6e2418ec93a",
+      "truncated": false
+    },
+    {
+      "path": "logs/device-probe-script.log",
+      "size": 1457,
+      "sha256": "23318f04719774ee122819ff1aebc6f51a2c337ec623da33d3feaaa7466a9e86",
+      "truncated": false
+    },
+    {
+      "path": "logs/emulator.log",
+      "size": 9315,
+      "sha256": "3acb0691b106351406835c425fd1a693f23e23add32d3e330aeb667f720bff97",
+      "truncated": false
+    },
+    {
+      "path": "logs/evidence-protocol.log",
+      "size": 791,
+      "sha256": "7a96c8f72bdbcafc6e3aa89fb3684b936d4fb363ac4ae5e3ebea03814917f38d",
+      "truncated": false
+    },
+    {
+      "path": "logs/phone-probe-apks.log",
+      "size": 240,
+      "sha256": "a2adbdbb2fa2ff5f588c1a429047dc28b43dbad74843f835a9736c2ec1323ea9",
+      "truncated": false
+    },
+    {
+      "path": "logs/phone-probe.log",
+      "size": 1854,
+      "sha256": "7a2f7ab28194d3a75588b02faeef0b83082988d0563d48883eb35cc534a426f0",
+      "truncated": false
+    },
+    {
+      "path": "logs/phone-restart-seed.log",
+      "size": 700,
+      "sha256": "85b8dff7a9c50077896cb32c4830e54105d3100cce95beb2385c26431edf5992",
+      "truncated": false
+    },
+    {
+      "path": "logs/phone-restart-verify.log",
+      "size": 704,
+      "sha256": "5fffef08a7a8e51ee4a1fcf5af6ff7ad94d27c6acbcd26f7bb972db1f3f57cc0",
+      "truncated": false
+    },
+    {
+      "path": "logs/phone-start.log",
+      "size": 262,
+      "sha256": "4f083796ef481706598289272c3fb675e7b4630201f07fa142cd98b2a0eb139e",
+      "truncated": false
+    }
+  ]
+}
