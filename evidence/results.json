@@ -1,0 +1,177 @@
+{
+  "source_sha": "9cd9d35fe8045a0c616156d34d0504c230c15ea7",
+  "tested_sha": "54dfef585ca0a71578011ecd8760fce31ad359d1",
+  "run_id": 39001250626,
+  "run_attempt": 1,
+  "conclusion": "success",
+  "gates": [
+    {
+      "gate": "apk-transport-protocol",
+      "exit_code": 0,
+      "duration_seconds": 1,
+      "command": [
+        "python3",
+        "-S",
+        "tools/test_trusted_apk_transport.py"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "build",
+      "exit_code": 0,
+      "duration_seconds": 206,
+      "command": [
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        ":core:model:test",
+        ":core:data:assembleDebugAndroidTest",
+        ":app:assembleDebug",
+        ":app:assembleDebugAndroidTest",
+        ":app:lintDebug",
+        ":app:processReleaseMainManifest"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "device-probe-script",
+      "exit_code": 0,
+      "duration_seconds": 2,
+      "command": [
+        "python3",
+        "-S",
+        "tools/test_device_probe.py"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "devices",
+      "exit_code": 0,
+      "duration_seconds": 240,
+      "command": [
+        "bash",
+        "tools/device_gate.sh"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "evidence-protocol",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "command": [
+        "python3",
+        "tools/test_evidence.py"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "phone-probe",
+      "exit_code": 0,
+      "duration_seconds": 17,
+      "command": [
+        "bash",
+        "tools/post_test_probe.sh",
+        "phone"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "phone",
+      "exit_code": 0,
+      "duration_seconds": 90,
+      "command": [
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        "--no-parallel",
+        ":core:data:connectedDebugAndroidTest",
+        ":app:connectedDebugAndroidTest",
+        "-Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "privacy",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "command": [
+        "python3",
+        "tools/check_repo.py",
+        "--merged"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "readable-evidence",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "command": [
+        "python3",
+        "-S",
+        "tools/test_evidence_text.py"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "structure",
+      "exit_code": 0,
+      "duration_seconds": 0,
+      "command": [
+        "python3",
+        "tools/check_repo.py"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "tablet-probe",
+      "exit_code": 0,
+      "duration_seconds": 16,
+      "command": [
+        "bash",
+        "tools/post_test_probe.sh",
+        "tablet"
+      ],
+      "conclusion": "success"
+    },
+    {
+      "gate": "tablet",
+      "exit_code": 0,
+      "duration_seconds": 38,
+      "command": [
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        "--no-parallel",
+        ":app:connectedDebugAndroidTest",
+        "-Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe"
+      ],
+      "conclusion": "success"
+    }
+  ],
+  "tests": {
+    "model": {
+      "tests": 9,
+      "errors": 0,
+      "failures": 0,
+      "report": "reports/model/test/TEST-io.github.lihuihnu.xuaneynote.model.ModelTest.xml"
+    },
+    "room": {
+      "tests": 7,
+      "errors": 0,
+      "failures": 0,
+      "report": "reports/phone/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml"
+    },
+    "phone": {
+      "tests": 2,
+      "errors": 0,
+      "failures": 0,
+      "report": "reports/phone/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml"
+    },
+    "tablet": {
+      "tests": 2,
+      "errors": 0,
+      "failures": 0,
+      "report": "reports/tablet/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml"
+    }
+  }
+}
