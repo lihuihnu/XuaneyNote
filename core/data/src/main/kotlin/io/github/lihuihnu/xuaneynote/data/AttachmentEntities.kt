@@ -72,6 +72,9 @@ interface AttachmentDao {
     @Query("SELECT * FROM attachments ORDER BY id ASC")
     suspend fun allAttachments(): List<AttachmentEntity>
 
+    @Query("SELECT * FROM note_attachments ORDER BY noteId ASC, sortOrder ASC, attachmentId ASC")
+    suspend fun allLinks(): List<NoteAttachmentEntity>
+
     @Query("""
         SELECT a.* FROM attachments AS a
         JOIN note_attachments AS l ON l.attachmentId = a.id

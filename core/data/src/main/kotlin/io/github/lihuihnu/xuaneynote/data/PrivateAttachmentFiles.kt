@@ -245,6 +245,61 @@ class PrivateAttachmentFiles(
         return file
     }
 
+    /**
+     * B4.2 仅内部使用：跨 Room 逻辑快照、导出流和文件写入的私有目录锁。
+     * 与本类的普通导入/删除/recover 共用同一 Mutex，回调不可再次调用加锁接口。
+     */
+    internal suspend fun <T> withLockedFiles(block: suspend () -> T): T =
+        withContext(Dispatchers.IO) {
+            gate.lock()
+            try {
+                ensureDirs()
+                block()
+            } finally {
+                gate.unlock()
+            }
+        }
+
+    /** 调用方必须持有 withLockedFiles 锁，不允许把这个 File 暴露给外部内容提供者。 */
+    internal fun verifiedExistingUnderLock(item: AttachmentEntity): File = validateStored(item)
+
+    /**
+     * B4.2 恢复时：从已预检的 bundle 沙箱再次分块校验哈希、尺寸、MIME，
+     * 同一私有文件系统先原子改名成不可变原图，随后才能做 Room 事务。
+     */
+    internal suspend fun installVerifiedUnderLock(
+        metadata: AttachmentEntity, verifiedSource: File
+    ): File {
+        check(verifiedSource.isFile && !Files.isSymbolicLink(verifiedSource.toPath())) {
+            "备份中的原图已经失效"
+        }
+        val destination = managedFile(metadata.relativePath)
+        check(!destination.exists()) { "恢复目标已有文件，不允许覆盖" }
+        val stage = File.createTempFile("stage-", ".part", staging)
+        try {
+            val (size, sha) = copyBounded(FileInputStream(verifiedSource), stage)
+            require(size == metadata.byteSize && sha == metadata.sha256) {
+                "恢复期间图片字节发生变化"
+            }
+            val info = inspectImage(stage)
+            require(info.mime == metadata.mimeType && info.width == metadata.width &&
+                info.height == metadata.height) { "恢复时图片 MIME 或尺寸不一致" }
+            check(stage.renameTo(destination)) { "图片无法完成私有目录提交" }
+            return destination
+        } finally {
+            stage.delete()
+        }
+    }
+
+    /** 在 Room 事务回滚或取消后，仅移除确定没有元数据的本次新增文件。 */
+    internal suspend fun cleanupAbortedUnderLock(items: List<AttachmentEntity>) {
+        for (item in items) {
+            if (database.attachments().findAttachment(item.id) == null) {
+                runCatching { managedFile(item.relativePath).delete() }
+            }
+        }
+    }
+
     /** 取消单篇正常笔记的图片关联，保留其他笔记的共享引用和原图。 */
     suspend fun unlink(noteId: String, attachmentId: String): AttachmentDeletion =
         withContext(Dispatchers.IO) {
