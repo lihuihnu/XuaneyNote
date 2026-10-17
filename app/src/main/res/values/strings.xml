@@ -37,7 +37,7 @@
   <string name="recent_records">最近记录</string>
   <string name="notes_count">%1$d 条本地笔记</string>
   <string name="working">处理中…</string>
-  <string name="preview_stage">PR-A 预览版 · 请勿作为重要资料的唯一副本</string>
+  <string name="preview_stage">PR-B 开发预览 · 请勿将重要资料只保存于测试版本</string>
     <string name="search_notes">搜索标题或正文</string>
     <string name="search_clear">清除</string>
     <string name="search_in_progress">正在搜索…</string>

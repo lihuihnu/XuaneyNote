@@ -102,7 +102,7 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
         savedState["trash_open"] = true
     }
     fun leaveTrash() {
-        if (mutableBusy.value) return
+        // 退出回收站只是展示状态更新；首次恢复 Activity 时也必须可重置。
         mutableTrashOpen.value = false
         savedState["trash_open"] = false
     }

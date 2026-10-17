@@ -64,7 +64,7 @@ class NoteTrashTest {
                 assertEquals(2, continued.summaries.first().size)
             } finally { reopened.close() }
         } finally {
-            if (db.isOpen) db.close()
+            db.close()
             context.deleteDatabase(name)
         }
     }
