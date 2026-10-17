@@ -1,8 +1,8 @@
-# B4：完整本地备份 v2 · B4.1 已验收，B4.2a 事务恢复候选
+# B4：完整本地备份 v2 · B4.1 / B4.2a 已验收，B4.2b SAF 候选
 
 **日期**：2026-10-17，分支 feat/pr-b-data-safety，唯一活动 [PR #2](https://github.com/lihuihnu/XuaneyNote/pull/2)。
 **基线**：B3.2 官方 [Run 39012222967](https://github.com/lihuihnu/XuaneyNote/actions/runs/39012222967) completed/success，源码 ee14433061534b3d152770d4ddc3e9ab2f08c7b0，tested a4dfe66ea9480d5a5144d06f15a526cce3b81e09。关键 XML 与 Schema 已固定归档 [f4df55ce](https://github.com/lihuihnu/XuaneyNote/tree/f4df55cecc529f193f42efbe568526896ace49b4/evidence)。
-**现状**：B4.1 已通过 [官方 Run 39018703459](https://github.com/lihuihnu/XuaneyNote/actions/runs/39018703459) 并归档；B4.2a 的安全 Room/私有图片导出与恢复后端及设备回归为待验证候选，**尚未开放 SAF 操作或图片 UI**。
+**现状**：B4.1 [Run 39018703459](https://github.com/lihuihnu/XuaneyNote/actions/runs/39018703459)、B4.2a [Run 39021083940](https://github.com/lihuihnu/XuaneyNote/actions/runs/39021083940) 均已通过官方 CI 且证据远端读回。B4.2b ZIP v2 的系统文件选择器入口、导出回读与导入预览确认正进入待 CI 候选；用户图片插入入口仍关闭。
 
 ## 明文 ZIP v2 格式
 
@@ -58,13 +58,38 @@
 
 ### B4.2a 新增设备门禁（需当前 SHA 的官方 CI）
 
-- [ ] `BundleTransferServiceTest.exportedZipRestoresImagesTrashAndSharedLinksIntoEmptyDatabase`：真实 B3.2 合成原图的导出→隔离预检→空库恢复→重复导入幂等，中文、共享图片与已回收笔记往返保留。
-- [ ] `sameIdConflictCreatesStableCopyWithoutOverwritingExistingNote`：同 UUID 不同正文和图片时保留本机原件、稳定恢复副本与附件，重复导入不增加笔记。
-- [ ] `corruptedAfterInspectionCannotModifyExistingDatabase`：预检后再篡改已暂存图像，恢复失败无数据库变更、无新关联和新文件残留。
-- [ ] `noteDeletionStateConflictRemainsSeparateAndIdempotent`：同 UUID 删除状态不同不得偷偷覆盖，保留原件和删除状态副本。
-- [ ] `interruptedInspectionCacheIsCleanedWithoutTouchingOtherFiles`：重启清理只扫描应用受控缓存名，不删除无关数据。
-- [ ] `repeatedRestoreDetectsDamagedExistingImageInsteadOfClaimingSuccess`：重复导入时必须核对已关联图片的物理字节，不得因元数据匹配而把丢失文件伪称已恢复。
-- [ ] 全部旧版 B0～B4.1、模拟手机/平板、进程重启、隐私门禁及 Room v1/v2/v3 Schema Hash 仍通过。
-- [ ] 真实 source/tested SHA 的 Run、JUnit 和可读证据独立归档并远端读回；通过后独立开发 **B4.2b 系统 SAF 交互、导出回读、导入预览/确认、主题失败恢复**。
+- [x] `BundleTransferServiceTest.exportedZipRestoresImagesTrashAndSharedLinksIntoEmptyDatabase`：真实 B3.2 合成原图的导出→隔离预检→空库恢复→重复导入幂等，中文、共享图片与已回收笔记往返保留。
+- [x] `sameIdConflictCreatesStableCopyWithoutOverwritingExistingNote`：同 UUID 不同正文和图片时保留本机原件、稳定恢复副本与附件，重复导入不增加笔记。
+- [x] `corruptedAfterInspectionCannotModifyExistingDatabase`：预检后再篡改已暂存图像，恢复失败无数据库变更、无新关联和新文件残留。
+- [x] `noteDeletionStateConflictRemainsSeparateAndIdempotent`：同 UUID 删除状态不同不得偷偷覆盖，保留原件和删除状态副本。
+- [x] `interruptedInspectionCacheIsCleanedWithoutTouchingOtherFiles`：重启清理只扫描应用受控缓存名，不删除无关数据。
+- [x] `repeatedRestoreDetectsDamagedExistingImageInsteadOfClaimingSuccess`：重复导入时必须核对已关联图片的物理字节，不得因元数据匹配而把丢失文件伪称已恢复。
+- [x] 全部旧版 B0～B4.1、模拟手机/平板、进程重启、隐私门禁及 Room v1/v2/v3 Schema Hash 仍通过。
+- [x] 真实 source/tested SHA 的 Run、JUnit 和可读证据独立归档并远端读回；通过后独立开发 **B4.2b 系统 SAF 交互、导出回读、导入预览/确认、主题失败恢复**。
 
 **B4.2a 不等于 B4 完成；B4.2b 以及 B3.3 未通过前绝不开放用户插图。**
+
+## B4.2a 已验收的真实证据
+
+- [Run 39021083940](https://github.com/lihuihnu/XuaneyNote/actions/runs/39021083940) completed/success，source `b210aff4b7d7865383f6d882ffaacdc49f518d88`，tested merge `a36badd37da8b7de1a47400076d5deec14303b03`。
+- Kotlin 模型 10/10、Room/备份与恢复 36/36、手机/平板模拟 Compose 各 4/4；编译、Lint、隐私和 Room v1/v2/v3 Schema 一致性通过。
+- [B4.2a 固定证据分支](https://github.com/lihuihnu/XuaneyNote/tree/1424ac767710aae593dfa17bdb910d80f47ee239/evidence) 已入库并远端读回，内容为 24 份可读报告子集，不冒充完整二进制或实体设备验收。
+
+## B4.2b 用户 SAF 操作闭环（候选待本次 CI）
+
+1. 设置页新增 **ZIP v2 完整备份** 导出/导入两个独立入口；保留旧版 **JSON v1** 导出/导入，不改变 PR-A 旧文件内容合同。UI 仍禁止用户新增图片，防止备份功能尚未人工验收时产生唯一原件。
+2. 导出：刷新自动保存队列并检查无失败草稿，弹明文风险确认，系统 `CreateDocument(application/zip)` 选择目标，流式生成含活动笔记、回收站、图片和主题的 ZIP；**关闭目标后经同一 URI 的 `openInputStream` 再次完整预检，且须与原快照相等才提示成功**。写入、回读、校验或来源图片异常均明确告知文件可能不完整，不删除原笔记。
+3. 导入：系统 `OpenDocument` 选择 ZIP，先在隔离缓存中限制压缩、展开大小与恶意路径，完整验证哈希和图片；**只把摘要、少量标题展示在 Compose 确认框中**，包含笔记数量、回收站数量、图片和引用数量、主题。取消/退回只清理暂存，不触碰 Room。
+4. 用户显式确认后由 B4.2a 后端保证“图片先安全就绪—Room 单事务只新增—冲突副本—幂等—失败回滚/孤儿清理”，主题通过 DataStore 另写；主题失败需要明确报告“笔记和图片已恢复，但主题未更新”，不能谎称跨存储原子提交。
+5. ZIP 为**未加密明文**；用户选择第三方存储提供方可能是云盘，本应用不会自动上传。被恢复的图片直到 B3.3 完成仍不可在当前笔记编辑 UI 中查看，需要在恢复确认文案中说明。
+6. ViewModel 只在内存维护预检包，不把图片或大 JSON 放进 SavedState；正常取消及 ViewModel 销毁会清理缓存，进程被杀后的遗留由下次启动的受控缓存清理处理。
+
+### B4.2b 自动化门禁与人工边界
+
+- [ ] `NoteFlowTest.fullZipEntryRequiresWarningAndKeepsLegacyBackup`：手机/平板各检查完整 ZIP 导出入口的提示、取消后不创建目标、保留 JSON v1 的独立入口。
+- [ ] `BundleContentResolverRoundTripTest.systemContentProviderSupportsClosedZipReadback`：使用 Android 29+ 的测试程序自行创建的系统 MediaStore `content:` URI，写入关闭后重新打开进行完整 ZIP v2 验证，并在 `finally` 删除合成文件，**不可把 MediaStore 测试冒充用户真机 SAF CreateDocument 操作**。
+- [ ] B0/B1/B2/B3.1/B3.2/B4.1/B4.2a 全部既有回归、API35 手机与宽屏模拟、进程重建、隐私和 v1/v2/v3 Schema 哈希不变；用户入口只有文本与完整 ZIP，没有图片新建按钮。
+- [ ] 最新 source/tested SHA 官方 GitHub-hosted Ubuntu24.04 CI 与关键 XML、安全证据归档远端读回成功；随后让维护者在真实手机完成 [B4.2b SAF 人工验收清单](B4_2B_SAF_ACCEPTANCE.md)，才可宣称本阶段适合保存重要资料。
+- [ ] B4.2b 尚未涵盖的厂商 ROM、低磁盘空间、第三方云盘 providers、应用签名升级和真机旋转/强制杀死中断，需在实际设备或后续专项门禁单独记录，不能归为已通过。
+
+**阶段界限**：即使 CI 完全通过，仍不立即合并整个 PR-B；B3.3 图片可见 UI、B5 加密保护与 PR-B 最终审阅仍待实现。
