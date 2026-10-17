@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.github.lihuihnu.xuaneynote.model.ModelTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-10-17T09:27:32.323Z" hostname="runnervm8k3b6" time="0.329">
+  <properties/>
+  <testcase name="repeatedImportSkips" classname="io.github.lihuihnu.xuaneynote.model.ModelTest" time="0.031"/>
+  <testcase name="conflictPreservesBothAndIsIdempotent" classname="io.github.lihuihnu.xuaneynote.model.ModelTest" time="0.033"/>
+  <testcase name="unknownBodyVersionFails" classname="io.github.lihuihnu.xuaneynote.model.ModelTest" time="0.001"/>
+  <testcase name="invalidTimeFails" classname="io.github.lihuihnu.xuaneynote.model.ModelTest" time="0.0"/>
+  <testcase name="duplicateIdsFail" classname="io.github.lihuihnu.xuaneynote.model.ModelTest" time="0.001"/>
+  <testcase name="writeFailureIsNotSavedAndCanRetry" classname="io.github.lihuihnu.xuaneynote.model.ModelTest" time="0.218"/>
+  <testcase name="coalescesToLatestRevision" classname="io.github.lihuihnu.xuaneynote.model.ModelTest" time="0.014"/>
+  <testcase name="continuousTypingHasMaximumWait" classname="io.github.lihuihnu.xuaneynote.model.ModelTest" time="0.018"/>
+  <testcase name="unicodeIsPreserved" classname="io.github.lihuihnu.xuaneynote.model.ModelTest" time="0.001"/>
+  <testcase name="trashedRecordImportMakesVisibleIdempotentCopy" classname="io.github.lihuihnu.xuaneynote.model.ModelTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
