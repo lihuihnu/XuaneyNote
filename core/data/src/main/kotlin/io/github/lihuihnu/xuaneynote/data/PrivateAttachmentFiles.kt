@@ -245,6 +245,36 @@ class PrivateAttachmentFiles(
         return file
     }
 
+    /** 取消单篇正常笔记的图片关联，保留其他笔记的共享引用和原图。 */
+    suspend fun unlink(noteId: String, attachmentId: String): AttachmentDeletion =
+        withContext(Dispatchers.IO) {
+            gate.withLock {
+                val released = database.withTransaction {
+                    val active = database.notes().findActive(noteId)
+                        ?: return@withTransaction null
+                    val record = database.attachments().findAttachment(attachmentId)
+                        ?: return@withTransaction null
+                    if (database.attachments().forNote(active.id).none { it.id == attachmentId }) {
+                        return@withTransaction null
+                    }
+                    managedFile(record.relativePath)
+                    check(database.attachments().unlink(noteId, attachmentId) == 1)
+                    if (database.attachments().countReferences(attachmentId) == 0) {
+                        check(database.attachments().deleteUnreferenced(attachmentId) == 1)
+                        record.relativePath
+                    } else ""
+                }
+                if (released == null) AttachmentDeletion(false, 0)
+                else {
+                    val pending = if (released.isNotEmpty()) {
+                        val file = managedFile(released)
+                        if (file.exists() && !file.delete()) 1 else 0
+                    } else 0
+                    AttachmentDeletion(true, pending)
+                }
+            }
+        }
+
     /** B4 备份层可以取得验证过的受控 File，并自行流式读取。 */
     suspend fun verifiedFile(attachmentId: String): File = withContext(Dispatchers.IO) {
         gate.withLock {

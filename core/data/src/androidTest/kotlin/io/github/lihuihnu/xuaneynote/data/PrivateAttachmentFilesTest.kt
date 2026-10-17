@@ -215,6 +215,34 @@ class PrivateAttachmentFilesTest {
         }
     }
 
+    @Test fun unlinkSharedImageKeepsOtherNoteAndLastLinkDeletesFile() = runBlocking {
+        val ctx = context()
+        val id = UUID.randomUUID().toString().take(10)
+        val name = "b3-unlink-$id.db"
+        val folder = "b3-unlink-$id"
+        val db = NoteDatabase.open(ctx, name)
+        try {
+            NoteStore(db).restore(listOf(first, second))
+            val store = PrivateAttachmentFiles(ctx, db, folder)
+            val item = store.importStream(first.id, ByteArrayInputStream(picture(Bitmap.CompressFormat.PNG)))
+            val file = store.verifiedFile(item.id)
+            store.linkExisting(second.id, item.id)
+            assertEquals(AttachmentDeletion(true, 0), store.unlink(first.id, item.id))
+            assertTrue(file.exists())
+            assertEquals(1, db.attachments().countReferences(item.id))
+            assertFalse(store.unlink(first.id, item.id).deleted)
+            assertEquals(AttachmentDeletion(true, 0), store.unlink(second.id, item.id))
+            assertFalse(file.exists())
+            assertNull(db.attachments().findAttachment(item.id))
+            assertEquals(first, NoteStore(db).get(first.id))
+            assertEquals(second, NoteStore(db).get(second.id))
+        } finally {
+            db.close()
+            ctx.deleteDatabase(name)
+            File(ctx.filesDir, folder).deleteRecursively()
+        }
+    }
+
     @Test fun unsafeMetadataPathCannotEscapePrivateDirectory() = runBlocking {
         val ctx = context()
         val id = UUID.randomUUID().toString().take(10)

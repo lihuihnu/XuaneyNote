@@ -80,6 +80,9 @@ interface AttachmentDao {
     """)
     suspend fun forNote(noteId: String): List<AttachmentEntity>
 
+    @Query("DELETE FROM note_attachments WHERE noteId = :noteId AND attachmentId = :attachmentId")
+    suspend fun unlink(noteId: String, attachmentId: String): Int
+
     @Query("DELETE FROM attachments WHERE id = :id AND " +
         "NOT EXISTS(SELECT 1 FROM note_attachments WHERE attachmentId = :id)")
     suspend fun deleteUnreferenced(id: String): Int
