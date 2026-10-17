@@ -1,0 +1,53 @@
+{
+  "repository": "lihuihnu/XuaneyNote",
+  "run_id": 38939329504,
+  "run_attempt": 1,
+  "job_id": 117102695438,
+  "source_sha": "0e7b307fb06da27d035980a8481108644b8998ad",
+  "tested_sha": "85a9db3e16af1cbe9267847b762218a8ead327d5",
+  "runner": "GitHub Actions 1000032146",
+  "runner_label": "ubuntu-24.04",
+  "runner_image": "20261012.334.1",
+  "conclusion": "failure",
+  "coverage": "reviewed-job-metadata-and-selected-log-lines-not-full-envelope",
+  "log_selection": {
+    "source": "GitHub.fetch_workflow_job_logs",
+    "truncated": true,
+    "method": "noncontiguous selected lines",
+    "original_total_bytes": null
+  },
+  "envelope_observed": {
+    "chunks": 45,
+    "header_sha256": "05f1c47c8df17bdb5b04d2a9b352357b499f3226532eaa0903e53e7ad2d0e561",
+    "full_local_decode_verified": false
+  },
+  "not_archived": [
+    "full-job-log",
+    "full-evidence-envelope",
+    "Gradle-Wrapper-files",
+    "Room-schema",
+    "raw-test-XML",
+    "APK"
+  ],
+  "fix_commit": "06ae6fc4b49a2c8f7b5b854e94b7e6de54251e37",
+  "local_regression": {
+    "kind": "mock-script-tests-not-Android",
+    "python": "3.13.5",
+    "commands": [
+      "python3 -S tools/test_device_probe.py",
+      "python3 -S tools/test_evidence_text.py"
+    ],
+    "passed_tests": [
+      12,
+      4
+    ],
+    "tested_files_sha256": {
+      ".github/workflows/ci.yml": "81bfde1daaa4de301ba852b038d76ad130b4b3d20be7ba17f1212baa8b19b85c",
+      "tools/device_gate.sh": "9462c478cb617c1179b6ced295bfb7a553e5ef42266352853fdf08c8d8f4d12b",
+      "tools/evidence_text.py": "9449b91183b3e8842db906b7ce4395a0027d02c4c4a46e0c724610d3ea94e564",
+      "tools/post_test_probe.sh": "11c471689edb253d6b59a01455fb1d31a288248ba553e89ccd2eaf5b24582678",
+      "tools/test_device_probe.py": "bf5197c8e9f9c984d0eff1637d9d3b91e0a1f666885744eff3530b4c110f3eb1",
+      "tools/test_evidence_text.py": "0c49b5450d419d3a43d5c99a9a975eea1d542d63ff16baf620be462645d87a4c"
+    }
+  }
+}

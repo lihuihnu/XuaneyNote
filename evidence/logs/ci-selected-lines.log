@@ -1,0 +1,16 @@
+2026-10-16T17:27:15.4197542Z BUILD SUCCESSFUL in 3m 25s
+2026-10-16T17:27:15.4203131Z 202 actionable tasks: 202 executed
+2026-10-16T17:27:15.9096150Z PASS source XML / pinned versions / read-only official CI / no artifact / no runtime permissions / no destructive migration
+2026-10-16T17:27:15.9097228Z PASS merged Manifest network-permission check (5 manifests)
+2026-10-16T17:29:44.3227146Z Starting 2 tests on emulator-5554 - 15
+2026-10-16T17:29:53.5260963Z emulator-5554 - 15 Tests 1/2 completed. (0 skipped) (0 failed)
+2026-10-16T17:30:03.5220257Z emulator-5554 - 15 Tests 2/2 completed. (0 skipped) (0 failed)
+2026-10-16T17:30:04.3218992Z Finished 2 tests on emulator-5554 - 15
+2026-10-16T17:30:17.3222994Z Starting 4 tests on emulator-5554 - 15
+2026-10-16T17:30:18.3274648Z Finished 4 tests on emulator-5554 - 15
+2026-10-16T17:30:18.8224364Z BUILD SUCCESSFUL in 1m 33s
+2026-10-16T17:30:18.8225078Z 142 actionable tasks: 2 executed, 140 up-to-date
+2026-10-16T17:30:19.3453318Z Starting: Intent { cmp=io.github.lihuihnu.xuaneynote.debug/io.github.lihuihnu.xuaneynote.MainActivity }
+2026-10-16T17:30:19.3530708Z Error type 3
+2026-10-16T17:30:19.3533987Z Error: Activity class {io.github.lihuihnu.xuaneynote.debug/io.github.lihuihnu.xuaneynote.MainActivity} does not exist.
+2026-10-16T17:30:19.4011423Z ##[error]Process completed with exit code 1.

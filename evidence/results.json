@@ -1,0 +1,26 @@
+{
+  "old_ci": {
+    "build_model_tests_lint_apk": "success",
+    "merged_manifest_privacy": "success",
+    "phone_compose": {
+      "tests": 2,
+      "failed": 0
+    },
+    "phone_room_backup": {
+      "tests": 4,
+      "failed": 0
+    },
+    "post_phone_activity_start": "failure: Error type 3",
+    "tablet": "not-run",
+    "process_restart_probe": "not-run",
+    "evidence_emit_step": "success",
+    "cleanup_step": "success",
+    "overall": "failure"
+  },
+  "new_fix": {
+    "android_ci": "not-run-at-archive-creation",
+    "local_device_probe_tests": 12,
+    "local_readable_evidence_tests": 4,
+    "production_Android_sources_changed": false
+  }
+}
