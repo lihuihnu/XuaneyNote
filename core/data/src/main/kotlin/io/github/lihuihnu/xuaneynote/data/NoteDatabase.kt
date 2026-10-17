@@ -75,13 +75,15 @@ interface NoteDao {
     @Insert suspend fun insert(notes: List<NoteEntity>)
 }
 
-@Database(entities = [NoteEntity::class], version = 2, exportSchema = true)
+@Database(entities = [NoteEntity::class, AttachmentEntity::class, NoteAttachmentEntity::class],
+    version = 3, exportSchema = true)
 abstract class NoteDatabase : RoomDatabase() {
     abstract fun notes(): NoteDao
+    abstract fun attachments(): AttachmentDao
     companion object {
         fun open(context: Context, name: String = "xuaneynote.db"): NoteDatabase =
             Room.databaseBuilder(context.applicationContext, NoteDatabase::class.java, name)
-                .addMigrations(DatabaseMigrations.MIGRATION_1_2)
+                .addMigrations(DatabaseMigrations.MIGRATION_1_2, DatabaseMigrations.MIGRATION_2_3)
                 .build()
     }
 }
@@ -89,6 +91,16 @@ abstract class NoteDatabase : RoomDatabase() {
 /** v1 JSON 无法表示 deletedAt；宁可拒绝导出，也不能静默漏掉回收站里的资料。 */
 class LegacyBackupWouldOmitTrash : IllegalStateException(
     "回收站仍有笔记，旧版 JSON 不能备份回收站。请先恢复需要备份的笔记；包含回收站的完整备份将在 B4 提供。"
+)
+
+/** B3.1 尚未提供文件系统引用清理；若目标含图片引用，拒绝永久删除。 */
+class AttachmentCleanupNotReady : IllegalStateException(
+    "笔记仍含图片引用，目前尚未完成附件安全清理，请在后续版本中重试。"
+)
+
+/** 旧版 JSON 无法保存附件元数据或图片文件，不得声称导出成功。 */
+class LegacyBackupWouldOmitAttachments : IllegalStateException(
+    "笔记含有图片资料，当前旧版 JSON 无法完整备份图片。请保留原文件并使用后续完整备份。"
 )
 
 class NoteStore(private val database: NoteDatabase) {
@@ -119,12 +131,16 @@ class NoteStore(private val database: NoteDatabase) {
         database.notes().upsert(NoteEntity.from(note))
     }
     // 旧格式只支持活动笔记；有回收站内容时导出必须失败，不能丢弃状态。
-    suspend fun verifyLegacyBackupAvailability() {
+    suspend fun verifyLegacyBackupAvailability() = database.withTransaction {
+        requireLegacyBackupAvailable()
+    }
+    private suspend fun requireLegacyBackupAvailable() {
         if (database.notes().countTrashed() != 0) throw LegacyBackupWouldOmitTrash()
+        if (database.attachments().countAttachments() != 0) throw LegacyBackupWouldOmitAttachments()
     }
     suspend fun snapshot(): List<Note> = database.withTransaction {
         requireBackupBudget()
-        if (database.notes().countTrashed() != 0) throw LegacyBackupWouldOmitTrash()
+        requireLegacyBackupAvailable()
         database.notes().snapshot().map { it.model() }
     }
     suspend fun moveToTrash(id: String, at: Long = System.currentTimeMillis()): Boolean {
@@ -132,8 +148,11 @@ class NoteStore(private val database: NoteDatabase) {
         return database.notes().moveToTrash(id, at) == 1
     }
     suspend fun restoreFromTrash(id: String): Boolean = database.notes().restoreTrashed(id) == 1
-    // B2 只含文本笔记；B3 加入图片附件后须同时加入有引用检查的文件清理合同。
-    suspend fun permanentlyDelete(id: String): Boolean = database.notes().permanentlyDeleteTrashed(id) == 1
+    // 删除笔记之前必须核验当前图片链接；B3.2 引入经审阅的文件清理日志后才能安全移除。
+    suspend fun permanentlyDelete(id: String): Boolean = database.withTransaction {
+        if (database.attachments().countForNote(id) > 0) throw AttachmentCleanupNotReady()
+        database.notes().permanentlyDeleteTrashed(id) == 1
+    }
     private suspend fun requireBackupBudget() {
         require(database.notes().count() <= BackupCodec.MAX_NOTES && database.notes().textBytes() <= BackupCodec.MAX_BYTES) {
             "文本资料超过本阶段整库备份/恢复上限"
