@@ -20,7 +20,7 @@
 
 ## 只有满足以下条件才允许单独解闸
 
-- [ ] 维护者本人完成 [B4.2b 手机 SAF 手工验收清单](B4_2B_SAF_ACCEPTANCE.md)。这项**目前尚无完成证据**。
+- [x] 维护者 2026-10-17 报告手机端 SAF 验收通过。当前只有完成声明，没有设备型号、逐项记录或图片 Photo Picker 验收证据；不外推其他设备/系统。
 - [ ] 在真实手机通过 Photo Picker 插入 JPEG/PNG/WebP，进程重启后展示仍存在，ZIP v2 导出、读回、恢复能找回所有图片与文字，错误/取消/低存储不会造成误报成功。
 - [ ] 覆盖安装使用同一签名身份；跨临时 CI Debug 签名不得强行覆盖。
 - [ ] 解除 `USER_ENTRY_ENABLED=false` 须有独立提交、最新 SHA 全门禁成功、明确的人工设备验收记录。不能把本阶段只读组件测试当作真实图片添加已上线。
@@ -33,3 +33,12 @@
 - Room/备份 38/38、Kotlin 模型 10/10、手机/宽屏模拟各 8/8，零失败。三份历史 Room Schema 未改变。
 - [不可变可读证据提交](https://github.com/lihuihnu/XuaneyNote/tree/33a434310a77ab06bd61efbf4df6ff75da29794b/evidence) 归档 20 份可读 XML/Schema/日志，已远端读回；并不包含所有原始二进制。
 - 下一阶段仅准备供真人在测试设备尝试 SAF 的受信任临时 Debug APK。工作流 build 版本由 `0.1.0-pr-a` 更新到 `0.2.0-pr-b`，每次 Runner 临时 debug 证书可能不同，不用于在含真实资料的旧版 App 上直接覆盖安装。
+
+## B3.4 Debug-only Photo Picker 小步验收（2026-10-17）
+
+维护者报告手机 SAF 测试通过，允许**仅在 Debug 构建**露出图片添加/移除入口，以便开展下一轮真机 Photo Picker 验收。Release 仍由 `BuildConfig.DEBUG=false` 强制隐藏，PR #2 继续 Draft，不表示正式开放。
+
+- 修复正常回收站 UI 仍经 `NoteStore.permanentlyDelete` 拒绝含图笔记的问题：改用含 Room 事务与共享引用检查的 `PrivateAttachmentFiles.permanentlyDeleteTrashed`，如实反馈文件待清理。
+- Picker 弹出前固定笔记 ID，返回后只允许追加到原笔记；取消、切换笔记或 URI 无效均不得误关联。
+- 增加 Debug 编辑按钮可见性及含图笔记经 UI 永久删除后的原图清理自动化测试；仓库静态门禁锁定 Debug-only，不改变 Room v1/v2/v3 Schema、备份协议、权限或正式签名。
+- 新源码的 CI、APK 传输、真机图片导入/恢复、低存储及同签名升级仍待分别验收。详见 [B3.4 真机专项清单](B3_4_IMAGE_PICKER_ACCEPTANCE.md)。

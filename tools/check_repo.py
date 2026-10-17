@@ -78,7 +78,14 @@ assert hashlib.sha256(schema3.read_bytes()).hexdigest() == (
     'dc57dc1df55e8d0ae29dfebaec166c868a2076b8c869e394578638c7bc7602ed'
 ), 'Frozen real Room v3 schema changed'
 
-print('PASS source/privacy / pinned dependencies / official Wrapper and frozen Room v1/v2/v3 schemas / read-only CI')
+# 仅 Debug 构建可以测试图片编辑，Release 必须始终由 BuildConfig.DEBUG 关闸。
+image_ui = (root / 'app/src/main/kotlin/io/github/lihuihnu/xuaneynote/ui/NoteImages.kt').read_text()
+assert 'val USER_ENTRY_ENABLED = BuildConfig.DEBUG' in image_ui, 'Image edit gate must remain Debug-only'
+assert 'buildConfig = true' in (root / 'app/build.gradle.kts').read_text(), 'BuildConfig generation required'
+viewmodel = (root / 'app/src/main/kotlin/io/github/lihuihnu/xuaneynote/NotesViewModel.kt').read_text()
+assert 'data.attachments.permanentlyDeleteTrashed(id)' in viewmodel, 'File-safe trash deletion required'
+assert 'fun addImage(noteId: String, uri: Uri)' in viewmodel, 'Bind Picker return to original note'
+print('PASS source/privacy / pinned dependencies / Wrapper / frozen Room schemas / Debug-only image gate / file-safe deletion / read-only CI')
 if '--merged' in sys.argv:
     manifests = list((root / 'app/build/intermediates').glob('**/AndroidManifest.xml'))
     assert any('release' in str(p).lower() for p in manifests), 'No release merged manifest'

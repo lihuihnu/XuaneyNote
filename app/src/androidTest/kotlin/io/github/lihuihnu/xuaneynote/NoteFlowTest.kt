@@ -2,6 +2,12 @@ package io.github.lihuihnu.xuaneynote
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -139,8 +145,9 @@ class NoteFlowTest {
         compose.onNodeWithTag("export-legacy-backup").assertExists()
     }
 
-    @Test fun normalApplicationCannotOpenImagePickerBeforeManualSafAcceptance() {
-        assertFalse(io.github.lihuihnu.xuaneynote.ui.ImageUiGate.USER_ENTRY_ENABLED)
+    @Test fun debugPreviewExposesImageEntryOnlyForDebugVariant() {
+        assertTrue(BuildConfig.DEBUG)
+        assertEquals(BuildConfig.DEBUG, io.github.lihuihnu.xuaneynote.ui.ImageUiGate.USER_ENTRY_ENABLED)
         compose.waitUntil(15_000) {
             compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
         }
@@ -154,7 +161,74 @@ class NoteFlowTest {
         compose.waitUntil(12_000) {
             compose.onAllNodesWithTag("note-body").fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithTag("add-note-image").assertDoesNotExist()
+        compose.onNodeWithTag("add-note-image").assertExists()
+    }
+
+    @Test fun imageBackedTrashUsesSafeFileCleanupFromNormalUi() {
+        compose.waitUntil(15_000) { compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty() }
+        if (compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isEmpty()) {
+            compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+            compose.waitUntil(12_000) {
+                compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isNotEmpty()
+            }
+        }
+        compose.onNodeWithTag("new-note").performClick()
+        compose.waitUntil(12_000) {
+            compose.onAllNodesWithTag("note-title").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        val title = "B3 图片删除专项 " + System.nanoTime()
+        compose.onNodeWithTag("note-title").performTextReplacement(title)
+        compose.waitUntil(15_000) {
+            compose.onAllNodes(hasTestTag("save-state") and hasText("已保存")).fetchSemanticsNodes().isNotEmpty()
+        }
+        val data = (compose.activity.application as XuaneyApplication).data
+        val noteId = runBlocking {
+            withTimeout(15_000) {
+                data.notes.summaries.first { list -> list.any { it.title == title } }
+                    .first { it.title == title }.id
+            }
+        }
+        val bitmap = Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888)
+        val bytes = try {
+            val output = ByteArrayOutputStream()
+            assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, output))
+            output.toByteArray()
+        } finally {
+            bitmap.recycle()
+        }
+        val image = runBlocking {
+            data.attachments.importStream(noteId, ByteArrayInputStream(bytes))
+        }
+        val originalFile = runBlocking { data.attachments.verifiedFile(image.id) }
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("note-image-" + image.id).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("trash-current-note").performClick()
+        compose.onNodeWithTag("confirm-trash-move").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("open-trash").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("open-trash").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("trash-actions-" + noteId, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNode(
+            hasTestTag("trash-permanent") and
+                hasAnyAncestor(hasTestTag("trash-actions-" + noteId)),
+            useUnmergedTree = true
+        ).performClick()
+        compose.onNodeWithTag("confirm-permanent-delete").performClick()
+        compose.waitUntil(15_000) {
+            !originalFile.exists() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        assertNull(runBlocking { data.notes.get(noteId) })
+        assertTrue(runCatching {
+            runBlocking { data.attachments.verifiedFile(image.id) }
+        }.isFailure)
     }
 
     @Test fun applicationHasNoNetworkPermissionsOrAutomaticBackup() {

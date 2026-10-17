@@ -18,7 +18,7 @@ android {
         debug { applicationIdSuffix = ".debug"; versionNameSuffix = "-debug" }
         release { isMinifyEnabled = false }
     }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     lint { abortOnError = true }
 }

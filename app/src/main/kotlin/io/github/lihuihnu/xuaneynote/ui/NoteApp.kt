@@ -60,6 +60,8 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
     var moveToTrashRequest by rememberSaveable { mutableStateOf<String?>(null) }
     var permanentDeleteRequest by rememberSaveable { mutableStateOf<String?>(null) }
     var page by rememberSaveable { mutableIntStateOf(1) }
+    // Photo Picker 返回前可能切换笔记：记录本次图片真正所属的笔记 ID。
+    var pendingPictureNoteId by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
     val export = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) {
         it?.let(vm::exportBackup)
@@ -73,11 +75,14 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
     val importBundle = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { it?.let(vm::inspectBundle) }
-    // AndroidX Photo Picker 仅返回一次性只读 content URI，旧 Android 回落到 SAF。
-    // 入口由 ImageUiGate.USER_ENTRY_ENABLED 控制，手机 SAF 人工验收前保持关闭。
+    // AndroidX Photo Picker 返回一次性只读 content URI，仅 Debug 可发起。
     val pickPicture = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
-    ) { uri -> uri?.let(vm::addImage) }
+    ) { uri ->
+        val intendedNoteId = pendingPictureNoteId
+        pendingPictureNoteId = null
+        if (uri != null && intendedNoteId != null) vm.addImage(intendedNoteId, uri)
+    }
     LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it); vm.clearMessage() } }
     LaunchedEffect(page) { if (page == 0) { vm.updateSearchText(""); vm.leaveTrash() } }
     BackHandler(enabled = note != null && !settings && backup == null && bundleReview == null && !exportWarning && !bundleExportWarning) {
@@ -170,9 +175,12 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
                                             busy = busy,
                                             allowEdit = ImageUiGate.USER_ENTRY_ENABLED,
                                             onAdd = {
-                                                pickPicture.launch(PickVisualMediaRequest(
-                                                    ActivityResultContracts.PickVisualMedia.ImageOnly
-                                                ))
+                                                if (!busy) {
+                                                    pendingPictureNoteId = selected.id
+                                                    pickPicture.launch(PickVisualMediaRequest(
+                                                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                                                    ))
+                                                }
                                             },
                                             onRemove = vm::removeImage,
                                             loadImage = vm::imageThumbnail
@@ -430,7 +438,8 @@ private fun TrashList(
                             if (item.preview.isNotBlank()) Text(item.preview, maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                                 style = MaterialTheme.typography.bodyMedium)
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            Row(Modifier.fillMaxWidth().testTag("trash-actions-" + item.id),
+                                horizontalArrangement = Arrangement.End) {
                                 TextButton(onClick = { onRestore(item.id) }, enabled = !busy,
                                     modifier = Modifier.testTag("trash-restore")) {
                                     Text(stringResource(R.string.trash_restore))

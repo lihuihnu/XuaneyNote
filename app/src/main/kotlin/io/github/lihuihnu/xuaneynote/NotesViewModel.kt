@@ -154,15 +154,22 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
     }
     fun permanentlyDeleteTrashed(id: String) = operation {
         requireSaved()
-        check(data.notes.permanentlyDelete(id)) { "只有回收站中的笔记才能永久删除" }
-        mutableMessage.value = "本机笔记已删除；此前导出的外部备份不会自动清除。"
+        // 图片可能被多篇笔记共享，删除必须走 Room 事务加受控私有文件清理。
+        val result = data.attachments.permanentlyDeleteTrashed(id)
+        check(result.deleted) { "只有回收站中的笔记才能永久删除" }
+        mutableMessage.value = if (result.pendingFileCleanup == 0)
+            "本机笔记及不再被引用的图片已删除；此前导出的外部备份不会自动清除。"
+        else "笔记已从回收站删除；部分本机图片待下次启动清理。外部备份不会自动清除。"
     }
 
-    /** B3.3：内部图片入口接线后才可能调用；选择的是只读 content URI。 */
-    fun addImage(uri: Uri) = operation {
+    /** B3.4：Debug 手工 Picker 测试，返回图片不可写入新选择的另一篇笔记。 */
+    fun addImage(noteId: String, uri: Uri) = operation {
+        if (mutableNote.value?.id != noteId) {
+            mutableMessage.value = "笔记已切换，此次图片未保存；请在目标笔记重新选择。"
+            return@operation
+        }
         requireSaved()
-        val active = mutableNote.value ?: error("请先打开正常笔记")
-        val image = data.attachments.importFromUri(active.id, uri)
+        val image = data.attachments.importFromUri(noteId, uri)
         mutableMessage.value = "图片已保存在本机：" + image.mimeType +
             "；原图可能包含拍摄地点等 EXIF 元信息，完整备份也会保留原图。"
     }

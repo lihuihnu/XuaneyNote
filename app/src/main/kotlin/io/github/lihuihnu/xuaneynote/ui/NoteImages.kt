@@ -16,6 +16,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.lihuihnu.xuaneynote.BuildConfig
 import io.github.lihuihnu.xuaneynote.R
 import io.github.lihuihnu.xuaneynote.data.AttachmentEntity
 import kotlinx.coroutines.CancellationException
@@ -23,12 +24,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * B3.3 开发态功能闸门。未完成用户手工 SAF/Photo Picker 验收及最终数据安全审查前，
- * 常规应用内绝不开放插图或删图入口。单独 composable 仪器测试可验证面板交互，
- * 但不能靠“组件测试通过”替代真实用户操作或签名升级。
+ * B3.4 隔离设备验收闸门：仅可丢弃数据的 Debug APK 开放图片添加/移除。
+ * Release 的 BuildConfig.DEBUG=false，仍须真人 Photo Picker 验收及正式代码审查。
  */
 internal object ImageUiGate {
-    const val USER_ENTRY_ENABLED = false
+    val USER_ENTRY_ENABLED = BuildConfig.DEBUG
 }
 
 /** 只从 APP 私有文件获取低分辨率图，实际解码与 SHA-256 验证由 data 模块在 IO 线程完成。 */
@@ -69,7 +69,7 @@ private fun ImagePreview(
 
 /**
  * 可单独 Compose 测试的图片列表，不依赖外部 URI，不持久化 Bitmap 至 SavedState。
- * 正式 NoteApp 目前由 USER_ENTRY_ENABLED=false 隐藏，解除须另一次人工验收和代码审查。
+ * NoteApp 只在 Debug 构建显示可编辑入口，Release 仅可预览已恢复的图片。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
