@@ -1,0 +1,127 @@
+name: XuaneyNote PR gate
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: xuaneynote-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  gate:
+    name: PR-A local notes gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      TESTED_SHA: ${{ github.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Classify paths without skipping the required gate
+        id: scope
+        shell: bash
+        run: |
+          echo "GRADLE_USER_HOME=$RUNNER_TEMP/xuaney-gradle" >> "$GITHUB_ENV"
+          echo "XUANEY_BOOTSTRAP_DIR=$RUNNER_TEMP/xuaney-bootstrap" >> "$GITHUB_ENV"
+          mkdir -p ci-out/logs ci-out/status
+          test "$(git rev-parse HEAD)" = "$TESTED_SHA"
+          if [[ -n "$BASE_SHA" ]]; then
+            git cat-file -e "$BASE_SHA^{commit}" || git fetch --no-tags --depth=1 origin "$BASE_SHA"
+            git diff --name-only "$BASE_SHA" HEAD > ci-out/changed-paths.txt
+          else
+            git ls-files > ci-out/changed-paths.txt
+          fi
+          python3 - <<'PY'
+          import os, pathlib
+          paths = pathlib.Path('ci-out/changed-paths.txt').read_text().splitlines()
+          android = any(not (p.endswith('.md') or p.startswith('docs/')) for p in paths)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f'android={str(android).lower()}\n')
+          PY
+      - name: Fast repository and evidence-protocol tests
+        run: |
+          bash tools/run_gate.sh structure python3 tools/check_repo.py
+          bash tools/run_gate.sh evidence-protocol python3 tools/test_evidence.py
+          bash tools/run_gate.sh device-probe-script python3 -S tools/test_device_probe.py
+          bash tools/run_gate.sh readable-evidence python3 -S tools/test_evidence_text.py
+          bash tools/run_gate.sh apk-transport-protocol python3 -S tools/test_trusted_apk_transport.py
+      - name: JDK 17
+        if: steps.scope.outputs.android == 'true'
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK and toolchain identity
+        if: steps.scope.outputs.android == 'true'
+        shell: bash
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;35.0.0'
+          { java -version; echo "Runner image: ${ImageVersion:-unknown}"; } > ci-out/logs/toolchain.log 2>&1
+      - name: Unit tests, lint, APK and release Manifest with verified official Wrapper
+        if: steps.scope.outputs.android == 'true'
+        run: |
+          bash tools/run_gate.sh build ./gradlew --no-daemon --console=plain \
+            :core:model:test :core:data:assembleDebugAndroidTest :app:assembleDebug \
+            :app:assembleDebugAndroidTest :app:lintDebug :app:processReleaseMainManifest
+          bash tools/run_gate.sh privacy python3 tools/check_repo.py --merged
+      - name: Phone, tablet window, Room backup and real process restart
+        if: steps.scope.outputs.android == 'true'
+        run: bash tools/run_gate.sh devices bash tools/device_gate.sh
+      - name: Trusted one-time debug APK handoff (read-only)
+        if: >-
+          ${{
+            github.event_name == 'pull_request' &&
+            github.actor == 'lihuihnu' &&
+            github.event.pull_request.user.login == 'lihuihnu' &&
+            github.event.pull_request.head.repo.full_name == github.repository &&
+            github.event.pull_request.head.ref == 'feat/pr-a-local-notes' &&
+            contains(github.event.pull_request.labels.*.name, 'trusted-test-apk-once')
+          }}
+        env:
+          APK_APPROVED_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$SOURCE_SHA" = "$APK_APPROVED_SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$TESTED_SHA"
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" > ci-out/logs/apk-signer.log
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" > ci-out/logs/apk-badging.log
+          python3 -S tools/trusted_apk_transport.py emit \
+            --apk "$APK" \
+            --signer-report ci-out/logs/apk-signer.log \
+            --badging-report ci-out/logs/apk-badging.log \
+            --source-sha "$SOURCE_SHA" --tested-sha "$TESTED_SHA" \
+            --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT"
+          echo 'Debug APK bytes transported read-only; no installable download until maintainer verifies and archives them.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Emit bounded verifiable evidence (no repository write token)
+        if: always()
+        env:
+          CI_JOB_STATUS: ${{ job.status }}
+        run: |
+          python3 tools/evidence_text.py
+          python3 tools/evidence.py emit
+          echo 'Evidence transport emitted; maintainer repository write/read-back is still required.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Clean only this job's temporary products
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, shutil
+          root = pathlib.Path.cwd().resolve()
+          for name in ('app/build', 'core/model/build', 'core/data/build', 'core/designsystem/build', '.gradle', '.kotlin'):
+              path = (root / name).resolve()
+              assert path.is_relative_to(root) and path != root
+              if path.exists(): shutil.rmtree(path)
+          temporary = pathlib.Path(os.environ['RUNNER_TEMP']).resolve()
+          for name in ('xuaney-gradle', 'xuaney-bootstrap', 'xuaney-avd'):
+              path = (temporary / name).resolve()
+              assert path.parent == temporary
+              if path.exists(): shutil.rmtree(path)
+          PY
