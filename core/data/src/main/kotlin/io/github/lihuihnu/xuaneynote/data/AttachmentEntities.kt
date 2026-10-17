@@ -9,8 +9,8 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 
 /**
- * B3.1 只冻结附件元数据合同；字节文件和 SAF/Photo Picker 写入路径后续单独实现。
- * relativePath 必须是应用私有附件目录下的规范相对路径，禁止 content:// 和绝对路径。
+ * B3.1 元数据合同；B3.2 私有原始图片由 PrivateAttachmentFiles 管理。
+ * 相对路径只可使用 images/<UUID>.<jpg|png|webp>，不会持久化外部 URI。
  */
 @Entity(
     tableName = "attachments",
@@ -65,4 +65,22 @@ interface AttachmentDao {
     suspend fun countLinks(): Int
     @Query("SELECT COUNT(*) FROM attachments")
     suspend fun countAttachments(): Int
+
+    @Query("SELECT * FROM attachments WHERE id = :id")
+    suspend fun findAttachment(id: String): AttachmentEntity?
+
+    @Query("SELECT * FROM attachments ORDER BY id ASC")
+    suspend fun allAttachments(): List<AttachmentEntity>
+
+    @Query("""
+        SELECT a.* FROM attachments AS a
+        JOIN note_attachments AS l ON l.attachmentId = a.id
+        WHERE l.noteId = :noteId
+        ORDER BY l.sortOrder ASC, l.attachmentId ASC
+    """)
+    suspend fun forNote(noteId: String): List<AttachmentEntity>
+
+    @Query("DELETE FROM attachments WHERE id = :id AND " +
+        "NOT EXISTS(SELECT 1 FROM note_attachments WHERE attachmentId = :id)")
+    suspend fun deleteUnreferenced(id: String): Int
 }
