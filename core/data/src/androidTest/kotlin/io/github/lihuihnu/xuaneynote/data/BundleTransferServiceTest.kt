@@ -184,6 +184,30 @@ class BundleTransferServiceTest {
         }
     }
 
+    @Test fun repeatedRestoreDetectsDamagedExistingImageInsteadOfClaimingSuccess() = runBlocking {
+        val ctx = ApplicationProvider.getApplicationContext<Context>()
+        val (sdb, sfiles, sn) = dbAndFiles("b4damage-src")
+        val (tdb, tfiles, tn) = dbAndFiles("b4damage-dst")
+        try {
+            NoteStore(sdb).restore(listOf(first))
+            val photo = sfiles.importStream(first.id, ByteArrayInputStream(png()))
+            val zip = ByteArrayOutputStream()
+            BundleTransferService(ctx, sdb, sfiles).export(zip, ThemeMode.DARK, 900L)
+            val target = BundleTransferService(ctx, tdb, tfiles)
+            target.inspect(ByteArrayInputStream(zip.toByteArray())).use { bundle ->
+                assertEquals(1, target.restore(bundle).insertedNotes)
+                assertTrue(tfiles.verifiedFile(photo.id).delete())
+                assertTrue(runCatching { target.restore(bundle) }.isFailure)
+                assertEquals(first, NoteStore(tdb).get(first.id))
+                assertEquals(1, tdb.attachments().countAttachments())
+                assertEquals(1, tdb.attachments().countLinks())
+            }
+        } finally {
+            deleteTemporary(sdb, sn)
+            deleteTemporary(tdb, tn)
+        }
+    }
+
     @Test fun interruptedInspectionCacheIsCleanedWithoutTouchingOtherFiles() = runBlocking {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
         val (db, files, name) = dbAndFiles("b4clean")

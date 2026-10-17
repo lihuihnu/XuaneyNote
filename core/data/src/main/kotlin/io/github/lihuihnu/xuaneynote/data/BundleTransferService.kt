@@ -98,6 +98,7 @@ class BundleTransferService(
         val sourceImage = incoming.attachments.associateBy { it.id }
         val newNotes = mutableListOf<NoteEntity>()
         val mapping = mutableMapOf<String, String>()
+        val skippedDestinations = mutableSetOf<String>()
         var skipped = 0
         var conflicts = 0
 
@@ -114,6 +115,7 @@ class BundleTransferService(
             if (original == note &&
                 linksSignature(original.id, existing.links, existingImage) == attachmentsKey) {
                 skipped++
+                skippedDestinations += original.id
                 continue
             }
             conflicts++
@@ -144,6 +146,7 @@ class BundleTransferService(
                 if (known == copy &&
                     linksSignature(id, existing.links, existingImage) == attachmentsKey) {
                     skipped++
+                    skippedDestinations += id
                     handled = true
                     break
                 }
@@ -212,8 +215,12 @@ class BundleTransferService(
         require(newLinks.distinctBy { it.noteId to it.attachmentId }.size == newLinks.size) {
             "多个不同图片映射到了同一笔记关联"
         }
-        return RestorePlan(newNotes, newAtt, newLinks, reused.distinctBy { it.id },
-            skipped, conflicts)
+        // 已经存在且被“跳过”的图片也必须校验磁盘真实字节。
+        // 不能因为数据库元数据恰好相同就把丢失或损坏的图谎报为已恢复。
+        val skippedImages = existing.links.filter { it.noteId in skippedDestinations }
+            .map { requireNotNull(existingImage[it.attachmentId]) }
+        return RestorePlan(newNotes, newAtt, newLinks,
+            (reused + skippedImages).distinctBy { it.id }, skipped, conflicts)
     }
 
     /** 恢复仅执行新增操作，不会静默更新/清空用户已有笔记。 */
