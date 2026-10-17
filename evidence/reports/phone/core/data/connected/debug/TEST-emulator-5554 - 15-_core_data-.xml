@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="io.github.lihuihnu.xuaneynote.data.DataContractTest" tests="7" failures="0" errors="0" skipped="0" time="2.878" timestamp="2026-10-17T03:50:33" hostname="localhost">
+  <properties>
+    <property name="device" value="emulator-5554 - 15" />
+    <property name="flavor" value="" />
+    <property name="project" value=":core:data" />
+  </properties>
+  <testcase name="backupRoundtripAndEmptyBackup" classname="io.github.lihuihnu.xuaneynote.data.DataContractTest" time="0.069" />
+  <testcase name="databaseReopenAndAtomicRestore" classname="io.github.lihuihnu.xuaneynote.data.DataContractTest" time="0.941" />
+  <testcase name="corruptUnknownVersionAndTruncatedBackupAreRejected" classname="io.github.lihuihnu.xuaneynote.data.DataContractTest" time="0.023" />
+  <testcase name="duplicateIdsAndOversizedInputAreRejected" classname="io.github.lihuihnu.xuaneynote.data.DataContractTest" time="0.03" />
+  <testcase name="productionOpenAutomaticallyUpgradesTheOriginalV1Database" classname="io.github.lihuihnu.xuaneynote.data.DatabaseMigrationTest" time="0.229" />
+  <testcase name="prAV1SchemaMigratesWithoutChangingNotesOrPreferences" classname="io.github.lihuihnu.xuaneynote.data.DatabaseMigrationTest" time="0.735" />
+  <testcase name="frozenPrAV1BackupRestoresIntoV2Idempotently" classname="io.github.lihuihnu.xuaneynote.data.DatabaseMigrationTest" time="0.051" />
+</testsuite>
