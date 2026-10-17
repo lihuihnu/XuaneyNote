@@ -45,7 +45,7 @@ class NoteImageStripTest {
             assertEquals(item.id, removedId)
             assertEquals(1, addCount)
         } finally {
-            bitmap.recycle()
+            // The Compose rule disposes content after the test; do not recycle a still-painted Bitmap.
         }
     }
 
@@ -68,7 +68,7 @@ class NoteImageStripTest {
             compose.onNodeWithTag("note-image-" + item.id).performClick()
             compose.onNodeWithTag("image-preview-expanded").assertExists()
         } finally {
-            bitmap.recycle()
+            // The Compose rule disposes content after the test; do not recycle a still-painted Bitmap.
         }
     }
 }
