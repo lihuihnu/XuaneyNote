@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>XuaneyNote 测试 APK 下载</title>
+<style>body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f9;color:#20252a}main{max-width:600px;background:white;border-radius:18px;padding:28px;margin:8vh auto;box-shadow:0 8px 45px #15202e10}h1{font-size:24px}p{line-height:1.8}button{border:0;border-radius:12px;background:#1c5cbe;color:white;padding:14px 18px;font:inherit;cursor:pointer}button:disabled{opacity:.6}code{font-size:12px;word-break:break-all}small{color:#52616c}#status{white-space:pre-line}</style>
+</head><body><main>
+<h1>XuaneyNote · PR-A 测试安装包</h1>
+<p>这是临时调试签名的开发预览，仅用于真实设备测试。此页面只从已固定的 GitHub 提交下载 APK 分片，逐一验证 SHA-256，并在浏览器内拼装为可安装 APK。不需要账号，不上传用户资料。</p>
+<p><small>来源：GitHub Run 38995733428 · 源码 19532a929475</small></p>
+<button id="download">验证并下载 APK</button><p id="status" role="status">尚未开始。需要联网和支持 Web Crypto 的浏览器。</p>
+<p><small>完整 APK SHA-256：</small><code>9def70c30bed6953a02151ef217aa6935f9948094298c78fc186bd823038f170</code></p>
+<p><small>临时签名证书 SHA-256：</small><code>c8e2c35d3f7dc5f8867485baca46eb2a9f0efff6671b72f0b6357b7104c72ee4</code></p>
+<p><small>如浏览器无法执行，请使用随附的 Windows/ Python 拼装脚本。GitHub 网页的代码预览不会执行此文件，需下载 HTML 后用浏览器打开。</small></p>
+</main>
+<script>
+const base="https://raw.githubusercontent.com/lihuihnu/XuaneyNote/39a0d83a3908c99446bb5b96a4d7b9eb261f4b96/";
+const expected="9def70c30bed6953a02151ef217aa6935f9948094298c78fc186bd823038f170",filename="XuaneyNote-0.1.0-pr-a-19532a929475-debug.apk";
+const button=document.getElementById("download"), status=document.getElementById("status");
+function toHex(bytes){return Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("");}
+async function digest(bytes){return toHex(new Uint8Array(await crypto.subtle.digest("SHA-256",bytes)));}
+button.addEventListener("click",async()=>{
+ button.disabled=true;
+ try{
+   if(!globalThis.crypto?.subtle)throw Error("浏览器缺少 Web Crypto，请换用 Chrome/Edge 或使用桌面脚本");
+   const metaResponse=await fetch(base+"manifest.json",{credentials:"omit"});
+   if(!metaResponse.ok)throw Error("无法下载受信任清单");
+   const m=await metaResponse.json();
+   if(m.apk_sha256!==expected||m.apk_size!==11023697||m.apk_filename!==filename||
+      m.source_sha!=="19532a929475e9ce5e9f7fb2589654fb67f101d1"||
+      m.signer_certificate_sha256!=="c8e2c35d3f7dc5f8867485baca46eb2a9f0efff6671b72f0b6357b7104c72ee4"||m.parts.length!==11)
+      throw Error("测试包身份不符");
+   const parts=[];let size=0;
+   for(let i=0;i<11;i++){
+      const p=m.parts[i],path="parts/apk.part-"+String(i).padStart(2,"0");
+      if(p.path!==path)throw Error("分片顺序错误");
+      status.textContent="正在校验 "+(i+1)+"/11";
+      const res=await fetch(base+path,{credentials:"omit"});
+      if(!res.ok)throw Error("下载失败 "+path+" HTTP "+res.status);
+      const bytes=new Uint8Array(await res.arrayBuffer());
+      if(bytes.length!==p.size || await digest(bytes)!==p.sha256)throw Error("文件校验错误 "+path);
+      parts.push(bytes);size+=bytes.length;
+   }
+   if(size!==11023697)throw Error("APK 总长度错误");
+   status.textContent="所有分片验证通过，正在验证完整 APK";
+   const blob=new Blob(parts,{type:"application/vnd.android.package-archive"});
+   if(await digest(await blob.arrayBuffer())!==expected)throw Error("完整 APK SHA-256 校验失败");
+   const url=URL.createObjectURL(blob);
+   const a=document.createElement("a");a.href=url;a.download=filename;
+   document.body.appendChild(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),60000);
+   status.textContent="完整 APK 已校验并开始下载。SHA-256: "+expected+"。请只用于测试数据。";
+ }catch(err){status.textContent="未生成 APK："+String(err.message||err);}
+ finally{button.disabled=false;}
+});
+</script></body></html>
