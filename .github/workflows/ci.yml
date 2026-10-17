@@ -47,6 +47,8 @@ jobs:
         run: |
           bash tools/run_gate.sh structure python3 tools/check_repo.py
           bash tools/run_gate.sh evidence-protocol python3 tools/test_evidence.py
+          bash tools/run_gate.sh device-probe-script python3 -S tools/test_device_probe.py
+          bash tools/run_gate.sh readable-evidence python3 -S tools/test_evidence_text.py
       - name: JDK 17
         if: steps.scope.outputs.android == 'true'
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
@@ -76,6 +78,7 @@ jobs:
         env:
           CI_JOB_STATUS: ${{ job.status }}
         run: |
+          python3 tools/evidence_text.py
           python3 tools/evidence.py emit
           echo 'Evidence transport emitted; maintainer repository write/read-back is still required.' >> "$GITHUB_STEP_SUMMARY"
       - name: Clean only this job's temporary products

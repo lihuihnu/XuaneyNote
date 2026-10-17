@@ -24,23 +24,16 @@ adb shell input keyevent 82
 adb shell wm size 1080x1920
 adb shell wm density 420
 sleep 2
-bash tools/run_gate.sh phone bash tools/gradle.sh --no-daemon --console=plain :core:data:connectedDebugAndroidTest :app:connectedDebugAndroidTest \
+# 共用一个模拟器时串行测试模块，避免两个安装/卸载生命周期交错。
+bash tools/run_gate.sh phone bash tools/gradle.sh --no-daemon --console=plain --no-parallel :core:data:connectedDebugAndroidTest :app:connectedDebugAndroidTest \
     -Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe
 python3 tools/collect_device_reports.py phone
-adb shell am start -W -n io.github.lihuihnu.xuaneynote.debug/io.github.lihuihnu.xuaneynote.MainActivity
-adb exec-out screencap -p > ci-out/screenshots/phone-synthetic.png
+bash tools/run_gate.sh phone-probe bash tools/post_test_probe.sh phone
 adb shell wm size 1600x2560
 adb shell wm density 240
 sleep 2
-bash tools/run_gate.sh tablet bash tools/gradle.sh --no-daemon --console=plain :app:connectedDebugAndroidTest \
+bash tools/run_gate.sh tablet bash tools/gradle.sh --no-daemon --console=plain --no-parallel :app:connectedDebugAndroidTest \
     -Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe
 python3 tools/collect_device_reports.py tablet
-adb shell am start -W -n io.github.lihuihnu.xuaneynote.debug/io.github.lihuihnu.xuaneynote.MainActivity
-adb exec-out screencap -p > ci-out/screenshots/tablet-synthetic.png
-for phase in seed verify; do
-    if [[ "$phase" == verify ]]; then adb shell am force-stop io.github.lihuihnu.xuaneynote.debug; fi
-    adb shell am instrument -w -r -e class "io.github.lihuihnu.xuaneynote.RestartProbe#$phase" \
-        io.github.lihuihnu.xuaneynote.debug.test/androidx.test.runner.AndroidJUnitRunner | tee "ci-out/logs/restart-$phase.log"
-    grep -F 'OK (1 test)' "ci-out/logs/restart-$phase.log"
-done
+bash tools/run_gate.sh tablet-probe bash tools/post_test_probe.sh tablet
 adb shell getprop ro.build.fingerprint > ci-out/logs/device-fingerprint.log
