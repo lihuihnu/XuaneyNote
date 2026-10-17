@@ -30,8 +30,21 @@ data class NoteEntity(
 
 @Dao
 interface NoteDao {
-    @Query("SELECT id, title, substr(body, 1, 100) AS preview, updatedAt FROM notes ORDER BY updatedAt DESC, id ASC")
+    @Query("SELECT id, title, substr(body, 1, 100) AS preview, updatedAt FROM notes " +
+        "WHERE deletedAt IS NULL ORDER BY updatedAt DESC, id ASC")
     fun observeSummaries(): Flow<List<NoteSummary>>
+
+    // instr 匹配字面连续子串，百分号、下划线和引号不具有 LIKE 通配符含义。
+    // SQLite lower() 仅保证英文 ASCII 大小写处理；中文按原文匹配。
+    @Query("""
+        SELECT id, title, substr(body, 1, 100) AS preview, updatedAt
+        FROM notes
+        WHERE deletedAt IS NULL AND
+          (instr(lower(title), lower(:keyword)) > 0 OR instr(lower(body), lower(:keyword)) > 0)
+        ORDER BY updatedAt DESC, id ASC
+        LIMIT :limit
+    """)
+    fun observeMatching(keyword: String, limit: Int): Flow<List<NoteSummary>>
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun find(id: String): NoteEntity?
     @Query("SELECT * FROM notes ORDER BY id ASC")
@@ -56,7 +69,18 @@ abstract class NoteDatabase : RoomDatabase() {
 }
 
 class NoteStore(private val database: NoteDatabase) {
+    companion object {
+        const val SEARCH_VISIBLE_LIMIT = 200
+        const val SEARCH_MAX_LENGTH = 100
+    }
     val summaries = database.notes().observeSummaries()
+
+    fun search(keyword: String): Flow<List<NoteSummary>> {
+        val term = keyword.trim()
+        require(term.isNotEmpty() && term.length <= SEARCH_MAX_LENGTH) { "搜索关键词无效或过长" }
+        // 多查询一条用于判断是否还有更多结果，不谎报检索到的总条数。
+        return database.notes().observeMatching(term, SEARCH_VISIBLE_LIMIT + 1)
+    }
     suspend fun get(id: String): Note? = database.notes().find(id)?.model()
     suspend fun create(): Note = Note.empty().also { note ->
         database.notes().insert(listOf(NoteEntity.from(note)))

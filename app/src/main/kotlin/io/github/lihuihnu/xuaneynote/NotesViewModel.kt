@@ -7,7 +7,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import io.github.lihuihnu.xuaneynote.data.BackupCodec
 import io.github.lihuihnu.xuaneynote.data.NoteBackup
+import io.github.lihuihnu.xuaneynote.data.NoteStore
 import io.github.lihuihnu.xuaneynote.model.Note
+import io.github.lihuihnu.xuaneynote.model.NoteSummary
 import io.github.lihuihnu.xuaneynote.model.SaveState
 import io.github.lihuihnu.xuaneynote.model.ThemeMode
 import kotlinx.coroutines.CancellationException
@@ -16,6 +18,10 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+data class NoteListing(val keyword: String, val items: List<NoteSummary>)
+
+/** B1: 防抖并取消过时查询，数据库 I/O 不进入 Compose 编辑主线程。 */
+@OptIn(kotlinx.coroutines.FlowPreview::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class NotesViewModel(application: Application, private val savedState: SavedStateHandle) : AndroidViewModel(application) {
     private val app = application as XuaneyApplication
     private val data = app.data
@@ -24,13 +30,25 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
     private val mutableBusy = MutableStateFlow(false)
     private val mutableMessage = MutableStateFlow<String?>(null)
     private val mutableImport = MutableStateFlow<NoteBackup?>(null)
+    private val mutableSearchText = MutableStateFlow(savedState.get<String>("note_search").orEmpty())
+    val searchText = mutableSearchText.asStateFlow()
     val note = mutableNote.asStateFlow()
     val busy = mutableBusy.asStateFlow()
     val message = mutableMessage.asStateFlow()
     val pendingImport = mutableImport.asStateFlow()
     val saveStates = writes.states
-    val notes = data.notes.summaries.catch { mutableMessage.value = "读取笔记失败，请重新打开应用；原数据未被清空。" }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val listing = mutableSearchText
+        .debounce { if (it.isBlank()) 0L else 250L }
+        .map { it.trim() }
+        .distinctUntilChanged()
+        .flatMapLatest { keyword ->
+            val source = if (keyword.isEmpty()) data.notes.summaries else data.notes.search(keyword)
+            source.map { NoteListing(keyword, it) }.catch {
+                mutableMessage.value = "查询笔记失败，请稍后重试；已有笔记不会被修改。"
+                emit(NoteListing(keyword, emptyList()))
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), NoteListing("", emptyList()))
     val theme = data.preferences.theme.catch {
         mutableMessage.value = "读取外观设置失败，暂时跟随系统。"
         emit(ThemeMode.SYSTEM)
@@ -62,6 +80,12 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
         mutableNote.value = note
         savedState["selected_note"] = note?.id
         data.preferences.select(note?.id)
+    }
+
+    fun updateSearchText(value: String) {
+        if (value.length > NoteStore.SEARCH_MAX_LENGTH) return
+        mutableSearchText.value = value
+        savedState["note_search"] = value
     }
 
     fun createNote() = operation { requireSaved(); select(data.notes.create()) }
