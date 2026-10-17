@@ -1,9 +1,9 @@
-# B3：图片附件 · B3.1 已验收，B3.2 文件生命周期候选
+# B3：图片附件 · B3.1/B3.2 后端已验收，待 B4 备份和 UI
 
 **日期**：2026-10-17（Asia/Tokyo）。
 **分支**：`feat/pr-b-data-safety`，复用唯一活动 [PR #2](https://github.com/lihuihnu/XuaneyNote/pull/2)。
 **基线**：B2 `af36b2de2451bbd492c04ad3b8c05361319da962`，官方 [Run 39005974577](https://github.com/lihuihnu/XuaneyNote/actions/runs/39005974577) completed/success。B2 可读证据固定提交 `f4fe13a423c43b61fcdfc212e1fcb80a656cf8d9`。
-**状态**：**B3.1 回填后的最终 [Run 39009835439](https://github.com/lihuihnu/XuaneyNote/actions/runs/39009835439) completed/success，证据已归档读回；B3.2 文件存储与清理为待本次 CI 的候选实现。** 图片入口继续隐藏，B4 完整图片备份尚未完成。
+**状态**：**B3.1 Run 39009835439 与 B3.2 Run 39012222967 均 completed/success；可读证据已归档读回。** B4 完整图片备份及 B3.3 用户 UI 仍未完成，图片入口继续隐藏。
 
 ## B3 总体验收约束
 
@@ -62,12 +62,19 @@
 
 ### B3.2 Android CI 验收项目
 
-- [ ] 流式导入有效 PNG/JPEG/WebP；核对 MIME、长宽、字节数、哈希、Room 关联、重开后原图可用。
-- [ ] 拒绝无效、截断、超 20 MiB 的模拟输入与不存在的目标笔记；不得遗留数据库记录/新原图。
-- [ ] 两篇笔记共享同一原图，软删、永久删除或解除一份引用不伤其他笔记，最后一份引用清理文件。
-- [ ] 重开恢复时只删除受控孤儿/暂存，不触碰未管理的文件；物理丢失的被引用图片只报告不伪造。
-- [ ] 非法路径穿越与未授权元数据不能逃逸私有目录。
-- [ ] B0/B1/B2/B3.1 回归、手机/平板 Compose、进程重启、隐私和三版 Schema 哈希全部通过。
-- [ ] B3.2 实际 CI/完整 JUnit、真实 source/tested SHA、独立证据归档并读回；通过后才考虑 B3.3。
+- [x] 流式导入有效 PNG/JPEG/WebP；核对 MIME、长宽、字节数、哈希、Room 关联、重开后原图可用。
+- [x] 拒绝无效、截断、超 20 MiB 的模拟输入与不存在的目标笔记；不得遗留数据库记录/新原图。
+- [x] 两篇笔记共享同一原图，软删、永久删除或解除一份引用不伤其他笔记，最后一份引用清理文件。
+- [x] 重开恢复时只删除受控孤儿/暂存，不触碰未管理的文件；物理丢失的被引用图片只报告不伪造。
+- [x] 非法路径穿越与未授权元数据不能逃逸私有目录。
+- [x] B0/B1/B2/B3.1 回归、手机/平板 Compose、进程重启、隐私和三版 Schema 哈希全部通过。
+- [x] B3.2 实际 CI/完整 JUnit、真实 source/tested SHA、独立证据归档并读回；通过后才考虑 B3.3。
 
 **尚未交付**：用户图片选择 UI、真实 SAF/Photo Picker 交互、缩略图、EXIF 隐私告知、跨文件系统 B4 备份与恢复、密码保护、真机性能。
+
+### B3.2 验收档案
+
+- [官方 Run 39012222967](https://github.com/lihuihnu/XuaneyNote/actions/runs/39012222967) completed/success；source ee14433061534b3d152770d4ddc3e9ab2f08c7b0，tested merge a4dfe66ea9480d5a5144d06f15a526cce3b81e09。
+- 实际测试：Kotlin 模型 10/10、Room 和图片文件 21/21、模拟手机 4/4、模拟平板 4/4；Room v1/v2/v3 Schema 未变。
+- [B3.2 固定可读证据](https://github.com/lihuihnu/XuaneyNote/tree/f4df55cecc529f193f42efbe568526896ace49b4/evidence) 已远端读回；只含可读报告子集，不冒称全部二进制或真机验收。
+- 下一阶段需先交付 B4 完整图片/回收站备份与恢复，再开放图片界面；当前不能由普通用户插入图片。

@@ -2,7 +2,7 @@
 
 **专注当下，记录生活。** 面向 Android 手机和平板的完全本地、免费、无需登录的笔记、日记、手账、备忘录与番茄专注应用。
 
-> **当前状态（2026-10-17）**：PR-A [#1](https://github.com/lihuihnu/XuaneyNote/pull/1) 已合并至 `main`（`b85e27d5c004f978850badc4865dea821c0b44d1`），交付最小原生笔记闭环。PR-B 数据安全与资料管理已在 `feat/pr-b-data-safety` **冻结目标，B0 已完成最终 CI 验收；B1 中文搜索已通过官方 CI，B2 回收站已通过官方 CI；B3.1 最终 CI 已通过；B3.2 图片私有文件后端为待验证候选，不开放图片，B4–B5 尚未开始**。这仍不是正式 V1 发布。
+> **当前状态（2026-10-17）**：PR-A [#1](https://github.com/lihuihnu/XuaneyNote/pull/1) 已合并至 `main`（`b85e27d5c004f978850badc4865dea821c0b44d1`），交付最小原生笔记闭环。PR-B 数据安全与资料管理已在 `feat/pr-b-data-safety` **冻结目标，B0 已完成最终 CI 验收；B1 中文搜索已通过官方 CI，B2 回收站已通过官方 CI；B3.1/B3.2 内部数据与文件门禁已通过；B4.1 ZIP v2 校验编解码待 CI，仍不开放用户插图，B4–B5 尚未开始**。这仍不是正式 V1 发布。
 
 ## 已实现：PR-A 基础笔记
 
@@ -13,7 +13,7 @@
 
 ## 开发中：PR-B 冻结目标
 
-[**PR-B 目标与数据合同（docs/PR_B.md）**](docs/PR_B.md) 固定六项闭环：Room v1→v2 显式安全迁移、中文/英文搜索、回收站、私有图片附件、包含附件的备份 v2、可选密码保护的加密备份。**B0 [Run 39001250626](https://github.com/lihuihnu/XuaneyNote/actions/runs/39001250626)、B1 [Run 39002603730](https://github.com/lihuihnu/XuaneyNote/actions/runs/39002603730) 已通过；B2 [Run 39005974577](https://github.com/lihuihnu/XuaneyNote/actions/runs/39005974577) 已通过；B3.1 最终 [Run 39009835439](https://github.com/lihuihnu/XuaneyNote/actions/runs/39009835439) success；B3.2 私有文件、共享引用及中断清理等待新源码 CI；图片选择与完整备份尚未开放。** 见 [B1 搜索记录](docs/B1_SEARCH.md) 与 [B2 回收站合同](docs/B2_TRASH.md)。
+[**PR-B 目标与数据合同（docs/PR_B.md）**](docs/PR_B.md) 固定六项闭环：Room v1→v2 显式安全迁移、中文/英文搜索、回收站、私有图片附件、包含附件的备份 v2、可选密码保护的加密备份。**B0 [Run 39001250626](https://github.com/lihuihnu/XuaneyNote/actions/runs/39001250626)、B1 [Run 39002603730](https://github.com/lihuihnu/XuaneyNote/actions/runs/39002603730) 已通过；B2 [Run 39005974577](https://github.com/lihuihnu/XuaneyNote/actions/runs/39005974577) 已通过；B3.1 最终 [Run 39009835439](https://github.com/lihuihnu/XuaneyNote/actions/runs/39009835439) success；B3.2 [Run 39012222967](https://github.com/lihuihnu/XuaneyNote/actions/runs/39012222967) 已通过；B4.1 ZIP v2 编解码/预检候选待新源码 CI，真实恢复和图片选择界面尚未开放。** 见 [B1 搜索](docs/B1_SEARCH.md)、[B2 回收站](docs/B2_TRASH.md)、[B3 图片](docs/B3_ATTACHMENTS.md) 和 [B4 ZIP 备份合同](docs/B4_BUNDLE_V2.md)。
 
 计划顺序：B0 数据迁移 → B1 搜索 → B2 回收站 → B3 图片 → B4 完整备份 → B5 密码备份。每一步单独补齐验证，最后以最新源码 SHA 的官方 CI 与手工文件选择器回归验收。此阶段不提前开发番茄钟、日记或手账画布。
 
