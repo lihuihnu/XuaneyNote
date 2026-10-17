@@ -110,8 +110,16 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
                             }
                         }
                         if (wide || note == null) {
-                            NoteList(notes, note?.id, busy, page == 0, vm::createNote, vm::openNote,
-                                if (wide) Modifier.width(320.dp) else Modifier.weight(1f))
+                            NoteList(
+                                notes = if (page == 1 && searchPending) emptyList() else listing.items,
+                                selected = note?.id, busy = busy, today = page == 0,
+                                searchText = searchText, searchPending = page == 1 && searchPending,
+                                onSearchChange = vm::updateSearchText,
+                                onClearSearch = { vm.updateSearchText("") },
+                                onCreate = { vm.updateSearchText(""); vm.createNote() },
+                                onOpen = vm::openNote,
+                                modifier = if (wide) Modifier.width(320.dp) else Modifier.weight(1f)
+                            )
                         }
                         if (wide) VerticalDivider()
                         val selected = note
@@ -150,8 +158,15 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
 }
 
 @Composable
-private fun NoteList(notes: List<NoteSummary>, selected: String?, busy: Boolean, today: Boolean,
-    onCreate: () -> Unit, onOpen: (String) -> Unit, modifier: Modifier) {
+private fun NoteList(
+    notes: List<NoteSummary>, selected: String?, busy: Boolean, today: Boolean,
+    searchText: String, searchPending: Boolean,
+    onSearchChange: (String) -> Unit, onClearSearch: () -> Unit,
+    onCreate: () -> Unit, onOpen: (String) -> Unit, modifier: Modifier
+) {
+    val searching = !today && searchText.isNotBlank()
+    val visible = if (searching) notes.take(NoteStore.SEARCH_VISIBLE_LIMIT) else notes
+    val hasMore = searching && notes.size > NoteStore.SEARCH_VISIBLE_LIMIT
     Column(modifier.fillMaxHeight().padding(horizontal = 16.dp)) {
         Text(stringResource(if (today) R.string.recent_records else R.string.records),
             style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 16.dp))
