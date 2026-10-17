@@ -22,5 +22,6 @@ dependencies {
     implementation(libs.datastore.preferences)
     implementation(libs.coroutines.android)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.room.testing)
     androidTestImplementation(libs.androidx.runner)
 }

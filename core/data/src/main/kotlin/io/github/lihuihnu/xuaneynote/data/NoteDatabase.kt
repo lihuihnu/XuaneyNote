@@ -18,6 +18,8 @@ data class NoteEntity(
     val revision: Long,
     val bodyFormat: String,
     val bodyVersion: Int,
+    // PR-A 的旧记录迁移后为 NULL；B2 才开放实际删除入口。
+    val deletedAt: Long? = null,
 ) {
     fun model() = Note(id, title, body, createdAt, updatedAt, revision, bodyFormat, bodyVersion)
     companion object {
@@ -42,12 +44,14 @@ interface NoteDao {
     @Insert suspend fun insert(notes: List<NoteEntity>)
 }
 
-@Database(entities = [NoteEntity::class], version = 1, exportSchema = true)
+@Database(entities = [NoteEntity::class], version = 2, exportSchema = true)
 abstract class NoteDatabase : RoomDatabase() {
     abstract fun notes(): NoteDao
     companion object {
         fun open(context: Context, name: String = "xuaneynote.db"): NoteDatabase =
-            Room.databaseBuilder(context.applicationContext, NoteDatabase::class.java, name).build()
+            Room.databaseBuilder(context.applicationContext, NoteDatabase::class.java, name)
+                .addMigrations(DatabaseMigrations.MIGRATION_1_2)
+                .build()
     }
 }
 
@@ -59,7 +63,9 @@ class NoteStore(private val database: NoteDatabase) {
     }
     suspend fun save(note: Note) = database.withTransaction {
         note.validate()
-        val old = database.notes().find(note.id)?.model() ?: error("笔记不存在")
+        val oldEntity = database.notes().find(note.id) ?: error("笔记不存在")
+        check(oldEntity.deletedAt == null) { "已删除的笔记不能被旧草稿重新保存" }
+        val old = oldEntity.model()
         require(old == note || note.revision > old.revision) { "拒绝旧修订覆盖" }
         require(note.createdAt == old.createdAt) { "创建时间不能改变" }
         database.notes().upsert(NoteEntity.from(note))
