@@ -18,7 +18,7 @@ import io.github.lihuihnu.xuaneynote.model.SaveState
 fun NoteEditor(note: Note, state: SaveState, busy: Boolean, onTitle: (String) -> Unit,
     onBody: (String) -> Unit, onRetry: () -> Unit, onTrash: () -> Unit,
     modifier: Modifier = Modifier,
-    imageContent: @Composable (() -> Unit)? = null) {
+    imageContent: (@Composable () -> Unit)? = null) {
     // Bundle 只保存光标，不保存长正文，避免旋转时 TransactionTooLargeException。
     var titleCursor by rememberSaveable(note.id) { mutableIntStateOf(0) }
     var bodyCursor by rememberSaveable(note.id) { mutableIntStateOf(0) }

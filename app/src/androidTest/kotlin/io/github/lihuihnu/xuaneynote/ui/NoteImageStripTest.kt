@@ -63,7 +63,7 @@ class NoteImageStripTest {
             compose.onNodeWithTag("add-note-image").assertDoesNotExist()
             compose.onNodeWithTag("remove-note-image-" + item.id).assertDoesNotExist()
             compose.waitUntil(10_000) {
-                compose.onAllNodesWithTag("image-loaded").fetchSemanticsNodes().isNotEmpty()
+                compose.onAllNodesWithTag("image-loaded", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
             }
             compose.onNodeWithTag("note-image-" + item.id).performClick()
             compose.onNodeWithTag("image-preview-expanded").assertExists()
