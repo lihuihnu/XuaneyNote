@@ -45,8 +45,26 @@ interface NoteDao {
         LIMIT :limit
     """)
     fun observeMatching(keyword: String, limit: Int): Flow<List<NoteSummary>>
+    @Query("SELECT id, title, substr(body, 1, 100) AS preview, updatedAt FROM notes " +
+        "WHERE deletedAt IS NOT NULL ORDER BY deletedAt DESC, id ASC")
+    fun observeTrashSummaries(): Flow<List<NoteSummary>>
+
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun find(id: String): NoteEntity?
+    @Query("SELECT * FROM notes WHERE id = :id AND deletedAt IS NULL")
+    suspend fun findActive(id: String): NoteEntity?
+
+    // 每次移入和恢复均提升修订号，为删除前的旧自动保存草稿设置版本屏障。
+    @Query("UPDATE notes SET deletedAt = :at, revision = revision + 1 " +
+        "WHERE id = :id AND deletedAt IS NULL AND revision < 9223372036854775806")
+    suspend fun moveToTrash(id: String, at: Long): Int
+    @Query("UPDATE notes SET deletedAt = NULL, revision = revision + 1 " +
+        "WHERE id = :id AND deletedAt IS NOT NULL AND revision < 9223372036854775807")
+    suspend fun restoreTrashed(id: String): Int
+    @Query("DELETE FROM notes WHERE id = :id AND deletedAt IS NOT NULL")
+    suspend fun permanentlyDeleteTrashed(id: String): Int
+    @Query("SELECT COUNT(*) FROM notes WHERE deletedAt IS NOT NULL")
+    suspend fun countTrashed(): Int
     @Query("SELECT * FROM notes ORDER BY id ASC")
     suspend fun snapshot(): List<NoteEntity>
     @Query("SELECT COUNT(*) FROM notes")
@@ -68,12 +86,18 @@ abstract class NoteDatabase : RoomDatabase() {
     }
 }
 
+/** v1 JSON 无法表示 deletedAt；宁可拒绝导出，也不能静默漏掉回收站里的资料。 */
+class LegacyBackupWouldOmitTrash : IllegalStateException(
+    "回收站仍有笔记，旧版 JSON 不能备份回收站。请先恢复需要备份的笔记；包含回收站的完整备份将在 B4 提供。"
+)
+
 class NoteStore(private val database: NoteDatabase) {
     companion object {
         const val SEARCH_VISIBLE_LIMIT = 200
         const val SEARCH_MAX_LENGTH = 100
     }
     val summaries = database.notes().observeSummaries()
+    val trashSummaries = database.notes().observeTrashSummaries()
 
     fun search(keyword: String): Flow<List<NoteSummary>> {
         val term = keyword.trim()
@@ -81,7 +105,7 @@ class NoteStore(private val database: NoteDatabase) {
         // 多查询一条用于判断是否还有更多结果，不谎报检索到的总条数。
         return database.notes().observeMatching(term, SEARCH_VISIBLE_LIMIT + 1)
     }
-    suspend fun get(id: String): Note? = database.notes().find(id)?.model()
+    suspend fun get(id: String): Note? = database.notes().findActive(id)?.model()
     suspend fun create(): Note = Note.empty().also { note ->
         database.notes().insert(listOf(NoteEntity.from(note)))
     }
@@ -94,10 +118,19 @@ class NoteStore(private val database: NoteDatabase) {
         require(note.createdAt == old.createdAt) { "创建时间不能改变" }
         database.notes().upsert(NoteEntity.from(note))
     }
+    // 旧格式只支持活动笔记；有回收站内容时导出必须失败，不能丢弃状态。
     suspend fun snapshot(): List<Note> = database.withTransaction {
         requireBackupBudget()
+        if (database.notes().countTrashed() != 0) throw LegacyBackupWouldOmitTrash()
         database.notes().snapshot().map { it.model() }
     }
+    suspend fun moveToTrash(id: String, at: Long = System.currentTimeMillis()): Boolean {
+        require(at >= 0L)
+        return database.notes().moveToTrash(id, at) == 1
+    }
+    suspend fun restoreFromTrash(id: String): Boolean = database.notes().restoreTrashed(id) == 1
+    // B2 只含文本笔记；B3 加入图片附件后须同时加入有引用检查的文件清理合同。
+    suspend fun permanentlyDelete(id: String): Boolean = database.notes().permanentlyDeleteTrashed(id) == 1
     private suspend fun requireBackupBudget() {
         require(database.notes().count() <= BackupCodec.MAX_NOTES && database.notes().textBytes() <= BackupCodec.MAX_BYTES) {
             "文本资料超过本阶段整库备份/恢复上限"
@@ -105,7 +138,9 @@ class NoteStore(private val database: NoteDatabase) {
     }
     suspend fun restore(notes: List<Note>): RestorePlan = database.withTransaction {
         requireBackupBudget()
-        val plan = planRestore(database.notes().snapshot().map { it.model() }, notes)
+        val existing = database.notes().snapshot()
+        val plan = planRestore(existing.map { it.model() }, notes,
+            forceCopyIds = existing.filter { it.deletedAt != null }.mapTo(mutableSetOf()) { it.id })
         database.notes().insert(plan.inserts.map(NoteEntity::from))
         plan
     }

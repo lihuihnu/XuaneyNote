@@ -33,7 +33,10 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 data class RestorePlan(val inserts: List<Note>, val skipped: Int, val conflicts: Int)
 
 /** ID 冲突一律保留副本；稳定派生 ID 使同一份备份重复导入幂等。 */
-fun planRestore(existing: List<Note>, incoming: List<Note>): RestorePlan {
+fun planRestore(
+    existing: List<Note>, incoming: List<Note>,
+    forceCopyIds: Set<String> = emptySet()
+): RestorePlan {
     require(incoming.map { it.id }.toSet().size == incoming.size) { "备份包含重复 ID" }
     val known = existing.associateBy { it.id }.toMutableMap()
     val inserts = mutableListOf<Note>()
@@ -42,7 +45,8 @@ fun planRestore(existing: List<Note>, incoming: List<Note>): RestorePlan {
     for (note in incoming) {
         note.validate()
         val original = known[note.id]
-        if (original == note) { skipped++; continue }
+        // 备份中的原笔记若仍在回收站，保留回收站状态，另创建稳定副本。
+        if (original == note && note.id !in forceCopyIds) { skipped++; continue }
         var candidate = note
         if (original != null) {
             conflicts++
