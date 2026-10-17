@@ -1,7 +1,7 @@
 # B2：本地回收站、恢复和永久删除
 
 **开发分支**：`feat/pr-b-data-safety`（继续 PR #2），起点为 B1 源码 `6e4d1c4d850cf4230e646e0b73bbae0f54921a0f`。
-**状态**：仅提交候选源码、设备测试与数据合同；**新提交的 Android CI 未运行成功之前不得宣布 B2 已完成或可发行**。
+**状态**：B2 源码 `af36b2de2451bbd492c04ad3b8c05361319da962` 已通过 [官方 CI Run 39005974577](https://github.com/lihuihnu/XuaneyNote/actions/runs/39005974577)，实际 tested merge SHA `1127966fd72e023cdbbbdee6ccf44f1b9ccbccab`。可读证据 [固定归档](https://github.com/lihuihnu/XuaneyNote/tree/f4fe13a423c43b61fcdfc212e1fcb80a656cf8d9/evidence) 已远端读回；B2 通过不代表 B3 已通过或完整 PR-B 已发布。
 
 ## 功能与 UI
 
