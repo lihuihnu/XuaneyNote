@@ -1,0 +1,94 @@
+{
+  "protocol": "XuaneyNote.test-apk-handoff-v1",
+  "archive_kind": "verified-split-test-apk",
+  "archive_status": "pieces-uploaded-no-assembled-single-file",
+  "run_id": "38995733428",
+  "run_attempt": "1",
+  "source_sha": "19532a929475e9ce5e9f7fb2589654fb67f101d1",
+  "tested_sha": "3f049fd689016b0766f25018db541b2158b31da2",
+  "apk_filename": "XuaneyNote-0.1.0-pr-a-19532a929475-debug.apk",
+  "apk_size": 11023697,
+  "apk_sha256": "9def70c30bed6953a02151ef217aa6935f9948094298c78fc186bd823038f170",
+  "application_id": "io.github.lihuihnu.xuaneynote.debug",
+  "version_code": 1,
+  "version_name": "0.1.0-pr-a-debug",
+  "min_sdk": 26,
+  "target_sdk": 36,
+  "signing_policy": "ephemeral-runner-debug-key; not stable for upgrades; test data only",
+  "signer_certificate_sha256": "c8e2c35d3f7dc5f8867485baca46eb2a9f0efff6671b72f0b6357b7104c72ee4",
+  "verified_signature_schemes": [
+    "v2"
+  ],
+  "compressed_sha256": "c32e02dbe53b2fe1d00be1b4583601f4b5cdc7bcba71d14b2e39839b552eb944",
+  "compressed_size": 10507482,
+  "chunk_size_bytes": 1048576,
+  "parts": [
+    {
+      "path": "parts/apk.part-00",
+      "size": 1048576,
+      "sha256": "6dde718189385f296a50820ef0ee4f75f261b8e7f76d09b28e30d8b3f0b47bd3",
+      "git_sha1": "e7d8df55d4838caef7bf04b8295cf2d442522636"
+    },
+    {
+      "path": "parts/apk.part-01",
+      "size": 1048576,
+      "sha256": "467ba6dd728cb808bb2ff14dc07d04ab5875b5154439a0913bec032d769f264b",
+      "git_sha1": "720848294fac57e75805f6e632f486cceeee2d65"
+    },
+    {
+      "path": "parts/apk.part-02",
+      "size": 1048576,
+      "sha256": "7c4f0dde74917e680512d91ef19ee68ac8d7f788b133990e16c721cb0373fd53",
+      "git_sha1": "7bbf5ee9bac9c9ccefa65374561a90d93acd4f8b"
+    },
+    {
+      "path": "parts/apk.part-03",
+      "size": 1048576,
+      "sha256": "6111861f348036ee33208fdede3168e6803d99ec85d77f1163945ff00e65a62b",
+      "git_sha1": "156b7ed8df6bb7213fb885da87f2cdae88d45364"
+    },
+    {
+      "path": "parts/apk.part-04",
+      "size": 1048576,
+      "sha256": "72bdeaf34a0b6bc6bcdbf0eb94e515a0dcf2ec0a0d78b759e04026fd7107b3ae",
+      "git_sha1": "0b3da2c0382d6969ce32f62d9dfe1a22c8a17a36"
+    },
+    {
+      "path": "parts/apk.part-05",
+      "size": 1048576,
+      "sha256": "d213676cf24c1d587d34c9be3b8c02e6bbac2806925a4cdc28794a862eba7ba1",
+      "git_sha1": "61d0a36bdbcfe5a8beb2d3f02a1b444db780bb79"
+    },
+    {
+      "path": "parts/apk.part-06",
+      "size": 1048576,
+      "sha256": "dacdc1a603be39c0e53765f39499e23ca54fc2d2d140d80ba0623b66b08e5495",
+      "git_sha1": "2008cb9264a5ee010dd77e3597f7057f835818f2"
+    },
+    {
+      "path": "parts/apk.part-07",
+      "size": 1048576,
+      "sha256": "608c112cbfc2c245e13398c39812e017c095a28418fe3ccce174034dd99e0129",
+      "git_sha1": "d9f0a5fe1fd1d8b23b5d1e842726b151bd3bef53"
+    },
+    {
+      "path": "parts/apk.part-08",
+      "size": 1048576,
+      "sha256": "fd624e023619fa26f6d5e39241102598bf8e05d323a79f8f09a4312e010188cf",
+      "git_sha1": "3d3929757e988aadc0149045875d77050ac8a62f"
+    },
+    {
+      "path": "parts/apk.part-09",
+      "size": 1048576,
+      "sha256": "c3d3861adbbb88214d2f30f260f22b5167bc01e18959b0eb38e019817c0e6c3f",
+      "git_sha1": "e0497c28d6f5dfa1276a73c06db72ce4aa933128"
+    },
+    {
+      "path": "parts/apk.part-10",
+      "size": 537937,
+      "sha256": "5f4d7d657b99686cef86c502781aa9325007bae0953d4ebe7e13dd6039544099",
+      "git_sha1": "6b5daeaa00c7db4d4559f4b2c4ebb04a76601ae9"
+    }
+  ],
+  "note": "GitHub connector could not write the full APK in one request; all bytes are archived as ordered verified chunks. Reassemble and verify before installation."
+}
