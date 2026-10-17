@@ -9,6 +9,7 @@ import io.github.lihuihnu.xuaneynote.data.BackupCodec
 import io.github.lihuihnu.xuaneynote.data.NoteBackup
 import io.github.lihuihnu.xuaneynote.data.NoteStore
 import io.github.lihuihnu.xuaneynote.data.LegacyBackupWouldOmitTrash
+import io.github.lihuihnu.xuaneynote.data.LegacyBackupWouldOmitAttachments
 import io.github.lihuihnu.xuaneynote.model.Note
 import io.github.lihuihnu.xuaneynote.model.NoteSummary
 import io.github.lihuihnu.xuaneynote.model.SaveState
@@ -74,6 +75,7 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
             try { block() }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (error: LegacyBackupWouldOmitTrash) { mutableMessage.value = error.message }
+            catch (error: LegacyBackupWouldOmitAttachments) { mutableMessage.value = error.message }
             catch (_: Exception) { mutableMessage.value = "操作未完成。请检查文件、权限或可用空间后重试；已有笔记不会被清空。" }
             finally { mutableBusy.value = false }
         }

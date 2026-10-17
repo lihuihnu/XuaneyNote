@@ -132,7 +132,7 @@ class DatabaseMigrationTest {
                 assertEquals(listOf(prARecords[0]), NoteStore(live).snapshot())
                 @Suppress("DEPRECATION")
                 val upgradedVersion = live.openHelper.readableDatabase.version
-                assertEquals(2, upgradedVersion)
+                assertEquals(3, upgradedVersion)
             } finally {
                 live.close()
             }
