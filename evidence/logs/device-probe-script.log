@@ -1,0 +1,17 @@
+test_activity_failure_does_not_produce_success_screenshot (__main__.DeviceProbeTest.test_activity_failure_does_not_produce_success_screenshot) ... ok
+test_changed_apk_is_detected (__main__.DeviceProbeTest.test_changed_apk_is_detected) ... ok
+test_empty_screenshot_fails (__main__.DeviceProbeTest.test_empty_screenshot_fails) ... ok
+test_force_stop_requires_process_exit (__main__.DeviceProbeTest.test_force_stop_requires_process_exit) ... ok
+test_install_failure_stops_before_probe (__main__.DeviceProbeTest.test_install_failure_stops_before_probe) ... ok
+test_invalid_window_fails_before_adb (__main__.DeviceProbeTest.test_invalid_window_fails_before_adb) ... ok
+test_missing_apk_never_calls_adb (__main__.DeviceProbeTest.test_missing_apk_never_calls_adb) ... ok
+test_nonzero_adb_exit_is_not_hidden_by_tee (__main__.DeviceProbeTest.test_nonzero_adb_exit_is_not_hidden_by_tee) ... ok
+test_package_presence_is_required (__main__.DeviceProbeTest.test_package_presence_is_required) ... ok
+test_registered_runner_is_required (__main__.DeviceProbeTest.test_registered_runner_is_required) ... ok
+test_reinstalls_after_harness_cleanup_for_both_windows (__main__.DeviceProbeTest.test_reinstalls_after_harness_cleanup_for_both_windows) ... ok
+test_zero_adb_exit_does_not_hide_failed_test (__main__.DeviceProbeTest.test_zero_adb_exit_does_not_hide_failed_test) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 2.531s
+
+OK

@@ -1,0 +1,170 @@
+{
+  "archive_status": "transported-not-yet-repository-verified",
+  "gates": [
+    {
+      "command": [
+        "bash",
+        "tools/gradle.sh",
+        "--no-daemon",
+        "--console=plain",
+        "wrapper",
+        "--gradle-version",
+        "8.13",
+        "--distribution-type",
+        "bin",
+        "--gradle-distribution-sha256-sum",
+        "20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78",
+        ":core:model:test",
+        ":core:data:assembleDebugAndroidTest",
+        ":app:assembleDebug",
+        ":app:assembleDebugAndroidTest",
+        ":app:lintDebug",
+        ":app:processReleaseMainManifest"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 223,
+      "exit_code": 0,
+      "gate": "build"
+    },
+    {
+      "command": [
+        "python3",
+        "-S",
+        "tools/test_device_probe.py"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 3,
+      "exit_code": 0,
+      "gate": "device-probe-script"
+    },
+    {
+      "command": [
+        "bash",
+        "tools/device_gate.sh"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 309,
+      "exit_code": 0,
+      "gate": "devices"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/test_evidence.py"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 0,
+      "exit_code": 0,
+      "gate": "evidence-protocol"
+    },
+    {
+      "command": [
+        "bash",
+        "tools/post_test_probe.sh",
+        "phone"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 34,
+      "exit_code": 0,
+      "gate": "phone-probe"
+    },
+    {
+      "command": [
+        "bash",
+        "tools/gradle.sh",
+        "--no-daemon",
+        "--console=plain",
+        "--no-parallel",
+        ":core:data:connectedDebugAndroidTest",
+        ":app:connectedDebugAndroidTest",
+        "-Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 92,
+      "exit_code": 0,
+      "gate": "phone"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/check_repo.py",
+        "--merged"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 0,
+      "exit_code": 0,
+      "gate": "privacy"
+    },
+    {
+      "command": [
+        "python3",
+        "-S",
+        "tools/test_evidence_text.py"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 0,
+      "exit_code": 0,
+      "gate": "readable-evidence"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/check_repo.py"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 0,
+      "exit_code": 0,
+      "gate": "structure"
+    },
+    {
+      "command": [
+        "bash",
+        "tools/post_test_probe.sh",
+        "tablet"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 19,
+      "exit_code": 0,
+      "gate": "tablet-probe"
+    },
+    {
+      "command": [
+        "bash",
+        "tools/gradle.sh",
+        "--no-daemon",
+        "--console=plain",
+        "--no-parallel",
+        ":app:connectedDebugAndroidTest",
+        "-Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 55,
+      "exit_code": 0,
+      "gate": "tablet"
+    }
+  ],
+  "job_status_at_collection": "success",
+  "omissions": [],
+  "real_device_acceptance": "pending",
+  "repository": "lihuihnu/XuaneyNote",
+  "run_attempt": "1",
+  "run_id": "38988757189",
+  "runner": "GitHub Actions 1000032147",
+  "runner_image": "20261012.334.1",
+  "source_sha": "06ae6fc4b49a2c8f7b5b854e94b7e6de54251e37",
+  "temporary_apks": [
+    {
+      "bytes": 11023697,
+      "delivery": "not-published",
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "sha256": "9c6ec8040ef2cbe7fd42ced4283c98e40415915869342fa763f9c30504ca813a"
+    },
+    {
+      "bytes": 1078071,
+      "delivery": "not-published",
+      "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "sha256": "f8591193710ca3060d499b575877f687e312d212df33062b168d034a50b002a1"
+    }
+  ],
+  "tested_sha": "ed076740e734641c1e0d3b6870b47714a461a208"
+}

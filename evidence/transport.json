@@ -1,0 +1,13 @@
+{
+  "protocol": "XuaneyNote-transport-v1",
+  "run_id": "38988757189",
+  "run_attempt": "1",
+  "source_sha": "06ae6fc4b49a2c8f7b5b854e94b7e6de54251e37",
+  "tested_sha": "ed076740e734641c1e0d3b6870b47714a461a208",
+  "envelope_sha256": "e697c2cc1a6864896ecc61305aee1ef3cbcd2b32032419b4911a55d5e3676897",
+  "envelope_parts": 157,
+  "decoded_payload_bytes": 478969,
+  "files": 36,
+  "archive_expected_path": "evidence/",
+  "original_job_log": "https://github.com/lihuihnu/XuaneyNote/actions/runs/38988757189/job/117266179486"
+}

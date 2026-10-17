@@ -1,0 +1,2 @@
+PASS source XML / pinned versions / read-only official CI / no artifact / no runtime permissions / no destructive migration
+PASS merged Manifest network-permission check (5 manifests)
