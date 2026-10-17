@@ -1,0 +1,23 @@
+130f987ceef3ea92f99d086ed77f75c3097a73a87cd26a0b55a1664a328d5c55  logs/phone-start.log
+1a3077a69eea4f3149dce23b2f39811c4ee7245a494a5c34834ff50287c8b926  reports/model/test/TEST-io.github.lihuihnu.xuaneynote.model.ModelTest.xml
+225b89340a13a437df9286cfdc18aa6cf5962bea1c737e46469808cf96794a2c  logs/phone-restart-verify.log
+386b1a5bd12e99798d42116b2aeeffada857ba9fd5ff8e5ede6d60cb2a10b812  reports/last-device/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml
+386b1a5bd12e99798d42116b2aeeffada857ba9fd5ff8e5ede6d60cb2a10b812  reports/tablet/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml
+57931b17dd228e5c24dac90e815d0bf82477e831a4618dfab4136f5446b42a9f  bootstrap/gradlew.bat.txt
+5a444ccca3703ee001d27182eb861429cd6ffcf5d957ebee6550aeb4f0728b33  logs/phone-probe.log
+633fbfc3b92b012914165717ce367282664c75ad9f6e533b4a1ad6e2418ec93a  logs/device-fingerprint.log
+6c8b9e2ea45c170c1b81df901e748377fa109e7a0a74f96c1b17e2e144ae5e99  schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/1.json
+7033c56d972c4b74689025871200b3f8b3970abcb654d5d8c4ef3d3a807b6fed  logs/phone-restart-seed.log
+734b3879d3501dce471cf0522d3bcbafe76873d9fc5129345b67fb43bd15e933  bootstrap/gradlew.txt
+8a83fe7adc9ee11dca1247c2881996be636b16f2ea6ac5c463007f0d94159b5a  logs/device-probe-script.log
+90f828828523d22275f124b0f1ef340f27313df1f65b26514b38872b5629ae8a  logs/apk-transport-protocol.log
+9ba603f08bc9e08eb5eee97cb6600c9aaa2fd90540cf16722184d5a9389ed445  schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/2.json
+a621b990e55015060b85bf60dd5be48df3f990dceaf864ec51da40bf27cbd59f  reports/last-device/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml
+a621b990e55015060b85bf60dd5be48df3f990dceaf864ec51da40bf27cbd59f  reports/phone/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml
+a621b990e55015060b85bf60dd5be48df3f990dceaf864ec51da40bf27cbd59f  reports/tablet/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml
+a915075d3b9c55cfad36dc8e39e7cdead827d0cea07b9cf15d2bcf1478a39a92  logs/privacy.log
+b0cb6bff8bf4fafed8120e02d88ef3d7d958dab417bc4466ec3b4bab6ce50523  logs/evidence-protocol.log
+c040b6ef2fb893ff5beea5a281614f2848f1c3996a7886f650b713f8240656a2  bootstrap/gradle-wrapper.properties.txt
+dc57dc1df55e8d0ae29dfebaec166c868a2076b8c869e394578638c7bc7602ed  schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/3.json
+e521c8cd17ab9a27684ec4f070b33c9d35a8b7fcc0f6b69218a6ee7c557caff7  reports/phone/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml
+f329641c51d9671cde070524d3b9d1dc8f95deac4b24d2f3c35af240a2777a51  logs/phone-probe-apks.log
