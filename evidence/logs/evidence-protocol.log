@@ -1,0 +1,12 @@
+test_does_not_overwrite_existing_evidence (__main__.EvidenceTest.test_does_not_overwrite_existing_evidence) ... ok
+test_duplicate_and_checksum_rejected (__main__.EvidenceTest.test_duplicate_and_checksum_rejected) ... ok
+test_expected_failure_is_preserved_not_changed_to_pass (__main__.EvidenceTest.test_expected_failure_is_preserved_not_changed_to_pass) ... ok
+test_path_traversal_rejected (__main__.EvidenceTest.test_path_traversal_rejected) ... ok
+test_success_roundtrip (__main__.EvidenceTest.test_success_roundtrip) ... ok
+test_truncation_rejected (__main__.EvidenceTest.test_truncation_rejected) ... ok
+test_wrong_source_rejected (__main__.EvidenceTest.test_wrong_source_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.004s
+
+OK
