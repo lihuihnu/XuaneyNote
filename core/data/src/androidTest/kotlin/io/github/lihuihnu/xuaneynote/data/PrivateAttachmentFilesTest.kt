@@ -243,6 +243,34 @@ class PrivateAttachmentFilesTest {
         }
     }
 
+    @Test fun verifiedThumbnailIsBoundedAndCorruptionFailsClosed() = runBlocking {
+        val ctx = context()
+        val id = UUID.randomUUID().toString().take(10)
+        val name = "b3-thumb-$id.db"
+        val folder = "b3-thumb-$id"
+        val db = NoteDatabase.open(ctx, name)
+        try {
+            NoteStore(db).restore(listOf(first))
+            val store = PrivateAttachmentFiles(ctx, db, folder)
+            val image = store.importStream(first.id, ByteArrayInputStream(picture(Bitmap.CompressFormat.PNG)))
+            val bitmap = store.thumbnail(image.id, 256)
+            try {
+                assertEquals(4, bitmap.width)
+                assertEquals(3, bitmap.height)
+            } finally {
+                bitmap.recycle()
+            }
+            store.verifiedFile(image.id).writeText("corrupted after import")
+            assertTrue(runCatching { store.thumbnail(image.id, 256) }.isFailure)
+            assertNotNull(db.attachments().findAttachment(image.id))
+            assertEquals(first, NoteStore(db).get(first.id))
+        } finally {
+            db.close()
+            ctx.deleteDatabase(name)
+            File(ctx.filesDir, folder).deleteRecursively()
+        }
+    }
+
     @Test fun unsafeMetadataPathCannotEscapePrivateDirectory() = runBlocking {
         val ctx = context()
         val id = UUID.randomUUID().toString().take(10)

@@ -139,6 +139,24 @@ class NoteFlowTest {
         compose.onNodeWithTag("export-legacy-backup").assertExists()
     }
 
+    @Test fun normalApplicationCannotOpenImagePickerBeforeManualSafAcceptance() {
+        assertFalse(io.github.lihuihnu.xuaneynote.ui.ImageUiGate.USER_ENTRY_ENABLED)
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        if (compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isEmpty()) {
+            compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+            compose.waitUntil(12_000) {
+                compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isNotEmpty()
+            }
+        }
+        compose.onNodeWithTag("new-note").performClick()
+        compose.waitUntil(12_000) {
+            compose.onAllNodesWithTag("note-body").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("add-note-image").assertDoesNotExist()
+    }
+
     @Test fun applicationHasNoNetworkPermissionsOrAutomaticBackup() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         @Suppress("DEPRECATION")
