@@ -9,12 +9,13 @@ $Temp = Join-Path $PSScriptRoot '.xuaney-apk-incomplete'
 if ([IO.File]::Exists($Target) -or [IO.File]::Exists($Temp)) {
     throw 'Refusing to overwrite an existing APK or temporary file'
 }
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $Client = New-Object System.Net.WebClient
 $Client.Headers.Add('User-Agent', 'XuaneyNote-verified-test-apk/1')
 function Get-Bytes([string]$Relative) {
     $Local = Join-Path $PSScriptRoot ($Relative -replace '/', [IO.Path]::DirectorySeparatorChar)
-    if ([IO.File]::Exists($Local)) { return [IO.File]::ReadAllBytes($Local) }
-    return $Client.DownloadData($Base + $Relative)
+    if ([IO.File]::Exists($Local)) { return ,([IO.File]::ReadAllBytes($Local)) }
+    return ,($Client.DownloadData($Base + $Relative))
 }
 function Get-Hash([byte[]]$Bytes) {
     $shaObj = [Security.Cryptography.SHA256]::Create()
