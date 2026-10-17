@@ -1,0 +1,19 @@
+279acfab8deeac7b339890c6db8eb0960f4813498dc27b2956b10fa070ed1ad1  reports/last-device/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml
+279acfab8deeac7b339890c6db8eb0960f4813498dc27b2956b10fa070ed1ad1  reports/phone/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml
+279acfab8deeac7b339890c6db8eb0960f4813498dc27b2956b10fa070ed1ad1  reports/tablet/core/data/connected/debug/TEST-emulator-5554 - 15-_core_data-.xml
+2a09587449531a1bc82a8c5e1a0577b629649b23444b0e100f8ec154e8d2b631  reports/model/test/TEST-io.github.lihuihnu.xuaneynote.model.ModelTest.xml
+2dcea05da90f14dc1266af2cd2727cf5ee003f3c0fd30610310743fee5211db7  reports/phone/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml
+464c9e8d5dd7ff57c61a0a4d1bbe4d6d4dccc39ec70f119293c7089af66c4330  reports/last-device/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml
+464c9e8d5dd7ff57c61a0a4d1bbe4d6d4dccc39ec70f119293c7089af66c4330  reports/tablet/app/connected/debug/TEST-emulator-5554 - 15-_app-.xml
+4cf694df85a1b05384d4b4b673f1a43343a8f72301801b8b5ffdcdce3a1bce54  logs/emulator.log
+57931b17dd228e5c24dac90e815d0bf82477e831a4618dfab4136f5446b42a9f  bootstrap/gradlew.bat.txt
+633fbfc3b92b012914165717ce367282664c75ad9f6e533b4a1ad6e2418ec93a  logs/device-fingerprint.log
+66db6f273a22972950e94d30c2dd29fec0d459e2d94eba67278daac4d993308b  logs/apk-transport-protocol.log
+6c8b9e2ea45c170c1b81df901e748377fa109e7a0a74f96c1b17e2e144ae5e99  schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/1.json
+734b3879d3501dce471cf0522d3bcbafe76873d9fc5129345b67fb43bd15e933  bootstrap/gradlew.txt
+9ba603f08bc9e08eb5eee97cb6600c9aaa2fd90540cf16722184d5a9389ed445  schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/2.json
+c040b6ef2fb893ff5beea5a281614f2848f1c3996a7886f650b713f8240656a2  bootstrap/gradle-wrapper.properties.txt
+dc57dc1df55e8d0ae29dfebaec166c868a2076b8c869e394578638c7bc7602ed  schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/3.json
+e3c0f3b0f2d2227f8bfb429d5ea946414ba767be2d18ae28c55743a51370958d  logs/evidence-protocol.log
+e4ee6c83f18692e8da2703c9aa28a8965f894b47f5f6d73916a577ba0baa4697  logs/structure.log
+ee751c4b9066574d50e8ef12ed514e63a55e4d080b7a043066cc6ecfdc9dd8de  logs/device-probe-script.log

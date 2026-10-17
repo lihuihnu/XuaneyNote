@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="io.github.lihuihnu.xuaneynote.data.AttachmentSchemaTest" tests="30" failures="0" errors="0" skipped="0" time="2.977" timestamp="2026-10-17T08:53:00" hostname="localhost">
+  <properties>
+    <property name="device" value="emulator-5554 - 15" />
+    <property name="flavor" value="" />
+    <property name="project" value=":core:data" />
+  </properties>
+  <testcase name="productionV1ToV3UpgradeKeepsOriginalNotebookData" classname="io.github.lihuihnu.xuaneynote.data.AttachmentSchemaTest" time="0.097" />
+  <testcase name="linkedAttachmentCannotBeDeletedOrSilentlyExcludedFromV1Backup" classname="io.github.lihuihnu.xuaneynote.data.AttachmentSchemaTest" time="0.05" />
+  <testcase name="v2SchemaMigratesToV3WithoutChangingNotesOrTrash" classname="io.github.lihuihnu.xuaneynote.data.AttachmentSchemaTest" time="0.078" />
+  <testcase name="truncatedArchiveAndChangedImageBytesFailBeforeAnyRestore" classname="io.github.lihuihnu.xuaneynote.data.BundleBackupV2Test" time="0.079" />
+  <testcase name="imageWithCorrectHashButInvalidFormatIsRejectedWhenInspecting" classname="io.github.lihuihnu.xuaneynote.data.BundleBackupV2Test" time="0.003" />
+  <testcase name="duplicateZipFilenamesAreRejectedBeforeExtraction" classname="io.github.lihuihnu.xuaneynote.data.BundleBackupV2Test" time="0.024" />
+  <testcase name="fullRoundTripPreservesUnicodeTrashAndSharedImageReference" classname="io.github.lihuihnu.xuaneynote.data.BundleBackupV2Test" time="0.002" />
+  <testcase name="emptyArchiveIsValidAndOldFormatRemainsIndependent" classname="io.github.lihuihnu.xuaneynote.data.BundleBackupV2Test" time="0.032" />
+  <testcase name="compressedBombWithOversizedNotesEntryIsRejected" classname="io.github.lihuihnu.xuaneynote.data.BundleBackupV2Test" time="0.201" />
+  <testcase name="rejectsUnsafePathsUnknownEntriesAndInvalidArchiveVersion" classname="io.github.lihuihnu.xuaneynote.data.BundleBackupV2Test" time="0.004" />
+  <testcase name="tamperedNotesDigestFailsDespiteValidZipCrc" classname="io.github.lihuihnu.xuaneynote.data.BundleBackupV2Test" time="0.031" />
+  <testcase name="inconsistentMetadataOrImageDataCannotBePacked" classname="io.github.lihuihnu.xuaneynote.data.BundleBackupV2Test" time="0.001" />
+  <testcase name="backupRoundtripAndEmptyBackup" classname="io.github.lihuihnu.xuaneynote.data.DataContractTest" time="0.0" />
+  <testcase name="databaseReopenAndAtomicRestore" classname="io.github.lihuihnu.xuaneynote.data.DataContractTest" time="0.023" />
+  <testcase name="corruptUnknownVersionAndTruncatedBackupAreRejected" classname="io.github.lihuihnu.xuaneynote.data.DataContractTest" time="0.026" />
+  <testcase name="duplicateIdsAndOversizedInputAreRejected" classname="io.github.lihuihnu.xuaneynote.data.DataContractTest" time="0.001" />
+  <testcase name="productionOpenAutomaticallyUpgradesTheOriginalV1Database" classname="io.github.lihuihnu.xuaneynote.data.DatabaseMigrationTest" time="0.027" />
+  <testcase name="prAV1SchemaMigratesWithoutChangingNotesOrPreferences" classname="io.github.lihuihnu.xuaneynote.data.DatabaseMigrationTest" time="0.128" />
+  <testcase name="frozenPrAV1BackupRestoresIntoV2Idempotently" classname="io.github.lihuihnu.xuaneynote.data.DatabaseMigrationTest" time="0.025" />
+  <testcase name="syntheticDatasetsBoundResultsAndRecordSearchTiming" classname="io.github.lihuihnu.xuaneynote.data.NoteSearchTest" time="0.738" />
+  <testcase name="literalChineseEnglishAndDeletedNotesAreHandledCorrectly" classname="io.github.lihuihnu.xuaneynote.data.NoteSearchTest" time="0.074" />
+  <testcase name="oldBackupCannotSilentlyOmitTrashAndImportPreservesDeletedRecord" classname="io.github.lihuihnu.xuaneynote.data.NoteTrashTest" time="0.101" />
+  <testcase name="softDeleteRestoreAndRevisionFencePreventResurrection" classname="io.github.lihuihnu.xuaneynote.data.NoteTrashTest" time="0.102" />
+  <testcase name="permanentDeleteOnlyAcceptsTrashedRows" classname="io.github.lihuihnu.xuaneynote.data.NoteTrashTest" time="0.028" />
+  <testcase name="sharedReferenceSurvivesFirstDeleteAndFinalFileIsRemoved" classname="io.github.lihuihnu.xuaneynote.data.PrivateAttachmentFilesTest" time="0.104" />
+  <testcase name="unlinkSharedImageKeepsOtherNoteAndLastLinkDeletesFile" classname="io.github.lihuihnu.xuaneynote.data.PrivateAttachmentFilesTest" time="0.078" />
+  <testcase name="unsafeMetadataPathCannotEscapePrivateDirectory" classname="io.github.lihuihnu.xuaneynote.data.PrivateAttachmentFilesTest" time="0.029" />
+  <testcase name="invalidTruncatedOversizeAndMissingNoteNeverPersistMetadata" classname="io.github.lihuihnu.xuaneynote.data.PrivateAttachmentFilesTest" time="0.178" />
+  <testcase name="streamedFormatsAndReopenRetainExactPrivateBytes" classname="io.github.lihuihnu.xuaneynote.data.PrivateAttachmentFilesTest" time="0.103" />
+  <testcase name="restartRecoveryRemovesOnlyRecognizedOrphansAndReportsMissingFiles" classname="io.github.lihuihnu.xuaneynote.data.PrivateAttachmentFilesTest" time="0.058" />
+</testsuite>
