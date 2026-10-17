@@ -96,6 +96,8 @@ class NoteTrashTest {
             val store = NoteStore(db)
             store.restore(listOf(sample))
             assertTrue(store.moveToTrash(sample.id, 42))
+            assertTrue(runCatching { store.verifyLegacyBackupAvailability() }
+                .exceptionOrNull() is LegacyBackupWouldOmitTrash)
             assertTrue(runCatching { store.snapshot() }.exceptionOrNull() is LegacyBackupWouldOmitTrash)
             assertNull(store.get(sample.id))
             assertEquals(sample.body, requireNotNull(db.notes().find(sample.id)).body)

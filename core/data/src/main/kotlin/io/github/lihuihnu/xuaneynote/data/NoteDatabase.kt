@@ -119,6 +119,9 @@ class NoteStore(private val database: NoteDatabase) {
         database.notes().upsert(NoteEntity.from(note))
     }
     // 旧格式只支持活动笔记；有回收站内容时导出必须失败，不能丢弃状态。
+    suspend fun verifyLegacyBackupAvailability() {
+        if (database.notes().countTrashed() != 0) throw LegacyBackupWouldOmitTrash()
+    }
     suspend fun snapshot(): List<Note> = database.withTransaction {
         requireBackupBudget()
         if (database.notes().countTrashed() != 0) throw LegacyBackupWouldOmitTrash()

@@ -154,7 +154,7 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
             }
         }
         if (settings) SettingsDialog(theme, busy, vm::setTheme,
-            onExport = { settings = false; exportWarning = true },
+            onExport = { settings = false; vm.prepareLegacyBackup { exportWarning = true } },
             onImport = { settings = false; restore.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
             onDismiss = { settings = false })
         if (exportWarning) AlertDialog(onDismissRequest = { exportWarning = false },

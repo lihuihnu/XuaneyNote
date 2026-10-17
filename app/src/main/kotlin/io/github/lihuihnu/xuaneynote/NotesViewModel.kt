@@ -152,6 +152,13 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
     fun clearMessage() { mutableMessage.value = null }
     fun setTheme(mode: ThemeMode) = operation { data.preferences.setTheme(mode) }
 
+    // 在创建 SAF 目标文件前预检；实际写入时仍再次在一致快照事务中校验。
+    fun prepareLegacyBackup(onReady: () -> Unit) = operation {
+        requireSaved()
+        data.notes.verifyLegacyBackupAvailability()
+        onReady()
+    }
+
     fun exportBackup(uri: Uri) = operation {
         requireSaved()
         val backup = NoteBackup(data.notes.snapshot(), data.preferences.theme.first(), System.currentTimeMillis())
