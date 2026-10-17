@@ -2,6 +2,7 @@ package io.github.lihuihnu.xuaneynote.data
 
 import android.content.Context
 import android.graphics.Bitmap
+import kotlinx.coroutines.flow.Flow
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.room.withTransaction
@@ -205,6 +206,51 @@ class PrivateAttachmentFiles(
                 }
             }
         } } finally { runCatching { input.close() } }
+
+    /** Room Flow 只含受控元数据，不返回外部 URI 或私有文件路径给界面。 */
+    fun observeForNote(noteId: String): Flow<List<AttachmentEntity>> =
+        database.attachments().observeForNote(noteId)
+
+    /**
+     * 缩略图始终由私有原图加载、核验 SHA-256 后按采样尺度解码。
+     * 不将文件 URI 发送给第三方组件，不读取整个原始位图进内存。
+     */
+    suspend fun thumbnail(attachmentId: String, maxEdgePx: Int = 256): Bitmap =
+        withContext(Dispatchers.IO) {
+            require(maxEdgePx in 64..1024)
+            gate.withLock {
+                val record = requireNotNull(database.attachments().findAttachment(attachmentId)) {
+                    "图片元数据不存在"
+                }
+                val file = validateStored(record)
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeFile(file.absolutePath, bounds)
+                check(bounds.outWidth == record.width && bounds.outHeight == record.height &&
+                    bounds.outMimeType == record.mimeType) { "图片尺寸或格式发生变化" }
+                var sample = 1
+                while (maxOf(bounds.outWidth, bounds.outHeight) / sample > maxEdgePx) {
+                    sample *= 2
+                }
+                val bitmap = BitmapFactory.decodeFile(file.absolutePath,
+                    BitmapFactory.Options().apply {
+                        inSampleSize = sample
+                        inPreferredConfig = Bitmap.Config.ARGB_8888
+                    }) ?: error("图片解码失败")
+                val larger = maxOf(bitmap.width, bitmap.height)
+                if (larger <= maxEdgePx) bitmap
+                else {
+                    val ratio = maxEdgePx.toFloat() / larger
+                    val scaled = Bitmap.createScaledBitmap(
+                        bitmap,
+                        maxOf(1, (bitmap.width * ratio).toInt()),
+                        maxOf(1, (bitmap.height * ratio).toInt()),
+                        true
+                    )
+                    if (scaled !== bitmap) bitmap.recycle()
+                    scaled
+                }
+            }
+        }
 
     /** 将同一原图关联到第二篇正常笔记；不复制原图。 */
     suspend fun linkExisting(noteId: String, attachmentId: String) =

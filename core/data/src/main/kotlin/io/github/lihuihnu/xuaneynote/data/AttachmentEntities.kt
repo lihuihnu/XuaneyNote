@@ -7,6 +7,7 @@ import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 
 /**
  * B3.1 元数据合同；B3.2 私有原始图片由 PrivateAttachmentFiles 管理。
@@ -82,6 +83,14 @@ interface AttachmentDao {
         ORDER BY l.sortOrder ASC, l.attachmentId ASC
     """)
     suspend fun forNote(noteId: String): List<AttachmentEntity>
+    
+    @Query("""
+        SELECT a.* FROM attachments AS a
+        JOIN note_attachments AS l ON l.attachmentId = a.id
+        WHERE l.noteId = :noteId
+        ORDER BY l.sortOrder ASC, l.attachmentId ASC
+    """)
+    fun observeForNote(noteId: String): Flow<List<AttachmentEntity>>
 
     @Query("DELETE FROM note_attachments WHERE noteId = :noteId AND attachmentId = :attachmentId")
     suspend fun unlink(noteId: String, attachmentId: String): Int
