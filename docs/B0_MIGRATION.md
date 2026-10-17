@@ -2,7 +2,7 @@
 
 **实施日期**：2026-10-17，仓库遵循 Asia/Tokyo 日期口径。
 **代码基线**：PR-A #1 的合并提交 `b85e27d5c004f978850badc4865dea821c0b44d1`。
-**状态**：首轮候选源码 Android CI 已完成且成功，Room v2 schema 由真实 KSP 输出核验回填；**回填后新 HEAD 的最终 CI 尚待验证，不得宣称 B0 已最终完成**。
+**状态**：B0 最终官方 CI 已成功，数据库迁移与旧备份兼容通过；正式发布签名下 PR-A→PR-B 实体设备覆盖升级仍属于独立验收，不冒称已执行。
 
 ## 冻结变更范围
 
@@ -40,13 +40,21 @@
 - 经过原始日志可读证据协议的完整 digest 与逐文件 SHA-256 校验，25 份关键文本/Schema/XML 已单独归档并读回至 [固定证据提交 `6dfea983`](https://github.com/lihuihnu/XuaneyNote/tree/6dfea983a8fbfbda3e3303e0bebc6cde6df7cf9d/evidence)，该归档**明确仅是可读子集**，不冒充全部二进制/长日志。
 - 本提交将实际 v2 schema 字节回填到 `core/data/schemas/.../2.json`，并在 `tools/check_repo.py` 中固定 KSP 生成文件的真实 SHA-256。**必须对回填后的新 HEAD 再做官方 CI**；通过前不进入 B1。
 
+## 最终 B0 源码验收
+
+- 官方 [Run 39001250626](https://github.com/lihuihnu/XuaneyNote/actions/runs/39001250626) `completed/success`，job `117304451962`，attempt 1；PR source `9cd9d35fe8045a0c616156d34d0504c230c15ea7`；tested merge `54dfef585ca0a71578011ecd8760fce31ad359d1`。
+- 模型 JUnit `9/9`、Room/备份/迁移 `7/7`、手机 Compose `2/2`、宽屏平板 Compose `2/2`，均为零失败/零错误；官方 Runner 的 SDK 构建、Lint、隐私与强制终止重启检查成功。
+- KSP 实际输出 Room `2.json` SHA-256 `9ba603f08bc9e08eb5eee97cb6600c9aaa2fd90540cf16722184d5a9389ed445`，与已回填源码一致；PR-A 的 Room `1.json` 未变。
+- [固定可读证据及测试 XML](https://github.com/lihuihnu/XuaneyNote/tree/d44387b424b71027eceabc002ba0d92386ad4222/evidence) 完成独立归档并从远端读回；明确为 25 个可读记录子集，而非全部日志与二进制。
+- **B0 完成结论**：可以进入 B1；不能因此假定跨 Debug 签名覆盖安装、API26 实机或真实平板性能已经通过。
+
 ## CI / Schema 交付闸门
 
 当前运行时 Room 版本固定为 2.8.4；新增同版本 `androidx.room:room-testing` 的 **androidTest-only** 依赖，生产 APK 不引入测试库。Schema 导出仍由项目 KSP 自动生成。
 
-- [ ] 官方 GitHub-hosted `ubuntu-24.04` 针对 B0 **最终源码 SHA** 运行通过；不得用 PR-A 或文档 CI 的结果替代。
-- [ ] 从实际 KSP 输出取得 `core/data/schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/2.json`，核对并提交实际生成的 `identityHash`；**禁止手工推算或编造**。冻结的 v1 schema 不得改写。
-- [ ] 源代码 SHA、tested merge SHA、run/attempt、JUnit XML 和实际 generated schema 从 Runner 证据中核对；关键证据独立入库并远端读回。
-- [ ] 回填 v2 schema 后，若 HEAD 变化，应重新运行最终必要门禁。B0 全部通过后，才进入 B1 中文搜索。
+- [x] 官方 GitHub-hosted `ubuntu-24.04` 针对 B0 **最终源码 SHA** 运行通过；不得用 PR-A 或文档 CI 的结果替代。
+- [x] 从实际 KSP 输出取得 `core/data/schemas/io.github.lihuihnu.xuaneynote.data.NoteDatabase/2.json`，核对并提交实际生成的 `identityHash`；**禁止手工推算或编造**。冻结的 v1 schema 不得改写。
+- [x] 源代码 SHA、tested merge SHA、run/attempt、JUnit XML 和实际 generated schema 从 Runner 证据中核对；关键证据独立入库并远端读回。
+- [x] 回填 v2 schema 后，若 HEAD 变化，应重新运行最终必要门禁。B0 全部通过后，才进入 B1 中文搜索。
 
 **实体设备覆盖的诚实边界**：Room 迁移测试能够证明数据库兼容，却不能单独证明不同 CI 临时 Debug 签名可直接覆盖安装。真实 PR-A→PR-B APK 覆盖升级需要**同一包名及签名身份**，发布/固定签名流程后再做设备升级回归；禁止建议用户清除应用数据来规避签名不一致。

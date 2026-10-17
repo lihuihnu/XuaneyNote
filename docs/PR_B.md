@@ -1,7 +1,7 @@
 # PR-B：数据安全与资料管理——目标冻结 v1
 
 - **冻结日期**：2026-10-17（遵循仓库记录的 Asia/Tokyo 日期口径）。
-- **状态**：目标已冻结；**B0 首轮官方 Android CI 已成功（Run 38999957010），真实 KSP v2 Schema 已回填，等待回填后新 HEAD 的最终 CI**；B1–B5 仍未实施。详见 [B0 迁移记录](B0_MIGRATION.md)。
+- **状态**：目标已冻结；**B0 最终官方 CI 已通过（Run 39001250626），KSP v2 Schema 与旧备份兼容固定；B1 搜索已进入候选编码，等待本次新源码的 CI**；B2–B5 仍未实施。详见 [B0 迁移记录](B0_MIGRATION.md)。
 - **基线**：PR-A [#1](https://github.com/lihuihnu/XuaneyNote/pull/1) 已 squash 合并到 `main`，合并提交 `b85e27d5c004f978850badc4865dea821c0b44d1`。
 - **PR-A 身份**：最终源码 `19532a929475e9ce5e9f7fb2589654fb67f101d1`；官方 GitHub Actions [Run 38995733428](https://github.com/lihuihnu/XuaneyNote/actions/runs/38995733428) 为 `completed/success`；用户反馈手机实机验收无异常，但未提供设备型号、逐项日志或独立平板真机证据。
 - **工作分支**：`feat/pr-b-data-safety`，目标 `main`，只保持这一个活跃开发 PR。初次提交仅文档，不改变应用代码。
