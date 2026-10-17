@@ -1,9 +1,9 @@
-# B3：图片附件 · B3.1 数据模型/迁移候选
+# B3：图片附件 · B3.1 已验收，B3.2 文件生命周期候选
 
 **日期**：2026-10-17（Asia/Tokyo）。
 **分支**：`feat/pr-b-data-safety`，复用唯一活动 [PR #2](https://github.com/lihuihnu/XuaneyNote/pull/2)。
 **基线**：B2 `af36b2de2451bbd492c04ad3b8c05361319da962`，官方 [Run 39005974577](https://github.com/lihuihnu/XuaneyNote/actions/runs/39005974577) completed/success。B2 可读证据固定提交 `f4fe13a423c43b61fcdfc212e1fcb80a656cf8d9`。
-**状态**：**B3.1 首轮官方 Android CI 已成功；实际 KSP Schema v3 已校验回填，等待回填后的最终 SHA CI。** 仍不允许用户插入图片，也没有包含图片的完整备份，不能声明整个 B3 已完成。
+**状态**：**B3.1 回填后的最终 [Run 39009835439](https://github.com/lihuihnu/XuaneyNote/actions/runs/39009835439) completed/success，证据已归档读回；B3.2 文件存储与清理为待本次 CI 的候选实现。** 图片入口继续隐藏，B4 完整图片备份尚未完成。
 
 ## B3 总体验收约束
 
@@ -36,11 +36,38 @@
 
 ## B3.1 测试闸门
 
-- [ ] `AttachmentSchemaTest.v2SchemaMigratesToV3WithoutChangingNotesOrTrash`：使用真实冻结 `2.json` 创建旧库，保留活动笔记和回收站笔记的全部文本、修订与删除时间；升级后检查两新表为空，真实 Room open 可用。
-- [ ] `AttachmentSchemaTest.productionV1ToV3UpgradeKeepsOriginalNotebookData`：由生产 Room 直接执行完整 1→2→3 迁移，数据逐字节不变；没有破坏性重建。
-- [ ] `AttachmentSchemaTest.linkedAttachmentCannotBeDeletedOrSilentlyExcludedFromV1Backup`：只用合成元数据，检查共享引用、旧 v1 备份拒绝、带引用永久删除保护。
-- [ ] PR-A/B0/B1/B2 全部既有 Kotlin、Room/Compose 手机平板、进程重启、权限、备份测试持续通过。
-- [ ] 从 KSP 实际生成的 v3 Schema 回填并校验、跟踪 CI 源码 SHA 与 tested SHA，独立归档证据并远端读回。
-- [ ] 回填 `3.json` 后新 HEAD 再做最后一轮 CI；没有确认全部通过前不进入 B3.2。
+- [x] `AttachmentSchemaTest.v2SchemaMigratesToV3WithoutChangingNotesOrTrash`：使用真实冻结 `2.json` 创建旧库，保留活动笔记和回收站笔记的全部文本、修订与删除时间；升级后检查两新表为空，真实 Room open 可用。
+- [x] `AttachmentSchemaTest.productionV1ToV3UpgradeKeepsOriginalNotebookData`：由生产 Room 直接执行完整 1→2→3 迁移，数据逐字节不变；没有破坏性重建。
+- [x] `AttachmentSchemaTest.linkedAttachmentCannotBeDeletedOrSilentlyExcludedFromV1Backup`：只用合成元数据，检查共享引用、旧 v1 备份拒绝、带引用永久删除保护。
+- [x] PR-A/B0/B1/B2 全部既有 Kotlin、Room/Compose 手机平板、进程重启、权限、备份测试持续通过。
+- [x] 从 KSP 实际生成的 v3 Schema 回填并校验、跟踪 CI 源码 SHA 与 tested SHA，独立归档证据并远端读回。
+- [x] 回填 `3.json` 后新 HEAD 再做最后一轮 CI；没有确认全部通过前不进入 B3.2。
 
 **当前明确非目标**：不在 B3.1 交付 Photo Picker 交互、图片字节实际导入、缩略图、完整备份 ZIP、加密库或附件文件删除；也不修改正式签名、GitHub Runner、旧历史证据或 `main`。
+
+## B3.1 最终验证（回填 Schema 后）
+
+- 最终 source `5383c1e0240ca8403e109e1e7d430352d711c6fe`，tested SHA `939b92c1fc116d2a88ee207c1a697854978f02ef`。
+- 官方 [Run 39009835439](https://github.com/lihuihnu/XuaneyNote/actions/runs/39009835439) completed/success；模型 10/10、Room 15/15、手机/平板模拟窗口分别 4/4，零错误。Room v3 SHA-256 `dc57dc1df55e8d0ae29dfebaec166c868a2076b8c869e394578638c7bc7602ed`，历史 Schema 保留。
+- [最终可读证据归档](https://github.com/lihuihnu/XuaneyNote/tree/acc4e894fe6371d9e23e3ebffc9687bb4aa3d1c1/evidence) 已远端读回（22 份文件的可读子集，不冒充完整二进制封装）。
+
+## B3.2 私有文件生命周期（候选代码，CI 待验证）
+
+- `PrivateAttachmentFiles.kt` 内部 API 接受系统 `content:` URI 或移交的 `InputStream`，但**不在 Compose 中开放图片按钮**。图片必须具备完整备份/恢复后才向用户开放。
+- JPEG/PNG/WebP 检查文件头、实际 BitmapFactory MIME、尺寸和采样解码；最多 20 MiB、宽高 16,384、1 亿像素、单篇 128 张。8 KiB 流式复制和 SHA-256，不在内存加载整张大图；暂存后 `FileDescriptor.sync()`，重命名到 UUID 原图，再以 Room 事务关联。
+- 只允许私有相对路径 `images/<UUID>.<jpg|png|webp>`；拒绝路径穿越、绝对路径和符号链接；不保存外部 picker URI，不申请广泛存储权限。
+- `linkExisting`、`unlink` 和 `permanentlyDeleteTrashed` 依据数据库**真实引用**保留共享原图。删除最后引用时先提交数据库变更，再尝试删除物理文件；失败/中断由 `recover()` 幂等清理私有 staging 和孤儿文件。对还被引用但物理丢失的图只报告，不能偷偷删除笔记或附件记录。
+- 应用启动在 IO 线程尝试 `recover()`；**仅单进程串行化及 SQLite 事务，不承诺跨进程原子性、绝对掉电耐久或闪存物理擦除**。B2 当前 UI 对有附件链接的笔记仍采取保守拒绝，不会误用未完整验收的文件清理 API。
+- 旧 v1 JSON 在检测到任何附件/回收站状态时依旧拒绝不完整导出，B4 将负责包含图片的可验证 ZIP 完整备份；B3.2 不能视为安全可发行的图片功能。
+
+### B3.2 Android CI 验收项目
+
+- [ ] 流式导入有效 PNG/JPEG/WebP；核对 MIME、长宽、字节数、哈希、Room 关联、重开后原图可用。
+- [ ] 拒绝无效、截断、超 20 MiB 的模拟输入与不存在的目标笔记；不得遗留数据库记录/新原图。
+- [ ] 两篇笔记共享同一原图，软删、永久删除或解除一份引用不伤其他笔记，最后一份引用清理文件。
+- [ ] 重开恢复时只删除受控孤儿/暂存，不触碰未管理的文件；物理丢失的被引用图片只报告不伪造。
+- [ ] 非法路径穿越与未授权元数据不能逃逸私有目录。
+- [ ] B0/B1/B2/B3.1 回归、手机/平板 Compose、进程重启、隐私和三版 Schema 哈希全部通过。
+- [ ] B3.2 实际 CI/完整 JUnit、真实 source/tested SHA、独立证据归档并读回；通过后才考虑 B3.3。
+
+**尚未交付**：用户图片选择 UI、真实 SAF/Photo Picker 交互、缩略图、EXIF 隐私告知、跨文件系统 B4 备份与恢复、密码保护、真机性能。
