@@ -1,0 +1,59 @@
+Performing Streamed Install
+Success
+Performing Streamed Install
+Success
+INSTRUMENTATION_STATUS: class=io.github.lihuihnu.xuaneynote.RestartProbe
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+io.github.lihuihnu.xuaneynote.RestartProbe:
+INSTRUMENTATION_STATUS: test=seed
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.lihuihnu.xuaneynote.RestartProbe
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=seed
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 4.914
+
+OK (1 test)
+
+
+INSTRUMENTATION_CODE: -1
+INSTRUMENTATION_STATUS: class=io.github.lihuihnu.xuaneynote.RestartProbe
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+io.github.lihuihnu.xuaneynote.RestartProbe:
+INSTRUMENTATION_STATUS: test=verify
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=io.github.lihuihnu.xuaneynote.RestartProbe
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=verify
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 2.902
+
+OK (1 test)
+
+
+INSTRUMENTATION_CODE: -1
+app/build/outputs/apk/debug/app-debug.apk: OK
+app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk: OK
+Starting: Intent { cmp=io.github.lihuihnu.xuaneynote.debug/io.github.lihuihnu.xuaneynote.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: io.github.lihuihnu.xuaneynote.debug/io.github.lihuihnu.xuaneynote.MainActivity
+TotalTime: 2056
+WaitTime: 2060
+Complete

@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="io.github.lihuihnu.xuaneynote.NoteFlowTest" tests="8" failures="0" errors="0" skipped="0" time="42.761" timestamp="2026-10-17T13:00:17" hostname="localhost">
+  <properties>
+    <property name="device" value="emulator-5554 - 15" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="fullZipEntryRequiresWarningAndKeepsLegacyBackup" classname="io.github.lihuihnu.xuaneynote.NoteFlowTest" time="9.075" />
+  <testcase name="applicationHasNoNetworkPermissionsOrAutomaticBackup" classname="io.github.lihuihnu.xuaneynote.NoteFlowTest" time="3.841" />
+  <testcase name="chineseBodySearchEmptyStateAndClear" classname="io.github.lihuihnu.xuaneynote.NoteFlowTest" time="8.736" />
+  <testcase name="moveToTrashRestoreAndPermanentDelete" classname="io.github.lihuihnu.xuaneynote.NoteFlowTest" time="8.202" />
+  <testcase name="createEditAutosaveAndActivityRecreation" classname="io.github.lihuihnu.xuaneynote.NoteFlowTest" time="3.591" />
+  <testcase name="normalApplicationCannotOpenImagePickerBeforeManualSafAcceptance" classname="io.github.lihuihnu.xuaneynote.NoteFlowTest" time="2.104" />
+  <testcase name="readOnlyComponentShowsRecoveredImageButNoAddOrRemove" classname="io.github.lihuihnu.xuaneynote.ui.NoteImageStripTest" time="2.237" />
+  <testcase name="editableComponentHasAddAndExplicitRemoveConfirmation" classname="io.github.lihuihnu.xuaneynote.ui.NoteImageStripTest" time="2.242" />
+</testsuite>
