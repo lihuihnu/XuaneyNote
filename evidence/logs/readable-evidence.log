@@ -1,0 +1,9 @@
+test_binary_is_excluded_and_schema_has_priority (__main__.EvidenceTextTest.test_binary_is_excluded_and_schema_has_priority) ... ok
+test_budget_and_utf8_omissions_are_explicit (__main__.EvidenceTextTest.test_budget_and_utf8_omissions_are_explicit) ... ok
+test_corrupt_or_unsafe_record_is_rejected (__main__.EvidenceTextTest.test_corrupt_or_unsafe_record_is_rejected) ... ok
+test_roundtrip_preserves_bytes_and_commands_are_escaped (__main__.EvidenceTextTest.test_roundtrip_preserves_bytes_and_commands_are_escaped) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.002s
+
+OK

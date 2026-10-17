@@ -1,0 +1,160 @@
+{
+  "archive_status": "transported-not-yet-repository-verified",
+  "gates": [
+    {
+      "command": [
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        ":core:model:test",
+        ":core:data:assembleDebugAndroidTest",
+        ":app:assembleDebug",
+        ":app:assembleDebugAndroidTest",
+        ":app:lintDebug",
+        ":app:processReleaseMainManifest"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 191,
+      "exit_code": 0,
+      "gate": "build"
+    },
+    {
+      "command": [
+        "python3",
+        "-S",
+        "tools/test_device_probe.py"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 3,
+      "exit_code": 0,
+      "gate": "device-probe-script"
+    },
+    {
+      "command": [
+        "bash",
+        "tools/device_gate.sh"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 260,
+      "exit_code": 0,
+      "gate": "devices"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/test_evidence.py"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 0,
+      "exit_code": 0,
+      "gate": "evidence-protocol"
+    },
+    {
+      "command": [
+        "bash",
+        "tools/post_test_probe.sh",
+        "phone"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 24,
+      "exit_code": 0,
+      "gate": "phone-probe"
+    },
+    {
+      "command": [
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        "--no-parallel",
+        ":core:data:connectedDebugAndroidTest",
+        ":app:connectedDebugAndroidTest",
+        "-Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 92,
+      "exit_code": 0,
+      "gate": "phone"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/check_repo.py",
+        "--merged"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 0,
+      "exit_code": 0,
+      "gate": "privacy"
+    },
+    {
+      "command": [
+        "python3",
+        "-S",
+        "tools/test_evidence_text.py"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 0,
+      "exit_code": 0,
+      "gate": "readable-evidence"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/check_repo.py"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 0,
+      "exit_code": 0,
+      "gate": "structure"
+    },
+    {
+      "command": [
+        "bash",
+        "tools/post_test_probe.sh",
+        "tablet"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 17,
+      "exit_code": 0,
+      "gate": "tablet-probe"
+    },
+    {
+      "command": [
+        "./gradlew",
+        "--no-daemon",
+        "--console=plain",
+        "--no-parallel",
+        ":app:connectedDebugAndroidTest",
+        "-Pandroid.testInstrumentationRunnerArguments.notClass=io.github.lihuihnu.xuaneynote.RestartProbe"
+      ],
+      "conclusion": "success",
+      "duration_seconds": 40,
+      "exit_code": 0,
+      "gate": "tablet"
+    }
+  ],
+  "job_status_at_collection": "success",
+  "omissions": [],
+  "real_device_acceptance": "pending",
+  "repository": "lihuihnu/XuaneyNote",
+  "run_attempt": "1",
+  "run_id": "38993768936",
+  "runner": "GitHub Actions 1000032148",
+  "runner_image": "20261012.334.1",
+  "source_sha": "c5a5230d0a44a063f8dbfed621833f7c2b5e31ad",
+  "temporary_apks": [
+    {
+      "bytes": 11023697,
+      "delivery": "not-published",
+      "path": "app/build/outputs/apk/debug/app-debug.apk",
+      "sha256": "309488479495e49c2add3ff6f76eeb4cfb01782d2d21dbdc43b707d11f419bbe"
+    },
+    {
+      "bytes": 1078071,
+      "delivery": "not-published",
+      "path": "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      "sha256": "97bb6fa685595988813a7cfb5620e8cda3b085f438dd2708ec6897eebb7b16ad"
+    }
+  ],
+  "tested_sha": "6add833a89e9c58a62b64a832e611fcf4c8f85d7"
+}
