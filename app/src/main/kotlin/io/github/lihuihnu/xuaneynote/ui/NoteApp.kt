@@ -4,6 +4,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,6 +34,7 @@ import io.github.lihuihnu.xuaneynote.R
 import io.github.lihuihnu.xuaneynote.designsystem.XuaneyTheme
 import io.github.lihuihnu.xuaneynote.model.NoteSummary
 import io.github.lihuihnu.xuaneynote.model.SaveState
+import io.github.lihuihnu.xuaneynote.model.ThemeMode
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,8 +51,10 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
     val states by vm.saveStates.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
     val backup by vm.pendingImport.collectAsStateWithLifecycle()
+    val bundleReview by vm.pendingBundleReview.collectAsStateWithLifecycle()
     var settings by rememberSaveable { mutableStateOf(false) }
     var exportWarning by rememberSaveable { mutableStateOf(false) }
+    var bundleExportWarning by rememberSaveable { mutableStateOf(false) }
     var moveToTrashRequest by rememberSaveable { mutableStateOf<String?>(null) }
     var permanentDeleteRequest by rememberSaveable { mutableStateOf<String?>(null) }
     var page by rememberSaveable { mutableIntStateOf(1) }
@@ -60,12 +65,18 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
     val restore = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) {
         it?.let(vm::inspectBackup)
     }
+    val exportBundle = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { it?.let(vm::exportBundle) }
+    val importBundle = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { it?.let(vm::inspectBundle) }
     LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it); vm.clearMessage() } }
     LaunchedEffect(page) { if (page == 0) { vm.updateSearchText(""); vm.leaveTrash() } }
-    BackHandler(enabled = note != null && !settings && backup == null && !exportWarning) {
+    BackHandler(enabled = note != null && !settings && backup == null && bundleReview == null && !exportWarning && !bundleExportWarning) {
         if (!busy) vm.closeNote()
     }
-    BackHandler(enabled = trashOpen && note == null && !settings && backup == null && !exportWarning) {
+    BackHandler(enabled = trashOpen && note == null && !settings && backup == null && bundleReview == null && !exportWarning && !bundleExportWarning) {
         if (!busy) vm.leaveTrash()
     }
 
@@ -87,7 +98,8 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                         }
                     }, actions = {
-                        IconButton(onClick = { settings = true }, enabled = !busy) {
+                        IconButton(onClick = { settings = true }, enabled = !busy,
+                            modifier = Modifier.testTag("open-settings")) {
                             Icon(Icons.Default.MoreVert, stringResource(R.string.settings))
                         }
                     })
@@ -156,6 +168,8 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
         if (settings) SettingsDialog(theme, busy, vm::setTheme,
             onExport = { settings = false; vm.prepareLegacyBackup { exportWarning = true } },
             onImport = { settings = false; restore.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
+            onExportBundle = { settings = false; vm.prepareBundleExport { bundleExportWarning = true } },
+            onImportBundle = { settings = false; importBundle.launch(arrayOf("application/zip", "application/octet-stream", "application/x-zip-compressed")) },
             onDismiss = { settings = false })
         if (exportWarning) AlertDialog(onDismissRequest = { exportWarning = false },
             title = { Text(stringResource(R.string.confirm_export)) },
@@ -166,6 +180,70 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
             }) { Text(stringResource(R.string.choose_file)) } },
             dismissButton = { TextButton(onClick = { exportWarning = false }) { Text(stringResource(R.string.cancel)) } })
 
+
+        if (bundleExportWarning) AlertDialog(
+            onDismissRequest = { bundleExportWarning = false },
+            title = { Text(stringResource(R.string.confirm_bundle_export)) },
+            text = { Text(stringResource(R.string.bundle_plain_notice)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    bundleExportWarning = false
+                    exportBundle.launch("XuaneyNote-" + LocalDate.now() + ".xuaney.zip")
+                }, modifier = Modifier.testTag("bundle-export-confirm")) {
+                    Text(stringResource(R.string.choose_file))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { bundleExportWarning = false },
+                    modifier = Modifier.testTag("bundle-export-cancel")) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+
+        bundleReview?.let { review ->
+            AlertDialog(
+                onDismissRequest = vm::cancelBundleRestore,
+                title = { Text(stringResource(R.string.bundle_restore_title)) },
+                text = {
+                    Column(Modifier.verticalScroll(rememberScrollState())) {
+                        Text(stringResource(
+                            R.string.bundle_restore_summary,
+                            review.noteCount, review.trashedCount,
+                            review.imageCount, review.linkCount
+                        ))
+                        val themeName = when (review.exportedTheme) {
+                            ThemeMode.SYSTEM -> R.string.theme_system
+                            ThemeMode.LIGHT -> R.string.theme_light
+                            ThemeMode.DARK -> R.string.theme_dark
+                        }
+                        Text(stringResource(R.string.bundle_restore_theme, stringResource(themeName)),
+                            modifier = Modifier.padding(top = 8.dp))
+                        Text(stringResource(R.string.bundle_restore_conflict_notice),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 8.dp))
+                        if (review.sampleTitles.isNotEmpty()) {
+                            Text(stringResource(R.string.bundle_restore_preview_title),
+                                style = MaterialTheme.typography.titleSmall,
+                                modifier = Modifier.padding(top = 12.dp))
+                            review.sampleTitles.forEach { Text("· " + it, maxLines = 1) }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = vm::confirmBundleRestore, enabled = !busy,
+                        modifier = Modifier.testTag("confirm-bundle-restore")) {
+                        Text(stringResource(R.string.confirm_restore))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = vm::cancelBundleRestore, enabled = !busy,
+                        modifier = Modifier.testTag("cancel-bundle-restore")) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
+            )
+        }
         moveToTrashRequest?.let { id ->
             AlertDialog(onDismissRequest = { moveToTrashRequest = null },
                 title = { Text(stringResource(R.string.trash_confirm_title)) },
