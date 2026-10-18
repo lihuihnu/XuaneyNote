@@ -85,15 +85,27 @@ assert 'buildConfig = true' in (root / 'app/build.gradle.kts').read_text(), 'Bui
 viewmodel = (root / 'app/src/main/kotlin/io/github/lihuihnu/xuaneynote/NotesViewModel.kt').read_text()
 assert 'data.attachments.permanentlyDeleteTrashed(id)' in viewmodel, 'File-safe trash deletion required'
 assert 'fun addImage(noteId: String, uri: Uri)' in viewmodel, 'Bind Picker return to original note'
-# B5.1 third-party AES ZIP implementation is not authorized in production.
+# B5.2: reviewed Zip4j 2.11.6 may now be used only by an internal backend.
 b5data = (root / 'core/data/build.gradle.kts').read_text()
 assert versions['versions']['zip4j'] == '2.11.6'
-assert 'androidTestImplementation(libs.zip4j)' in b5data
-assert not re.search(r'(?m)^\s*implementation\(libs\.zip4j\)', b5data)
+assert re.search(r'(?m)^\s*implementation\(libs\.zip4j\)', b5data), 'B5 backend library required'
+assert 'androidTestImplementation(libs.zip4j)' not in b5data, 'No redundant test dependency'
 app_gradle = (root / 'app/build.gradle.kts').read_text()
-assert not re.search(r'(?m)^\s*implementation\(libs\.zip4j\)', app_gradle)
+assert not re.search(r'(?m)^\s*implementation\(libs\.zip4j\)', app_gradle), 'No separate app dependency'
 assert 'sourceSets.getByName("androidTest").java.srcDir("$rootDir/tools/b5")' in b5data
-print('PASS source/privacy / pinned dependencies / Wrapper / frozen Room schemas / Debug-only image gate / B5 test-only ZIP / read-only CI')
+b5_service = (root / 'core/data/src/main/kotlin/io/github/lihuihnu/xuaneynote/data/EncryptedBundleTransferService.kt').read_text()
+assert all(text in b5_service for text in (
+    'AesKeyStrength.KEY_STRENGTH_256',
+    'header.encryptionMethod == EncryptionMethod.AES',
+    'entries.size == 1',
+    'original.inspect(FileInputStream(inner))',
+    'original.restore(verified)',
+    'MAX_OUTER',
+    'cleanupOrphans()'
+)), 'B5 fail-closed backend contracts missing'
+assert 'encryptedBundles.' not in (root / 'app/src/main/kotlin/io/github/lihuihnu/xuaneynote/NotesViewModel.kt').read_text(), 'No B5.3 UI yet'
+assert '5f1eb1e9d67cfee200a695e4079751b49e73a226b154193e13f7c602efbe72fb' in (root / 'tools/b5/run_interop.sh').read_text(), 'Pinned candidate hash missing'
+print('PASS source/privacy / frozen Room schemas / Debug image gate / isolated B5.2 AES backend / read-only CI')
 if '--merged' in sys.argv:
     manifests = list((root / 'app/build/intermediates').glob('**/AndroidManifest.xml'))
     assert any('release' in str(p).lower() for p in manifests), 'No release merged manifest'

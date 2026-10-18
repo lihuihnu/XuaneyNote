@@ -93,3 +93,22 @@
 - 旧 `B5.1` 清单中的“**7-Zip 直接中文密码双向通过**”现认定是不可移植的测试假设，保留此失败证据，改以 **7-Zip ASCII + 独立 pyzipper Unicode** 双轨验证；新源码的 CI 结果必须单独记录，不能复用 Run 39090047535 当作通过。
 
 本轮新代码仍是测试工具；未在生产 `implementation` 引入 Zip4j，明文 ZIP v2、Room Schema 和既有数据均不改变，PR 保持 Draft。
+
+
+## 8. B5.1 成功验收与 B5.2 受控后端候选（2026-10-18）
+
+B5.1 修订版 [Run 39090837334](https://github.com/lihuihnu/XuaneyNote/actions/runs/39090837334) **completed/success**，source `6144554b339323d021c682d095fab89ad3510645`，tested merge `cd9c7ad58295dd65d994b0092ea153ea68d9c8c1`，attempt 1：
+
+- Zip4j + pyzipper 对中文/Emoji UTF-8 密码严格双向通过；Zip4j + 独立 7-Zip 对 ASCII 密码严格双向通过。7-Zip 在本 Runner 上额外观察到 Unicode 可解密，但不同环境不能以此保证全平台同一中文密码兼容。
+- 完整 AES MAC 篡改、错误密码、截断、AES-128、ZipCrypto、明文与多条目拒绝通过；实际 API26 三项专项、原 API35 构建/Lint/模拟手机平板测试均通过。
+- JAR SHA-256 `5f1eb1e9d67cfee200a695e4079751b49e73a226b154193e13f7c602efbe72fb` 在两轮官方 Maven 下载/CI 核对一致，独立可信来源仍应在发布审计中复核。风险：WinZip AES PBKDF2 1000 次、外层元数据泄漏、Unicode 第三方解压兼容不一，均**没有消失**。
+
+本轮 **B5.2** 只把已审候选的 Zip4j 2.11.6 引入 `core:data`，并新增 `EncryptedBundleTransferService` 内部后端，不连接任何 Compose / SAF 界面；原明文 B4 代码与 Room v1/v2/v3 Schema 保持不变：
+
+- 导出：原 B4 严格快照 → 私有临时 B4 ZIP → 单条目、固定文件名 `payload.xuaney.zip` 的 AES-256 外层 ZIP → 有界输出流。禁止 ZipCrypto/AES-128 降级，不把用户笔记标题或图片哈希写在 ZIP 条目名称上。B5.3 将负责 SAF 关闭后读回认证，当前不宣称已经具备用户可操作的完整加密导出。
+- 导入：有界私有临时落盘 → 严格检查 ZIP 中央目录恰好一个固定名称、AES-256 强度、非分卷和容量 → 读取到 EOF 完成认证 → **必须再交给现有 B4 `inspect`** 做逐文件完整性、图片内容与数据库语义校验。只返回 `InspectedBundle`，**不会直接修改 Room**；单独调用 `restore()` 才会使用已经验证的 B4 原子恢复事务。
+- 缓存：所有中间明文仅存在 app 私有 `cacheDir/xuaney-b5-*`，通过进程内 Mutex 序列化与启动时清理相同前缀的异常残留。错误/取消/损坏文件不会清空历史笔记，任何声明都不等于闪存物理不可恢复擦除。密码在后台使用临时 `CharArray` 副本并擦除，调用方仍负责自己传入的密码生命周期。
+- 新增 **2 项** Android 合成数据专项：完整加密的笔记/回收站/共享图片往返与恢复确认前零数据库写入；错误密码、篡改 MAC、非法多条目和无效 ZIP 保持既有笔记不变。其余 B4 Room/图片/备份回归继续交由唯一官方 CI。
+- **当前仅是提交前的候选源码与测试，尚未取得本轮 CI。** 即使成功，也只是后端原型，不代表真实 SAF、密码提示、加密文件读回或用户端功能完成；这些属于 B5.3。PR #2 仍 Draft，禁合并、禁发布。
+
+B5.2 审查与合并边界：旧 B4 原子恢复和导入冲突处理绝不能复制成另一套；若加密认证失败或用户未确认，不能创建任何正常笔记/回收站/图片元数据。

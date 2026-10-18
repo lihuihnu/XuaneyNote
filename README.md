@@ -2,7 +2,7 @@
 
 **专注当下，记录生活。** 面向 Android 手机和平板的完全本地、免费、无需登录的笔记、日记、手账、备忘录与番茄专注应用。
 
-> **当前状态（2026-10-17）**：PR-A [#1](https://github.com/lihuihnu/XuaneyNote/pull/1) 已合并至 `main`（`b85e27d5c004f978850badc4865dea821c0b44d1`），交付最小原生笔记闭环。PR-B 数据安全与资料管理已在 `feat/pr-b-data-safety` **冻结目标，B0 已完成最终 CI 验收；B1 中文搜索已通过官方 CI，B2 回收站已通过官方 CI；B3.1/B3.2/B4.1/B4.2a/B4.2b 均通过官方自动化 CI；B3.3 只读图片预览已通过官方 CI；受信任的 SAF 测试 APK 已归档；维护者报告手机 SAF 验收通过（未附逐项记录）；下一轮仅在 Debug 构建开放 Photo Picker/移除预览，正式 Release 仍关闭图片编辑，B3.4 真机图片功能已获维护者通过声明、仍缺逐项记录；B5.0 安全审查已通过，B5.1 原始 Run 39090047535 失败（7-Zip Unicode 密码互操作）；修订版改用 7-Zip ASCII 与独立 pyzipper Unicode 双轨验证，待新 CI，Android26 尚未运行；尚未实现生产密码备份**。这仍不是正式 V1 发布。
+> **当前状态（2026-10-17）**：PR-A [#1](https://github.com/lihuihnu/XuaneyNote/pull/1) 已合并至 `main`（`b85e27d5c004f978850badc4865dea821c0b44d1`），交付最小原生笔记闭环。PR-B 数据安全与资料管理已在 `feat/pr-b-data-safety` **冻结目标，B0 已完成最终 CI 验收；B1 中文搜索已通过官方 CI，B2 回收站已通过官方 CI；B3.1/B3.2/B4.1/B4.2a/B4.2b 均通过官方自动化 CI；B3.3 只读图片预览已通过官方 CI；受信任的 SAF 测试 APK 已归档；维护者报告手机 SAF 验收通过（未附逐项记录）；下一轮仅在 Debug 构建开放 Photo Picker/移除预览，正式 Release 仍关闭图片编辑，B3.4 真机图片功能已获维护者通过声明、仍缺逐项记录；B5.0 安全审查已通过，B5.1 Run 39090837334 已通过 7-Zip ASCII、pyzipper Unicode、AES MAC 及 Android26；B5.2 只新增内部加密备份后端和两项隔离测试，等待新 CI，用户尚不能使用密码备份；尚未实现生产密码备份**。这仍不是正式 V1 发布。
 
 ## 已实现：PR-A 基础笔记
 
@@ -28,7 +28,7 @@
 
 - [B4.2b SAF 手机验收清单](docs/B4_2B_SAF_ACCEPTANCE.md)：维护者口头报告通过，未提供机型/逐项证据；不视为同签名升级或其他 ROM 验收。
 - [B3.4 Photo Picker 专项](docs/B3_4_IMAGE_PICKER_ACCEPTANCE.md)：官方 Debug CI 已成功，维护者 2026-10-18 报告真机验收通过；机型、逐项异常及签名升级尚无单独证据。**Release 图片编辑仍关闭**。
-- [B5 AES-256 ZIP 安全审查](docs/B5_ENCRYPTED_BACKUP_SECURITY_REVIEW.md)：B5.0 官方 CI 已通过，B5.1 首次 7-Zip Unicode 测试失败，修订后保留 test-only Zip4j 2.11.6，使用 7-Zip ASCII 与 pyzipper Unicode 双向验证、API26 定向测试，**仍待新 CI**；生产 APK 不包含加密库或用户入口。
+- [B5 AES-256 ZIP 安全审查](docs/B5_ENCRYPTED_BACKUP_SECURITY_REVIEW.md)：B5.0 官方 CI 已通过，B5.1 修订版已于 [Run 39090837334](https://github.com/lihuihnu/XuaneyNote/actions/runs/39090837334) 通过；B5.2 仅将锁定版本的 Zip4j 2.11.6 用于 core:data 内部备份后端，等待本轮新 CI；**尚无密码备份 UI 和 SAF**；生产 APK 不包含加密库或用户入口。
 - [PR-B 测试 APK 来源与签名限制](docs/PR_B_TEST_APK.md)：旧 SAF 测试包不可冒充新的图片测试包；临时签名不可保证覆盖旧安装。
 
 ## 文档导航

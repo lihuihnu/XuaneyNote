@@ -18,6 +18,7 @@ class XuaneyApplication : Application() {
         // 进程启动后在 IO 线程恢复私有目录；永不删除 Room 仍引用的图片。
         applicationScope.launch(Dispatchers.IO) {
             runCatching { data.bundle.cleanupInspections() }
+            runCatching { data.encryptedBundles.cleanupOrphans() }
             runCatching { data.attachments.recover() }
         }
     }
