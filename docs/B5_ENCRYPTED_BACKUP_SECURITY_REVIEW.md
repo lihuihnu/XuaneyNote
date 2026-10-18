@@ -80,3 +80,16 @@
 - [ ] 进入 B5.2 前对实验结果复审，并将实际 JAR SHA-256 锁定为独立信任来源。
 
 **已知风险**：标准 AES ZIP 的 PBKDF2 1000 次迭代和外层元数据公开仍不改变；部分第三方 ZIP 实现对非 ASCII 密码编码可能不一致。若互操作失败，应明确保留失败并审查，不做不透明密码转码或使用弱 ZipCrypto 回退。
+
+
+
+## 7. B5.1 Run 39090047535 故障审计与修正合同（2026-10-18）
+
+- [Run 39090047535](https://github.com/lihuihnu/XuaneyNote/actions/runs/39090047535)（source `4f8cde37d9838933a19e84863d3187d0d3eacb7e`，tested merge `490dcbeb70d9d6a78dd6501753de9a770a5798ff`）**completed/failure**。结构门禁、JDK 设置成功，Zip4j 测试已打印 `PASS B5.1 write-aes` 与 `PASS B5.1 verify`。紧接着独立 7-Zip 以包含中文/Emoji 的密码执行 `t` 时出现 `E_INVALIDARG`，退出码 2；Android SDK、API35 与 API26 均因前序失败未执行。
+- 审核根因：ZIP AES 的**密码字节编码并没有跨工具统一的非 ASCII 语义**，7-Zip 和 Zip4j 的中文密码处理存在已知差异。[Zip4j 维护者说明](https://github.com/srikanth-lingala/zip4j/issues/328)、[7-Zip 作者对 ZIP 密码编码的说明](https://sourceforge.net/p/sevenzip/feature-requests/1322/)。**绝不能因为 Zip4j 自己能解密就把 7-Zip Unicode 互操作记为通过。**
+- 补救门禁（不降低 AES-256/认证/弱加密拒绝）：`7-Zip` 使用 ASCII 高熵合成密码严格**双向**验证 AES-256 的通用格式；独立 Python `pyzipper 0.4.0` 使用 UTF-8 字节对中文/Emoji 密码与 Zip4j 进行严格双向、逐字节验收。两组都必须成功，否则本轮 CI 失败。7-Zip Unicode 另作为非阻塞的**兼容性观察**写入日志，遇到 `E_INVALIDARG` 不伪装为通过。
+- Python 工具仅在 Runner 暂存目录安装，`pyzipper==0.4.0`、`pycryptodomex==3.23.0` 版本固定，不加到 Android 或发布依赖。Zip4j 测试 JAR 固定先前官方 Run 实见的 SHA-256 `5f1eb1e9d67cfee200a695e4079751b49e73a226b154193e13f7c602efbe72fb` 并在每次运行核对；**生产依赖的独立可信性审查仍未完成**。
+- **不具备直接跨任意 ZIP 软件使用同一个中文密码的承诺**。如果后续确认标准 ZIP 无法解决这一兼容性缺口，应在 B5.2/B5.3 设计中明确区分“应用内支持 Unicode”与“外部兼容条件”，不得偷偷把 Unicode 密码转为另一组不向用户告知的字符，也不得改用不安全 ZipCrypto。外部 ZIP 互通的通用保证只针对强 ASCII 密码。若产品规格要求所有外部工具原样接受 Unicode，必须重新评审容器格式后再开放加密功能。
+- 旧 `B5.1` 清单中的“**7-Zip 直接中文密码双向通过**”现认定是不可移植的测试假设，保留此失败证据，改以 **7-Zip ASCII + 独立 pyzipper Unicode** 双轨验证；新源码的 CI 结果必须单独记录，不能复用 Run 39090047535 当作通过。
+
+本轮新代码仍是测试工具；未在生产 `implementation` 引入 Zip4j，明文 ZIP v2、Room Schema 和既有数据均不改变，PR 保持 Draft。

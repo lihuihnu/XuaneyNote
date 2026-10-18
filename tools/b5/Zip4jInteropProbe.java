@@ -155,6 +155,8 @@ public final class Zip4jInteropProbe {
     }
 
     public static void mustReject(File archive, char[] password) throws Exception {
+        // A missing/corrupted test fixture must not masquerade as an authentication success.
+        require(archive.isFile(), "Missing negative-test archive");
         try {
             readAes(archive, password);
         } catch (Exception expected) {
