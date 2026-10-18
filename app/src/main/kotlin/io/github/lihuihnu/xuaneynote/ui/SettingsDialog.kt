@@ -19,6 +19,7 @@ import io.github.lihuihnu.xuaneynote.model.ThemeMode
 fun SettingsDialog(theme: ThemeMode, busy: Boolean, onTheme: (ThemeMode) -> Unit,
     onExport: () -> Unit, onImport: () -> Unit,
     onExportBundle: () -> Unit, onImportBundle: () -> Unit,
+    onExportEncrypted: () -> Unit, onImportEncrypted: () -> Unit,
     onDismiss: () -> Unit) {
     AlertDialog(onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.settings)) },
@@ -34,6 +35,18 @@ fun SettingsDialog(theme: ThemeMode, busy: Boolean, onTheme: (ThemeMode) -> Unit
                         Spacer(Modifier.width(12.dp)); Text(stringResource(label))
                     }
                 }
+                HorizontalDivider(Modifier.padding(vertical = 12.dp))
+                Button(onClick = onExportEncrypted, enabled = !busy,
+                    modifier = Modifier.fillMaxWidth().testTag("export-encrypted-bundle")) {
+                    Text(stringResource(R.string.aes_export_backup))
+                }
+                OutlinedButton(onClick = onImportEncrypted, enabled = !busy,
+                    modifier = Modifier.fillMaxWidth().testTag("import-encrypted-bundle")) {
+                    Text(stringResource(R.string.aes_import_backup))
+                }
+                Text(stringResource(R.string.aes_choice_notice),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(vertical = 8.dp))
                 HorizontalDivider(Modifier.padding(vertical = 12.dp))
                 Button(onClick = onExportBundle, enabled = !busy,
                     modifier = Modifier.fillMaxWidth().testTag("export-full-bundle")) {

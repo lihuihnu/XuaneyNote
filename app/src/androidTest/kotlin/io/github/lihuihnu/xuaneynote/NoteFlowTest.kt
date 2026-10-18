@@ -143,6 +143,16 @@ class NoteFlowTest {
         compose.onNodeWithTag("import-full-bundle").assertExists()
         compose.onNodeWithTag("import-legacy-backup").assertExists()
         compose.onNodeWithTag("export-legacy-backup").assertExists()
+        compose.onNodeWithTag("export-encrypted-bundle").assertExists()
+        compose.onNodeWithTag("import-encrypted-bundle").assertExists()
+        compose.onNodeWithTag("export-encrypted-bundle").performScrollTo().performClick()
+        compose.onNodeWithTag("aes-password-continue").assertIsNotEnabled()
+        // Cancel the password prompt. No SAF create-file is launched and legacy
+        // ZIP v2/JSON v1 entries are still accessible.
+        compose.onNodeWithTag("aes-password-cancel").performClick()
+        compose.onNodeWithTag("open-settings").performClick()
+        compose.onNodeWithTag("export-full-bundle").assertExists()
+        compose.onNodeWithTag("import-full-bundle").assertExists()
     }
 
     @Test fun debugPreviewExposesImageEntryOnlyForDebugVariant() {

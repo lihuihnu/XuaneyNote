@@ -1,5 +1,7 @@
 package io.github.lihuihnu.xuaneynote.ui
 
+import android.net.Uri
+
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -57,6 +59,10 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
     var settings by rememberSaveable { mutableStateOf(false) }
     var exportWarning by rememberSaveable { mutableStateOf(false) }
     var bundleExportWarning by rememberSaveable { mutableStateOf(false) }
+    // Password dialog / selected file URI never go into rememberSaveable or SavedState.
+    var encryptedExportPasswordDialog by remember { mutableStateOf(false) }
+    var encryptedImportPasswordDialog by remember { mutableStateOf(false) }
+    var pendingEncryptedImportUri by remember { mutableStateOf<Uri?>(null) }
     var moveToTrashRequest by rememberSaveable { mutableStateOf<String?>(null) }
     var permanentDeleteRequest by rememberSaveable { mutableStateOf<String?>(null) }
     var page by rememberSaveable { mutableIntStateOf(1) }
@@ -75,6 +81,15 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
     val importBundle = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { it?.let(vm::inspectBundle) }
+    val exportEncryptedBundle = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri -> vm.exportEncryptedBundle(uri) } // null SAF result zeros pending password.
+    val importEncryptedBundle = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        pendingEncryptedImportUri = uri
+        encryptedImportPasswordDialog = uri != null
+    }
     // AndroidX Photo Picker 返回一次性只读 content URI，仅 Debug 可发起。
     val pickPicture = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
@@ -85,10 +100,12 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
     }
     LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it); vm.clearMessage() } }
     LaunchedEffect(page) { if (page == 0) { vm.updateSearchText(""); vm.leaveTrash() } }
-    BackHandler(enabled = note != null && !settings && backup == null && bundleReview == null && !exportWarning && !bundleExportWarning) {
+    BackHandler(enabled = note != null && !settings && backup == null && bundleReview == null && !exportWarning && !bundleExportWarning &&
+        !encryptedExportPasswordDialog && !encryptedImportPasswordDialog) {
         if (!busy) vm.closeNote()
     }
-    BackHandler(enabled = trashOpen && note == null && !settings && backup == null && bundleReview == null && !exportWarning && !bundleExportWarning) {
+    BackHandler(enabled = trashOpen && note == null && !settings && backup == null && bundleReview == null && !exportWarning && !bundleExportWarning &&
+        !encryptedExportPasswordDialog && !encryptedImportPasswordDialog) {
         if (!busy) vm.leaveTrash()
     }
 
@@ -202,6 +219,12 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
             onImport = { settings = false; restore.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
             onExportBundle = { settings = false; vm.prepareBundleExport { bundleExportWarning = true } },
             onImportBundle = { settings = false; importBundle.launch(arrayOf("application/zip", "application/octet-stream", "application/x-zip-compressed")) },
+            onExportEncrypted = { settings = false; encryptedExportPasswordDialog = true },
+            onImportEncrypted = {
+                settings = false
+                pendingEncryptedImportUri = null
+                importEncryptedBundle.launch(arrayOf("application/zip", "application/octet-stream", "application/x-zip-compressed"))
+            },
             onDismiss = { settings = false })
         if (exportWarning) AlertDialog(onDismissRequest = { exportWarning = false },
             title = { Text(stringResource(R.string.confirm_export)) },
@@ -233,6 +256,37 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
             }
         )
 
+        if (encryptedExportPasswordDialog) {
+            EncryptedPasswordDialog(
+                mode = EncryptedPasswordMode.EXPORT,
+                busy = busy,
+                onConfirm = { secret ->
+                    encryptedExportPasswordDialog = false
+                    // ViewModel synchronously copies the CharArray; dialog zeros its own copy.
+                    vm.prepareEncryptedBundleExport(secret) {
+                        exportEncryptedBundle.launch("XuaneyNote-" + LocalDate.now() + ".xuaney.aes.zip")
+                    }
+                },
+                onDismiss = { encryptedExportPasswordDialog = false }
+            )
+        }
+        if (encryptedImportPasswordDialog) {
+            EncryptedPasswordDialog(
+                mode = EncryptedPasswordMode.IMPORT,
+                busy = busy,
+                onConfirm = { secret ->
+                    encryptedImportPasswordDialog = false
+                    val candidate = pendingEncryptedImportUri
+                    pendingEncryptedImportUri = null
+                    if (candidate != null) vm.inspectEncryptedBundle(candidate, secret)
+                },
+                onDismiss = {
+                    encryptedImportPasswordDialog = false
+                    pendingEncryptedImportUri = null
+                }
+            )
+        }
+
         bundleReview?.let { review ->
             AlertDialog(
                 onDismissRequest = vm::cancelBundleRestore,
@@ -244,6 +298,11 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
                             review.noteCount, review.trashedCount,
                             review.imageCount, review.linkCount
                         ))
+                        if (review.encrypted) {
+                            Text(stringResource(R.string.aes_verified_notice),
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(top = 8.dp))
+                        }
                         val themeName = when (review.exportedTheme) {
                             ThemeMode.SYSTEM -> R.string.theme_system
                             ThemeMode.LIGHT -> R.string.theme_light

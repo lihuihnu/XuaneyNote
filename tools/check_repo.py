@@ -103,9 +103,26 @@ assert all(text in b5_service for text in (
     'MAX_OUTER',
     'cleanupOrphans()'
 )), 'B5 fail-closed backend contracts missing'
-assert 'encryptedBundles.' not in (root / 'app/src/main/kotlin/io/github/lihuihnu/xuaneynote/NotesViewModel.kt').read_text(), 'No B5.3 UI yet'
+# B5.3: SAF only reports success after close + reopening the same URI and
+# fully re-validating AES+inner B4; password must never enter saved state.
+vm = (root / 'app/src/main/kotlin/io/github/lihuihnu/xuaneynote/NotesViewModel.kt').read_text()
+assert 'fun prepareEncryptedBundleExport(password: CharArray' in vm
+assert 'fun exportEncryptedBundle(uri: Uri?)' in vm
+assert 'fun inspectEncryptedBundle(uri: Uri, password: CharArray)' in vm
+assert 'verified.snapshot == recorded' in vm
+assert 'pendingEncryptedExportPassword' in vm and 'clearPendingEncryptedExport()' in vm
+assert 'data.encryptedBundles.inspect(input, secret)' in vm
+pwd_ui = (root / 'app/src/main/kotlin/io/github/lihuihnu/xuaneynote/ui/EncryptedPasswordDialog.kt').read_text()
+assert 'PasswordVisualTransformation()' in pwd_ui and 'SecureFlagPolicy.SecureOn' in pwd_ui
+assert 'rememberSaveable' not in pwd_ui and 'SavedStateHandle' not in pwd_ui
+app_ui = (root / 'app/src/main/kotlin/io/github/lihuihnu/xuaneynote/ui/NoteApp.kt').read_text()
+assert 'pendingEncryptedImportUri by remember {' in app_ui
+assert 'exportEncryptedBundle.launch(' in app_ui
+assert 'vm.exportEncryptedBundle(uri)' in app_ui
+assert 'importEncryptedBundle.launch(' in app_ui
+assert 'fun inspectBundle(uri: Uri) = inspectBundleInternal(uri, null)' in vm
 assert '5f1eb1e9d67cfee200a695e4079751b49e73a226b154193e13f7c602efbe72fb' in (root / 'tools/b5/run_interop.sh').read_text(), 'Pinned candidate hash missing'
-print('PASS source/privacy / frozen Room schemas / Debug image gate / isolated B5.2 AES backend / read-only CI')
+print('PASS source/privacy / frozen Room schemas / Debug image gate / B5.3 SAF + AES full readback / read-only CI')
 if '--merged' in sys.argv:
     manifests = list((root / 'app/build/intermediates').glob('**/AndroidManifest.xml'))
     assert any('release' in str(p).lower() for p in manifests), 'No release merged manifest'

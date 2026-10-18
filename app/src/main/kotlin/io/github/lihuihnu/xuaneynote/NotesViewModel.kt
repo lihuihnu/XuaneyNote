@@ -33,7 +33,8 @@ data class BundleRestorePreview(
     val imageCount: Int,
     val linkCount: Int,
     val exportedTheme: ThemeMode,
-    val sampleTitles: List<String>
+    val sampleTitles: List<String>,
+    val encrypted: Boolean = false
 )
 
 
@@ -50,6 +51,13 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
     private val mutableBundleReview = MutableStateFlow<BundleRestorePreview?>(null)
     val pendingBundleReview = mutableBundleReview.asStateFlow()
     private var verifiedBundle: InspectedBundle? = null
+    // Never in SavedStateHandle. Held only in ViewModel RAM during the SAF picker.
+    private var pendingEncryptedExportPassword: CharArray? = null
+
+    private fun clearPendingEncryptedExport() {
+        pendingEncryptedExportPassword?.fill('\u0000')
+        pendingEncryptedExportPassword = null
+    }
     private val mutableSearchText = MutableStateFlow(savedState.get<String>("note_search").orEmpty())
     val searchText = mutableSearchText.asStateFlow()
     private val mutableTrashOpen = MutableStateFlow(savedState.get<Boolean>("trash_open") ?: false)
@@ -285,38 +293,133 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
         }
     }
 
-    /** 未确认时仅解包在私有沙箱，不能写回 Room。 */
-    fun inspectBundle(uri: Uri) = operation {
-        requireSaved()
-        // 新的用户选择会废止旧 ZIP 预览，即使本次新文件无法验证也不会回退展示旧候选。
-        val previous = verifiedBundle
-        verifiedBundle = null
-        mutableBundleReview.value = null
-        if (previous != null) withContext(Dispatchers.IO) {
-            runCatching { previous.close() }
+    /**
+     * B5.3: password only in ViewModel RAM while Android SAF is picking a target.
+     * The UI clears its editable Strings immediately after handing off a CharArray.
+     */
+    fun prepareEncryptedBundleExport(password: CharArray, onReady: () -> Unit) {
+        if (mutableBusy.value) return
+        if (password.size !in 12..1024) {
+            mutableMessage.value = "密码至少 12 个字符，请使用更长且独立的口令。"
+            return
         }
-        val inspected = try {
-            check(uri.scheme == "content") { "仅接受系统选择器返回的文件" }
-            withContext(Dispatchers.IO) {
-                requireNotNull(app.contentResolver.openInputStream(uri)) {
-                    "ZIP 文件无法读取"
-                }.use { input -> data.bundle.inspect(input) }
+        val secret = password.copyOf()
+        operation {
+            var handedOff = false
+            try {
+                requireSaved()
+                clearPendingEncryptedExport()
+                pendingEncryptedExportPassword = secret
+                onReady() // Start CreateDocument only after autosave flush succeeds.
+                handedOff = true
+            } finally {
+                if (!handedOff) {
+                    if (pendingEncryptedExportPassword === secret) pendingEncryptedExportPassword = null
+                    secret.fill('\u0000')
+                }
             }
-        } catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) {
-            mutableMessage.value = "ZIP 备份未通过格式、附件和完整性校验；导入已取消，现有笔记和图片未被修改。"
-            return@operation
         }
-        verifiedBundle = inspected
-        val s: BundleSnapshot = inspected.snapshot
-        mutableBundleReview.value = BundleRestorePreview(
-            noteCount = s.notes.size,
-            trashedCount = s.notes.count { it.deletedAt != null },
-            imageCount = s.attachments.size,
-            linkCount = s.links.size,
-            exportedTheme = s.theme,
-            sampleTitles = s.notes.take(5).map { it.title.ifBlank { "未命名笔记" }.take(60) }
-        )
+    }
+
+    /** Canceling SAF must zero the temporary password and must not create a file. */
+    fun exportEncryptedBundle(uri: Uri?) {
+        val secret = pendingEncryptedExportPassword
+        pendingEncryptedExportPassword = null
+        if (secret == null) {
+            if (uri != null) mutableMessage.value = "密码会话已失效；未导出文件，请重新操作。"
+            return
+        }
+        if (uri == null || mutableBusy.value) {
+            secret.fill('\u0000')
+            return
+        }
+        operation {
+            try {
+                requireSaved()
+                withContext(Dispatchers.IO) {
+                    require(uri.scheme == "content") { "加密备份目标必须来自系统文件选择器" }
+                    val resolver = app.contentResolver
+                    val themeNow = data.preferences.theme.first()
+                    val recorded = requireNotNull(resolver.openOutputStream(uri, "wt")) {
+                        "无法写入加密备份目标"
+                    }.use { stream ->
+                        data.encryptedBundles.export(stream, themeNow, secret)
+                    }
+                    // Accept SAF success only after close, re-open and authenticate
+                    // the exact same URI, then compare the complete B4 snapshot.
+                    requireNotNull(resolver.openInputStream(uri)) {
+                        "目标文件提供者不支持关闭后读取校验"
+                    }.use { stream -> data.encryptedBundles.inspect(stream, secret) }
+                        .use { verified ->
+                            check(verified.snapshot == recorded) { "加密文件读回不一致" }
+                        }
+                }
+                mutableMessage.value = "AES-256 密码备份已写入并完整读回校验。请妥善保存密码。"
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                mutableMessage.value = "加密备份未通过写入、密码认证或读回校验；目标可能不完整，请勿使用。本机资料未被清除。"
+            } finally {
+                secret.fill('\u0000')
+            }
+        }
+    }
+
+    /** Strict B4 or AES-256+B4 inspection only; no user data is restored here. */
+    fun inspectBundle(uri: Uri) = inspectBundleInternal(uri, null)
+
+    fun inspectEncryptedBundle(uri: Uri, password: CharArray) {
+        if (mutableBusy.value) return
+        // Copy before the password dialog zeroes its input CharArray.
+        inspectBundleInternal(uri, password.copyOf())
+    }
+
+    private fun inspectBundleInternal(uri: Uri, secret: CharArray?) {
+        if (mutableBusy.value) {
+            secret?.fill('\u0000')
+            return
+        }
+        operation {
+            try {
+                requireSaved()
+                // Reject stale previews even when a new candidate fails verification.
+                val previous = verifiedBundle
+                verifiedBundle = null
+                mutableBundleReview.value = null
+                if (previous != null) withContext(Dispatchers.IO) {
+                    runCatching { previous.close() }
+                }
+                val inspected = try {
+                    check(uri.scheme == "content") { "仅接受系统选择器返回的文件" }
+                    withContext(Dispatchers.IO) {
+                        requireNotNull(app.contentResolver.openInputStream(uri)) {
+                            "ZIP 文件无法读取"
+                        }.use { input ->
+                            if (secret == null) data.bundle.inspect(input)
+                            else data.encryptedBundles.inspect(input, secret)
+                        }
+                    }
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) {
+                    mutableMessage.value = if (secret == null)
+                        "ZIP 备份未通过格式、附件和完整性校验；导入已取消，本机资料未变。"
+                    else "密码错误、加密文件损坏或格式不受支持；未修改本机资料。可重新导入并输入密码。"
+                    return@operation
+                }
+                verifiedBundle = inspected
+                val snap: BundleSnapshot = inspected.snapshot
+                mutableBundleReview.value = BundleRestorePreview(
+                    noteCount = snap.notes.size,
+                    trashedCount = snap.notes.count { it.deletedAt != null },
+                    imageCount = snap.attachments.size,
+                    linkCount = snap.links.size,
+                    exportedTheme = snap.theme,
+                    sampleTitles = snap.notes.take(5).map { it.title.ifBlank { "未命名笔记" }.take(60) },
+                    encrypted = secret != null
+                )
+            } finally {
+                secret?.fill('\u0000')
+            }
+        }
     }
 
     /** 取消只清除本次新建沙箱，不动数据库。 */
@@ -349,6 +452,7 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
     }
 
     override fun onCleared() {
+        clearPendingEncryptedExport()
         val old = verifiedBundle
         verifiedBundle = null
         // 强制杀死进程不执行 onCleared，Application 下次启动仍会清理受控缓存。

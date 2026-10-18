@@ -112,3 +112,18 @@ B5.1 修订版 [Run 39090837334](https://github.com/lihuihnu/XuaneyNote/actions/
 - **当前仅是提交前的候选源码与测试，尚未取得本轮 CI。** 即使成功，也只是后端原型，不代表真实 SAF、密码提示、加密文件读回或用户端功能完成；这些属于 B5.3。PR #2 仍 Draft，禁合并、禁发布。
 
 B5.2 审查与合并边界：旧 B4 原子恢复和导入冲突处理绝不能复制成另一套；若加密认证失败或用户未确认，不能创建任何正常笔记/回收站/图片元数据。
+
+
+## 9. B5.2 成功与 B5.3 密码备份界面候选（2026-10-18）
+
+[Run 39093609921](https://github.com/lihuihnu/XuaneyNote/actions/runs/39093609921)（source `65f24f44e6f7b8ad3714d7d85f253b74e585df98`）已 **completed/success**：Room/图片/备份 43/43，模型 10/10、模拟手机/平板 UI 各 9/9，API26 AES 专项 3/3，原 B5.1 独立 7-Zip/pyzipper Unicode、篡改及降级门禁均成功。B5.2 后端可以供下一轮 **受控 UI 测试** 使用，不等于正式发布或真机 SAF 已通过。
+
+B5.3 实施边界：
+
+- 保留**三个独立格式**：JSON v1 文本、B4 明文 ZIP v2、B5 AES-256 密码保护 ZIP；旧格式可继续使用，不用密码方式覆盖或替换任何已有内容。
+- 设置页面单独提供“导出密码保护备份”“导入密码保护备份”。导出密码必须输入两遍、长度 12–1024 字符，密码不放入 `rememberSaveable`、Room、DataStore、SavedState 或日志，使用 `PasswordVisualTransformation` 及 `SecureFlagPolicy.SecureOn`。在 SAF CreateDocument 期间只由 ViewModel 持有临时 `CharArray`；取消或退出即清除，不创建输出文件。
+- **导出成功的必要条件**：保存队列全部 flush → Android SAF 写入 → 关闭文件 → 通过同一 URI 再次读取 → 完整 AES-256 认证 + 现有 B4 内层校验 → 比较导出原始 `BundleSnapshot` 与读回快照完全一致。否则如实报告外部目标文件可能不完整，本机资料不受影响，不假称完成。
+- **导入成功的必要条件**：系统 SAF 选择 AES ZIP → 密码仅用于本次解密 → AES MAC 全量验证与 B4 预检成功 → 显示现有备份恢复预览 → 用户独立点击确认后**才调用原 B4 的 Room 事务恢复**。密码错误、取消、截断、篡改不会清空/覆盖现有资料；UI 允许重新选择文件、重新输入密码。
+- 密码丢失不可找回；标准 WinZip AES 使用弱 PBKDF2 1000 次，建议使用**高熵长口令**，不能宣称抵御离线猜测。含中文/Emoji 的密码可在 Zip4j/pyzipper 下使用，但不是所有外部 7-Zip/系统解压工具都保证同样处理；外层大小、时间等元数据仍可见。
+- 本轮新增受控密码对话框、合成 Compose 入口和密码校验测试、MediaStore 合成文件提供方**写入关闭—重开读回**测试；原数据库/图片/备份回归继续运行。真实 Android SAF 文件提供方及安装签名升级测试仍需维护者单独验收。
+- **B5.3 当前为源码候选，新提交的官方 CI 未执行完成前不得宣称密码备份已可安全使用。** 保持 PR #2 Draft、`main` 不变；下一阶段要提供新的受信任测试 APK，继续按此前固定 Run、source/tested SHA、签名与分块 SHA-256 身份交付。验收清单：[B5.3 手机专项](B5_3_SAF_ACCEPTANCE.md)。
