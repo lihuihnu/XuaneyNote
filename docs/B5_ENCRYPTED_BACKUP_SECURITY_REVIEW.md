@@ -1,6 +1,6 @@
 # B5.0：可选 AES-256 ZIP 备份——依赖安全审查与实现合同
 
-**审查日期**：2026-10-18（Asia/Tokyo）；**状态**：候选方案、风险与门禁已冻结，尚未添加 Gradle 依赖、加密业务代码或用户入口；不等于 B5 实现。唯一活动分支 `feat/pr-b-data-safety`，仍由 [PR #2](https://github.com/lihuihnu/XuaneyNote/pull/2) 管理，`main` 不直接修改。
+**审查日期**：2026-10-18（Asia/Tokyo）；**状态**：B5.0 安全审查已通过官方 [Run 39088201219](https://github.com/lihuihnu/XuaneyNote/actions/runs/39088201219)；B5.1 仅新增 test-only Zip4j 依赖、独立 JVM/7-Zip 探针及 API26 专项候选，**尚未运行本轮新 CI**。未新增生产加密代码或用户入口；不等于 B5 实现。唯一活动分支 `feat/pr-b-data-safety`，仍由 [PR #2](https://github.com/lihuihnu/XuaneyNote/pull/2) 管理，`main` 不直接修改。
 
 ## 0. 进入条件与现有基线
 
@@ -39,7 +39,7 @@
 
 ## 4. 最小、分阶段门禁（全部只在原 PR #2 进行）
 
-1. **B5.0（本提交）**：冻结上述候选及残余风险、回填 B3.4 维护者通过声明；仅文档变更，触发原 `.github/workflows/ci.yml` 的快速门禁。不引入依赖、业务功能或第三方密码 ZIP 样例，不生成 APK。
+1. **B5.0（已通过）**：冻结候选及残余风险、回填 B3.4 维护者通过声明；文档提交 `3ba6fa5b9a5eaf56ea0a7af0aa88133b46d49533`，官方 [Run 39088201219](https://github.com/lihuihnu/XuaneyNote/actions/runs/39088201219) completed/success。未增加运行时加密库。
 2. **B5.1 依赖/格式独立验证（下一小步）**：隔离验证 Zip4j **2.11.6**；必要时先运行独立 JDK 工具测试和固定 SHA-256 库字节，之后在 API26 Android 合成设备验证 AES 256 读写、UTF-8 中文/Emoji 密码、空密码拒绝、错误密码、HMAC 被篡改、截断包，以及与独立 7-Zip **双向**读写。只做本算法/格式，先不接手机 SAF UI。发现问题先停止，改审成熟库；绝不降级为 ZipCrypto。
 3. **B5.2 加密流与 B4 后端接线**：解码到私有有界沙箱，再强制走完整 B4 预检/事务/附件文件清理；重点验证在恢复确认前没有数据库写入，失败不改变既有笔记，重复导入幂等；不改 Room Schema。
 4. **B5.3 明文/加密格式选择 + 手机/平板用户界面**：加入显示/确认密码、错误密码重试、取消、明文备份风险提示，SAF 实际导出→回读和导入→确认；只在完整校验后提示成功，验证异常 provider 和存储空间不足。
@@ -57,3 +57,26 @@
 - [ ] B5 正式使用前的隐私、性能、磁盘清理及人工验收。
 
 **结论：B3.4 可以关闭当前人工验收等待，B5 仍处于审查/实现前置阶段。若 B5.1 任一安全门禁失败，不应把 AES-256 UI 提供给用户。**
+
+
+## 6. B5.1 独立安全验证源码候选（2026-10-18，未通过新 CI）
+
+本轮 **没有** 增加 `implementation(libs.zip4j)` 或更改已有 B4 生产备份接口。Zip4j 2.11.6 只在 `core:data` 的 `androidTestImplementation` 引入；由 `tools/b5/Zip4jInteropProbe.java` 这一份 Java 8 兼容源码同时为 Ubuntu JVM 和 Android 仪器测试服务。独立脚本 `tools/b5/run_interop.sh` 下载正式 Maven Central 2.11.6 JAR，先校验 Maven Central 同源 SHA-1 sidecar，再记录实际 JAR SHA-256 以待下一轮**独立确认并锁定**。同源 sidecar 不是独立可信 SHA-256 固定，不能因此直接生产准入。
+
+**只运行合成资料的安全专项**：
+
+- JVM：Zip4j 写 AES-256 ZIP → 独立 7-Zip 解包逐字节对照；独立 7-Zip 创建 AES-256 ZIP → Zip4j 严格单加密条目读取，对中文/Emoji 密码做双向验证。
+- 负例：错误密码、仅篡改 AE-2 的 10 字节认证码、截断尾部、明文 ZIP、弱 ZipCrypto、额外 ZIP 条目，均必须实际抛错而不是靠 UI 说失败；读取完整文件到 EOF 后才接受 MAC 验证。
+- Android：`B5Zip4jCompatibilityTest` 新增 3 个针对性测试，含正确 Unicode/错误密码、MAC/截断、弱格式降级；原 API35 手机设备套件执行一次，再独立启动 **API26** 模拟器，仅运行这 3 项（不重复其他大规模测试）。
+- CI：现有唯一官方 `.github/workflows/ci.yml`，先单次 `b5-interop`，随后现有 Android 门禁 + `b5-api26`；工作流仍然只读，无 Actions Artifact、无持久缓存、不引入新 Runner 或自动循环触发。
+- 禁止：将合成测试密码替换为用户真实密码，将测试 APK 当正式版，将 AES-256 的弱 KDF/外层元数据风险归零，把加密打包代码提前接进明文 ZIP v2 或 SAF UI。
+
+**验收状态**（此次提交前，以下均未取得本源码新 Run）：
+
+- [ ] 独立 7-Zip 双向 AES-256 + Unicode 字节一致。
+- [ ] AE-2 MAC 内容认证、错误密码、截断、弱格式与多条目拒绝。
+- [ ] API26 实际仪器测试与 API35 常规门禁完成。
+- [ ] 官方 Run/source/tested SHA 与 JAR SHA-256 得到复核并归档。
+- [ ] 进入 B5.2 前对实验结果复审，并将实际 JAR SHA-256 锁定为独立信任来源。
+
+**已知风险**：标准 AES ZIP 的 PBKDF2 1000 次迭代和外层元数据公开仍不改变；部分第三方 ZIP 实现对非 ASCII 密码编码可能不一致。若互操作失败，应明确保留失败并审查，不做不透明密码转码或使用弱 ZipCrypto 回退。

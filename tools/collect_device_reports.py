@@ -4,7 +4,7 @@ import shutil
 import sys
 
 name = sys.argv[1]
-assert name in {'phone', 'tablet'}
+assert name in {'phone', 'tablet', 'api26'}
 root = Path(__file__).resolve().parents[1]
 for module in ('app', 'core/data'):
     source = root / module / 'build/outputs/androidTest-results'

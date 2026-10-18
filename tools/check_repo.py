@@ -85,7 +85,15 @@ assert 'buildConfig = true' in (root / 'app/build.gradle.kts').read_text(), 'Bui
 viewmodel = (root / 'app/src/main/kotlin/io/github/lihuihnu/xuaneynote/NotesViewModel.kt').read_text()
 assert 'data.attachments.permanentlyDeleteTrashed(id)' in viewmodel, 'File-safe trash deletion required'
 assert 'fun addImage(noteId: String, uri: Uri)' in viewmodel, 'Bind Picker return to original note'
-print('PASS source/privacy / pinned dependencies / Wrapper / frozen Room schemas / Debug-only image gate / file-safe deletion / read-only CI')
+# B5.1 third-party AES ZIP implementation is not authorized in production.
+b5data = (root / 'core/data/build.gradle.kts').read_text()
+assert versions['versions']['zip4j'] == '2.11.6'
+assert 'androidTestImplementation(libs.zip4j)' in b5data
+assert not re.search(r'(?m)^\s*implementation\(libs\.zip4j\)', b5data)
+app_gradle = (root / 'app/build.gradle.kts').read_text()
+assert not re.search(r'(?m)^\s*implementation\(libs\.zip4j\)', app_gradle)
+assert 'sourceSets.getByName("androidTest").java.srcDir("$rootDir/tools/b5")' in b5data
+print('PASS source/privacy / pinned dependencies / Wrapper / frozen Room schemas / Debug-only image gate / B5 test-only ZIP / read-only CI')
 if '--merged' in sys.argv:
     manifests = list((root / 'app/build/intermediates').glob('**/AndroidManifest.xml'))
     assert any('release' in str(p).lower() for p in manifests), 'No release merged manifest'

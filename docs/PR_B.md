@@ -1,7 +1,7 @@
 # PR-B：数据安全与资料管理——目标冻结 v1
 
 - **冻结日期**：2026-10-17（遵循仓库记录的 Asia/Tokyo 日期口径）。
-- **状态**：目标已冻结；**B0/B1/B2/B3.1/B3.2/B4.1/B4.2a/B4.2b 已通过对应官方自动化 CI，B4.2b Run 39032360669 成功并归档；B3.3 图片只读预览已通过 CI；维护者报告手机 SAF 验收通过（未提供逐项记录），B3.4 Debug 图片功能已通过 Run 39043407435 且维护者于 2026-10-18 报告真机通过（无逐项记录），Release 图片编辑入口仍关闭；已进入 B5.0 安全审查，B5 功能与 PR-B 合并均未完成**；B3.4 真机整体通过声明已有，单项边界和签名升级没有独立证据；B5 尚未实现。详见 [B3.4 验收记录](B3_4_IMAGE_PICKER_ACCEPTANCE.md)与[B5 安全评审](B5_ENCRYPTED_BACKUP_SECURITY_REVIEW.md)。
+- **状态**：目标已冻结；**B0/B1/B2/B3.1/B3.2/B4.1/B4.2a/B4.2b 已通过对应官方自动化 CI，B4.2b Run 39032360669 成功并归档；B3.3 图片只读预览已通过 CI；维护者报告手机 SAF 验收通过（未提供逐项记录），B3.4 Debug 图片功能已通过 Run 39043407435 且维护者于 2026-10-18 报告真机通过（无逐项记录），Release 图片编辑入口仍关闭；B5.0 安全审查 CI 已通过；B5.1 隔离 AES ZIP 互操作与 API26 测试候选已准备、尚待新 CI，B5 生产功能与 PR-B 合并均未完成**；B3.4 真机整体通过声明已有，单项边界和签名升级没有独立证据；B5 尚未实现。详见 [B3.4 验收记录](B3_4_IMAGE_PICKER_ACCEPTANCE.md)与[B5 安全评审](B5_ENCRYPTED_BACKUP_SECURITY_REVIEW.md)。
 - **基线**：PR-A [#1](https://github.com/lihuihnu/XuaneyNote/pull/1) 已 squash 合并到 `main`，合并提交 `b85e27d5c004f978850badc4865dea821c0b44d1`。
 - **PR-A 身份**：最终源码 `19532a929475e9ce5e9f7fb2589654fb67f101d1`；官方 GitHub Actions [Run 38995733428](https://github.com/lihuihnu/XuaneyNote/actions/runs/38995733428) 为 `completed/success`；用户反馈手机实机验收无异常，但未提供设备型号、逐项日志或独立平板真机证据。
 - **工作分支**：`feat/pr-b-data-safety`，目标 `main`，只保持这一个活跃开发 PR。初次提交仅文档，不改变应用代码。
