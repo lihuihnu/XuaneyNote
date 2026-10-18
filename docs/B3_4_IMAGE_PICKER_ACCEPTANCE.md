@@ -28,3 +28,10 @@
 - [ ] 界面明确提醒 EXIF 和明文 ZIP 风险。记录机型、Android 版本、SAF 文件提供者及同签名升级是否实际测试。
 
 **安装安全**：不同 GitHub Runner 的临时 Debug 签名一般不能覆盖先前安装包，严禁卸载保存唯一重要笔记副本的应用。此版本尚无 B5 加密备份，只能使用合成/可再生测试数据。人工图片闭环成功后才讨论解除 Release 门禁和实施 B5。
+
+## 2026-10-18 人工验收状态回填
+
+- **维护者在对话中确认：B3.4 新 Debug APK 的手机端图片功能已验收。** 这里记录的是维护者整体通过声明，不擅自将上面的未核实逐项复选框全部改为勾选。
+- 对应软件源码 `236c322852b914a748dbd9f5b2a7b64e558ec0bf`，官方 [Run 39043407435](https://github.com/lihuihnu/XuaneyNote/actions/runs/39043407435) 为 completed/success，实际 tested merge `22a29b630d85e12f477ae799b57922950215c851`。模型 10/10、Room 38/38、模拟手机/平板分别 9/9；[可读证据](https://github.com/lihuihnu/XuaneyNote/tree/8d667f21f0c403b992a4cd85ab535093fb0b882a/evidence) 和 [测试包](https://github.com/lihuihnu/XuaneyNote/tree/5be48a612a3478f49c3d555e9ad0c0932b434dd0) 已另行归档。
+- 用户未提交手机型号、Android 版本、每种照片格式的逐项记录、低存储与签名覆盖升级证据；因此**不将这些额外条件记为独立实测通过**。
+- **允许推进 B5 的安全审查和后续实现**，但此声明不等于 PR-B 完成、Release 图片编辑门禁解除、正式签名可升级或 B5 已有任何测试证据。B5 的审查入口见 [B5 安全评审](B5_ENCRYPTED_BACKUP_SECURITY_REVIEW.md)。

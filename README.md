@@ -2,7 +2,7 @@
 
 **专注当下，记录生活。** 面向 Android 手机和平板的完全本地、免费、无需登录的笔记、日记、手账、备忘录与番茄专注应用。
 
-> **当前状态（2026-10-17）**：PR-A [#1](https://github.com/lihuihnu/XuaneyNote/pull/1) 已合并至 `main`（`b85e27d5c004f978850badc4865dea821c0b44d1`），交付最小原生笔记闭环。PR-B 数据安全与资料管理已在 `feat/pr-b-data-safety` **冻结目标，B0 已完成最终 CI 验收；B1 中文搜索已通过官方 CI，B2 回收站已通过官方 CI；B3.1/B3.2/B4.1/B4.2a/B4.2b 均通过官方自动化 CI；B3.3 只读图片预览已通过官方 CI；受信任的 SAF 测试 APK 已归档；维护者报告手机 SAF 验收通过（未附逐项记录）；下一轮仅在 Debug 构建开放 Photo Picker/移除预览，正式 Release 仍关闭图片编辑，图片真机闭环与 B5 加密尚未完成**。这仍不是正式 V1 发布。
+> **当前状态（2026-10-17）**：PR-A [#1](https://github.com/lihuihnu/XuaneyNote/pull/1) 已合并至 `main`（`b85e27d5c004f978850badc4865dea821c0b44d1`），交付最小原生笔记闭环。PR-B 数据安全与资料管理已在 `feat/pr-b-data-safety` **冻结目标，B0 已完成最终 CI 验收；B1 中文搜索已通过官方 CI，B2 回收站已通过官方 CI；B3.1/B3.2/B4.1/B4.2a/B4.2b 均通过官方自动化 CI；B3.3 只读图片预览已通过官方 CI；受信任的 SAF 测试 APK 已归档；维护者报告手机 SAF 验收通过（未附逐项记录）；下一轮仅在 Debug 构建开放 Photo Picker/移除预览，正式 Release 仍关闭图片编辑，B3.4 真机图片功能已获维护者通过声明、仍缺逐项记录；B5.0 正在做 AES-256 ZIP 安全评审，尚未实现密码备份**。这仍不是正式 V1 发布。
 
 ## 已实现：PR-A 基础笔记
 
@@ -13,7 +13,7 @@
 
 ## 开发中：PR-B 冻结目标
 
-[**PR-B 目标与数据合同（docs/PR_B.md）**](docs/PR_B.md) 固定六项闭环：Room v1→v2 显式安全迁移、中文/英文搜索、回收站、私有图片附件、包含附件的备份 v2、可选密码保护的加密备份。**B0 [Run 39001250626](https://github.com/lihuihnu/XuaneyNote/actions/runs/39001250626)、B1 [Run 39002603730](https://github.com/lihuihnu/XuaneyNote/actions/runs/39002603730) 已通过；B2 [Run 39005974577](https://github.com/lihuihnu/XuaneyNote/actions/runs/39005974577) 已通过；B3.1 最终 [Run 39009835439](https://github.com/lihuihnu/XuaneyNote/actions/runs/39009835439) success；B3.2 [Run 39012222967](https://github.com/lihuihnu/XuaneyNote/actions/runs/39012222967) 已通过；B4.1 [Run 39018703459](https://github.com/lihuihnu/XuaneyNote/actions/runs/39018703459) 已通过；B4.2a [Run 39021083940](https://github.com/lihuihnu/XuaneyNote/actions/runs/39021083940) 已通过；B4.2b [Run 39032360669](https://github.com/lihuihnu/XuaneyNote/actions/runs/39032360669) 自动化已通过；B3.3 只读图片组件已通过 CI；维护者报告手机 SAF 通过，当前 B3.4 仅针对 Debug 构建准备 Photo Picker 测试，Release 入口继续关闭。JSON v1 仍兼容。** 见 [B1 搜索](docs/B1_SEARCH.md)、[B2 回收站](docs/B2_TRASH.md)、[B3 图片](docs/B3_ATTACHMENTS.md)、[B3.3 受控图片面板](docs/B3_3_IMAGE_UI.md)和[B4 ZIP 备份合同](docs/B4_BUNDLE_V2.md)。
+[**PR-B 目标与数据合同（docs/PR_B.md）**](docs/PR_B.md) 固定六项闭环：Room v1→v2 显式安全迁移、中文/英文搜索、回收站、私有图片附件、包含附件的备份 v2、可选密码保护的加密备份。**B0 [Run 39001250626](https://github.com/lihuihnu/XuaneyNote/actions/runs/39001250626)、B1 [Run 39002603730](https://github.com/lihuihnu/XuaneyNote/actions/runs/39002603730) 已通过；B2 [Run 39005974577](https://github.com/lihuihnu/XuaneyNote/actions/runs/39005974577) 已通过；B3.1 最终 [Run 39009835439](https://github.com/lihuihnu/XuaneyNote/actions/runs/39009835439) success；B3.2 [Run 39012222967](https://github.com/lihuihnu/XuaneyNote/actions/runs/39012222967) 已通过；B4.1 [Run 39018703459](https://github.com/lihuihnu/XuaneyNote/actions/runs/39018703459) 已通过；B4.2a [Run 39021083940](https://github.com/lihuihnu/XuaneyNote/actions/runs/39021083940) 已通过；B4.2b [Run 39032360669](https://github.com/lihuihnu/XuaneyNote/actions/runs/39032360669) 自动化已通过；B3.3 只读图片组件已通过 CI；维护者报告手机 SAF 通过，B3.4 Debug 图片功能已通过 [Run 39043407435](https://github.com/lihuihnu/XuaneyNote/actions/runs/39043407435) 并经维护者报告真机通过（无逐项设备记录）；Release 入口仍关闭，B5 正在安全评审。JSON v1 仍兼容。** 见 [B1 搜索](docs/B1_SEARCH.md)、[B2 回收站](docs/B2_TRASH.md)、[B3 图片](docs/B3_ATTACHMENTS.md)、[B3.3 受控图片面板](docs/B3_3_IMAGE_UI.md)和[B4 ZIP 备份合同](docs/B4_BUNDLE_V2.md)。
 
 计划顺序：B0 数据迁移 → B1 搜索 → B2 回收站 → B3 图片 → B4 完整备份 → B5 密码备份。每一步单独补齐验证，最后以最新源码 SHA 的官方 CI 与手工文件选择器回归验收。此阶段不提前开发番茄钟、日记或手账画布。
 
@@ -27,7 +27,8 @@
 ## 当前 PR-B 真机测试进度
 
 - [B4.2b SAF 手机验收清单](docs/B4_2B_SAF_ACCEPTANCE.md)：维护者口头报告通过，未提供机型/逐项证据；不视为同签名升级或其他 ROM 验收。
-- [B3.4 Photo Picker 专项](docs/B3_4_IMAGE_PICKER_ACCEPTANCE.md)：下一次 Debug-only CI 和真实手机图片导入/移除/ZIP v2 往返待完成。**Release 图片编辑仍关闭**。
+- [B3.4 Photo Picker 专项](docs/B3_4_IMAGE_PICKER_ACCEPTANCE.md)：官方 Debug CI 已成功，维护者 2026-10-18 报告真机验收通过；机型、逐项异常及签名升级尚无单独证据。**Release 图片编辑仍关闭**。
+- [B5 AES-256 ZIP 安全审查](docs/B5_ENCRYPTED_BACKUP_SECURITY_REVIEW.md)：已冻结候选版本、弱 KDF/元数据风险与分阶段门禁；暂不把未验收的库或加密入口加入 APK。
 - [PR-B 测试 APK 来源与签名限制](docs/PR_B_TEST_APK.md)：旧 SAF 测试包不可冒充新的图片测试包；临时签名不可保证覆盖旧安装。
 
 ## 文档导航
