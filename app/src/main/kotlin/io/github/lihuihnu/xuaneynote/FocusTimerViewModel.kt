@@ -59,6 +59,10 @@ class FocusTimerViewModel(application: Application) : AndroidViewModel(applicati
         }
         viewModelScope.launch {
             while (isActive) {
+                // 没有运行中的计时时完全休眠，不为待机页每秒唤醒协程。
+                if (saved.value?.status != FocusStatus.RUNNING) {
+                    saved.first { it?.status == FocusStatus.RUNNING }
+                }
                 delay(1_000L)
                 val elapsed = SystemClock.elapsedRealtime()
                 now.value = elapsed

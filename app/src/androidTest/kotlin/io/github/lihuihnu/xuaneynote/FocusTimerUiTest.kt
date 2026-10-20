@@ -16,6 +16,10 @@ class FocusTimerUiTest {
         compose.onNodeWithTag("focus-nav").performClick()
         compose.onNodeWithTag("focus-screen").assertExists()
         compose.onNodeWithTag("focus-mode-short").performClick()
+        compose.waitUntil(10_000) {
+            compose.onAllNodes(hasTestTag("focus-clock") and hasText("05:00"))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
         compose.onNodeWithTag("focus-start").performClick()
         compose.waitUntil(10_000) {
             compose.onAllNodesWithTag("focus-pause").fetchSemanticsNodes().isNotEmpty()
