@@ -1,0 +1,97 @@
+{
+  "protocol": "XuaneyNote.test-apk-handoff-v1",
+  "archive_kind": "verified-split-zlib-debug-apk",
+  "archive_status": "compressed-pieces-uploaded; offline APK assembly + final SHA-256 verification required",
+  "run_id": "39422300056",
+  "run_attempt": "1",
+  "source_sha": "22778b18ace142cf58e218c0424b4bb332730af5",
+  "tested_sha": "6d6774568194eca1ee46e0b3032cbd11ff9fef04",
+  "apk_filename": "XuaneyNote-0.2.0-pr-b-22778b18ace1-debug.apk",
+  "apk_size": 11324953,
+  "apk_sha256": "0f03e6565dc684b4986ca41f9c686622bf3f027e29dc9f7625618abc24447387",
+  "application_id": "io.github.lihuihnu.xuaneynote.debug",
+  "version_code": 2,
+  "version_name": "0.2.0-pr-b-debug",
+  "min_sdk": 26,
+  "target_sdk": 36,
+  "signer_certificate_sha256": "b1b485420a83b14b777349f9e91e2bf5b4b7d2e530df6e55c95e6a2fd6382349",
+  "verified_signature_schemes": [
+    "v2"
+  ],
+  "signing_policy": "ephemeral-runner-debug-key; NOT stable for upgrades; synthetic test data only",
+  "compression": "zlib",
+  "compressed_size": 10789582,
+  "compressed_sha256": "f0df31fabd0b28d3f56eae32f6941a3d7f3e3af013302e179a16e78e8224f90f",
+  "part_group_size_transport_chunks": 320,
+  "transport_chunks": 3513,
+  "part_count": 11,
+  "parts": [
+    {
+      "path": "parts/apk.zlib.part-00",
+      "size": 983040,
+      "sha256": "c09bc13b975e5c814dedcbd90889139ce4346c7b95b1392cf4167c413177b2c2",
+      "git_sha1": "0b0daa64199d8524302d54a0d600c1c3068af299"
+    },
+    {
+      "path": "parts/apk.zlib.part-01",
+      "size": 983040,
+      "sha256": "dfc6fc51ac8174c25eaef8f1e300ab2231f36db10ab568661eaee80574b4cefb",
+      "git_sha1": "d04b0a7c5496279c0cb73853ffa990634d35158e"
+    },
+    {
+      "path": "parts/apk.zlib.part-02",
+      "size": 983040,
+      "sha256": "4733beef785cca5d9debda72a18f239168a23ec6c952eac07b30b37dbd67cfd2",
+      "git_sha1": "e183fb93071b73bb2368b5078f683fc7a8dfd7ea"
+    },
+    {
+      "path": "parts/apk.zlib.part-03",
+      "size": 983040,
+      "sha256": "408426ad06693b60642d5ab9b5437b69464140d5677d8b4a2939dcba673d1551",
+      "git_sha1": "66821d52323a2c3d0c0c3b4bdad420b1d3f48ac6"
+    },
+    {
+      "path": "parts/apk.zlib.part-04",
+      "size": 983040,
+      "sha256": "3ec4c57ee32a344199442a785b77cbfca62694f85da53578c3a2e11eedf82eb8",
+      "git_sha1": "1afe27f79736c5678a5a2266542ec5126b729f88"
+    },
+    {
+      "path": "parts/apk.zlib.part-05",
+      "size": 983040,
+      "sha256": "0b0dddfc62d0b2942a9be854b81876756ed40cb8f568032a2231447358ee3761",
+      "git_sha1": "2b2bedebd66d1a771cf2989d6c3c330ecd058c62"
+    },
+    {
+      "path": "parts/apk.zlib.part-06",
+      "size": 983040,
+      "sha256": "67f70e326598918800bb8ede14130977c8f18c1aa0fd93dfbe5b972bb082fffd",
+      "git_sha1": "b6da63ebbe01c71ba5f70146384bb3358b011154"
+    },
+    {
+      "path": "parts/apk.zlib.part-07",
+      "size": 983040,
+      "sha256": "76b805a46fdf5cd9cd13d3775d349d21b46fd53232fdff9f3a57b38db4eb8907",
+      "git_sha1": "0999c12e0fba03d931eee460f3b8f7f9eb144f44"
+    },
+    {
+      "path": "parts/apk.zlib.part-08",
+      "size": 983040,
+      "sha256": "fd52754dc9c0973036e1f6820eaa184ea74f835e3a6e181d24f60fc4352e3b61",
+      "git_sha1": "dc471fbb9032bceceee2ed5c2631085ad32bb254"
+    },
+    {
+      "path": "parts/apk.zlib.part-09",
+      "size": 983040,
+      "sha256": "0af56e3dc411ae4817d81798b81bd79a6ade9314e7b93fc272f1ada21b7d52f4",
+      "git_sha1": "f89c22c9b706f48ea73f48b77b7e861a03451b6f"
+    },
+    {
+      "path": "parts/apk.zlib.part-10",
+      "size": 959182,
+      "sha256": "32d59daa80b28f856c40888685a7506ff965513bc26203bc31afaea02bc27fd6",
+      "git_sha1": "7c2dc61854620b1d4010e881267b065a01c56ced"
+    }
+  ],
+  "notes": "Official GitHub-hosted CI signed Debug APK (Run 39422300056, attempt 1; 2026-10-20). Entire compressed stream independently SHA-256 checked before Git blob upload. APK original SHA-256 and signer fingerprint were reported by verified CI transport; offline reconstruction rechecks the decompressed APK and validates ZIP CRC. Ephemeral signer: never overwrite or uninstall any unique personal notes. B5.3 physical SAF acceptance pending."
+}
