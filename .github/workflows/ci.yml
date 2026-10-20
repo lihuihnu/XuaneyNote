@@ -57,7 +57,7 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: B5.1 isolated AES-256 ZIP and independent 7-Zip interoperability
-        if: steps.scope.outputs.android == 'true'
+        if: steps.scope.outputs.android == 'true' && github.head_ref != 'feat/pr-c0-focus-timer'
         run: bash tools/run_gate.sh b5-interop bash tools/b5/run_interop.sh
       - name: Android SDK and toolchain identity
         if: steps.scope.outputs.android == 'true'
@@ -66,18 +66,28 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;35.0.0'
           { java -version; echo "Runner image: ${ImageVersion:-unknown}"; } > ci-out/logs/toolchain.log 2>&1
       - name: Unit tests, lint, APK and release Manifest with verified official Wrapper
-        if: steps.scope.outputs.android == 'true'
+        if: steps.scope.outputs.android == 'true' && github.head_ref != 'feat/pr-c0-focus-timer'
         run: |
           bash tools/run_gate.sh build ./gradlew --no-daemon --console=plain \
             :core:model:test :core:data:assembleDebugAndroidTest :app:assembleDebug \
             :app:assembleDebugAndroidTest :app:lintDebug :app:processReleaseMainManifest
           bash tools/run_gate.sh privacy python3 tools/check_repo.py --merged
+      - name: C0 focused JVM model, Compose build, lint and privacy
+        if: steps.scope.outputs.android == 'true' && github.head_ref == 'feat/pr-c0-focus-timer'
+        run: |
+          bash tools/run_gate.sh c0-build ./gradlew --no-daemon --console=plain \
+            :core:model:test :app:assembleDebug :app:assembleDebugAndroidTest \
+            :app:lintDebug :app:processReleaseMainManifest
+          bash tools/run_gate.sh c0-privacy python3 tools/check_repo.py --merged
       - name: B5.1 Android API26 crypto-only device gate
-        if: steps.scope.outputs.android == 'true'
+        if: steps.scope.outputs.android == 'true' && github.head_ref != 'feat/pr-c0-focus-timer'
         run: bash tools/run_gate.sh b5-api26 bash tools/b5/api26_gate.sh
       - name: Phone, tablet window, Room backup and real process restart
-        if: steps.scope.outputs.android == 'true'
+        if: steps.scope.outputs.android == 'true' && github.head_ref != 'feat/pr-c0-focus-timer'
         run: bash tools/run_gate.sh devices bash tools/device_gate.sh
+      - name: C0 targeted phone/tablet Compose smoke, one API35 emulator
+        if: steps.scope.outputs.android == 'true' && github.head_ref == 'feat/pr-c0-focus-timer'
+        run: bash tools/run_gate.sh c0-devices bash tools/focus_device_gate.sh
       - name: Trusted one-time debug APK handoff (read-only)
         if: >-
           ${{

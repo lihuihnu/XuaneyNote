@@ -1,8 +1,6 @@
 package io.github.lihuihnu.xuaneynote
 
-import androidx.compose.ui.test.assertExists
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
