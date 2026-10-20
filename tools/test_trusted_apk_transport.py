@@ -17,8 +17,8 @@ SIGNER = ('Verified\nVerified using v1 scheme (JAR signing): false\n'
           'Verified using v3 scheme (APK Signature Scheme v3): true\n'
           'Number of signers: 1\n'
           'Signer #1 certificate SHA-256 digest: ' + 'c' * 64 + '\n')
-BADGING = ("package: name='io.github.lihuihnu.xuaneynote.debug' versionCode='1' "
-           "versionName='0.1.0-pr-a-debug' compileSdkVersion='36'\n"
+BADGING = ("package: name='io.github.lihuihnu.xuaneynote.debug' versionCode='2' "
+           "versionName='0.2.0-pr-b-debug' compileSdkVersion='36'\n"
            "sdkVersion:'26'\ntargetSdkVersion:'36'\n")
 
 

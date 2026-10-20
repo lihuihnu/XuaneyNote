@@ -6,6 +6,7 @@ compose-bom = "2025.08.01"
 activity = "1.10.1"
 lifecycle = "2.9.4"
 room = "2.8.4"
+zip4j = "2.11.6" # B5.1 androidTest only; NOT shipped in app
 datastore = "1.1.7"
 coroutines = "1.10.2"
 junit = "4.13.2"
@@ -25,6 +26,8 @@ lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-com
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 lifecycle-viewmodel-savedstate = { module = "androidx.lifecycle:lifecycle-viewmodel-savedstate", version.ref = "lifecycle" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
+zip4j = { module = "net.lingala.zip4j:zip4j", version.ref = "zip4j" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }

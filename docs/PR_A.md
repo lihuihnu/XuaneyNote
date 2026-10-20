@@ -1,6 +1,16 @@
 # PR-A：应用基础与笔记闭环
 
-冻结日期：2026-10-17，Asia/Tokyo。状态：Run #3 应用/设备门禁已通过并完整归档，实际 Wrapper/schema 已回填，等待新 HEAD 的最终 CI 与手工 SAF/真机验收；PR 仍为 Draft，不自动合并，不作为 V1 发布。
+冻结日期：2026-10-17，Asia/Tokyo。以下为 **PR-A 开发时的历史范围与 Run #3 验收快照**；旧的“待测试”状态不应被当作当前 PR 状态。最终合并结果详见下节。
+
+## 合并封存记录（2026-10-17）
+
+- [PR #1](https://github.com/lihuihnu/XuaneyNote/pull/1) 已经通过 **Squash merge** 进入 `main`，合并提交 `b85e27d5c004f978850badc4865dea821c0b44d1`；源码 HEAD `19532a929475e9ce5e9f7fb2589654fb67f101d1`，实际 tested merge SHA `3f049fd689016b0766f25018db541b2158b31da2`。
+- [最终官方 Run #5：38995733428](https://github.com/lihuihnu/XuaneyNote/actions/runs/38995733428) 为 `completed/success`。构建/Lint/Room、API35 模拟手机及平板、进程强制终止后找回、隐私/签名与受信任测试 APK 传输门禁均已通过。
+- 官方 Gradle Wrapper 和 Room v1 schema 已从真实历史 CI 校验后回填；成功/受控失败证据有独立归档；测试 APK 在独立 `testing-apks/pr-a-19532a929475` 分支以验证过的分片提供，**须拼接后验证哈希，非正式发行版**。
+- 用户在本次对话中反馈“PR-A 手机验收已经结束，没什么问题”并授权合并；**此处属于用户报告的手机实机验收**，不能据此虚构型号/逐项日志、独立平板真机/API26/性能实测。
+- PR-B 的目标冻结与下一步工作见 [PR_B.md](PR_B.md)；PR-A 仅为基础笔记闭环，不意味着完整 V1 已发布。
+
+## 历史实现与测试快照
 
 ## 实际范围
 

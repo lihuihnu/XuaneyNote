@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   gate:
-    name: PR-A local notes gate
+    name: XuaneyNote Android PR gate
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -56,6 +56,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: B5.1 isolated AES-256 ZIP and independent 7-Zip interoperability
+        if: steps.scope.outputs.android == 'true'
+        run: bash tools/run_gate.sh b5-interop bash tools/b5/run_interop.sh
       - name: Android SDK and toolchain identity
         if: steps.scope.outputs.android == 'true'
         shell: bash
@@ -69,6 +72,9 @@ jobs:
             :core:model:test :core:data:assembleDebugAndroidTest :app:assembleDebug \
             :app:assembleDebugAndroidTest :app:lintDebug :app:processReleaseMainManifest
           bash tools/run_gate.sh privacy python3 tools/check_repo.py --merged
+      - name: B5.1 Android API26 crypto-only device gate
+        if: steps.scope.outputs.android == 'true'
+        run: bash tools/run_gate.sh b5-api26 bash tools/b5/api26_gate.sh
       - name: Phone, tablet window, Room backup and real process restart
         if: steps.scope.outputs.android == 'true'
         run: bash tools/run_gate.sh devices bash tools/device_gate.sh
@@ -79,7 +85,9 @@ jobs:
             github.actor == 'lihuihnu' &&
             github.event.pull_request.user.login == 'lihuihnu' &&
             github.event.pull_request.head.repo.full_name == github.repository &&
-            github.event.pull_request.head.ref == 'feat/pr-a-local-notes' &&
+            github.event.pull_request.number == 2 &&
+            github.event.pull_request.base.ref == 'main' &&
+            github.event.pull_request.head.ref == 'feat/pr-b-data-safety' &&
             contains(github.event.pull_request.labels.*.name, 'trusted-test-apk-once')
           }}
         env:

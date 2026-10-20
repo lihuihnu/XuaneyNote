@@ -5,7 +5,8 @@ export PATH="$SDK/platform-tools:$SDK/emulator:$SDK/cmdline-tools/latest/bin:$PA
 export ANDROID_AVD_HOME="${RUNNER_TEMP:?}/xuaney-avd"
 mkdir -p "$ANDROID_AVD_HOME" ci-out/reports ci-out/screenshots
 sdkmanager 'emulator' 'system-images;android-35;google_apis;x86_64'
-echo no | avdmanager create avd --force --name xuaney-ci --package 'system-images;android-35;google_apis;x86_64' --device pixel_2
+# Do not use a pipefail-sensitive stdin producer for optional AVD prompts.
+avdmanager create avd --force --name xuaney-ci --package 'system-images;android-35;google_apis;x86_64' --device pixel_2 <<< "no"
 [[ -e /dev/kvm ]] || { echo 'KVM is required for this gate'; exit 1; }
 sudo chown "$(id -un)" /dev/kvm
 emulator -avd xuaney-ci -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 2048 > ci-out/logs/emulator.log 2>&1 &

@@ -2,6 +2,12 @@ package io.github.lihuihnu.xuaneynote
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.flow.first
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -36,6 +42,205 @@ class NoteFlowTest {
         compose.onNodeWithTag("note-title").assertTextContains("CI 合成笔记")
         compose.onNodeWithTag("note-body").assertTextContains("手机和平板测试\n重开后应保留🙂")
     }
+    @Test fun chineseBodySearchEmptyStateAndClear() {
+        compose.waitUntil(15_000) { compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty() }
+        if (compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isEmpty()) {
+            compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+            compose.waitUntil(12_000) { compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isNotEmpty() }
+        }
+        compose.onNodeWithTag("new-note").performClick()
+        compose.waitUntil(12_000) {
+            compose.onAllNodesWithTag("note-body").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("note-title").performTextReplacement("B1 搜索合成记录")
+        compose.onNodeWithTag("note-body").performTextReplacement("正文含有针尖词汇，供中文查询使用。")
+        compose.waitUntil(15_000) {
+            compose.onAllNodes(hasTestTag("save-state") and hasText("已保存")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+        compose.waitUntil(12_000) { compose.onAllNodesWithTag("note-search").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("note-search").performTextReplacement("针尖词汇")
+        compose.waitUntil(15_000) { compose.onAllNodesWithText("B1 搜索合成记录").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("note-search").performTextReplacement("找不到的B1词汇__不存在__")
+        compose.waitUntil(15_000) { compose.onAllNodesWithText("没有找到匹配的笔记").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("clear-note-search").performClick()
+        compose.waitUntil(15_000) { compose.onAllNodesWithText("B1 搜索合成记录").fetchSemanticsNodes().isNotEmpty() }
+    }
+    @Test fun moveToTrashRestoreAndPermanentDelete() {
+        compose.waitUntil(15_000) { compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty() }
+        if (compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isEmpty()) {
+            compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+            compose.waitUntil(12_000) {
+                compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isNotEmpty()
+            }
+        }
+        compose.onNodeWithTag("new-note").performClick()
+        compose.waitUntil(12_000) {
+            compose.onAllNodesWithTag("note-body").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("note-title").performTextReplacement("B2 回收站 UI 测试")
+        compose.onNodeWithTag("note-body").performTextReplacement("重开后应能恢复的合成正文🙂")
+        compose.waitUntil(15_000) {
+            compose.onAllNodes(hasTestTag("save-state") and hasText("已保存")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("trash-current-note").performClick()
+        compose.onNodeWithTag("confirm-trash-move").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("open-trash").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("open-trash").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("trash-restore").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("trash-restore").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("note-body").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("note-body").assertTextContains("重开后应能恢复的合成正文🙂")
+        compose.activityRule.scenario.recreate()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("trash-current-note").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("trash-current-note").performClick()
+        compose.onNodeWithTag("confirm-trash-move").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("open-trash").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("open-trash").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("trash-permanent").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("trash-permanent").performClick()
+        compose.onNodeWithTag("confirm-permanent-delete").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("trash-empty").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+    }
+    @Test fun fullZipEntryRequiresWarningAndKeepsLegacyBackup() {
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("open-settings").performClick()
+        compose.onNodeWithTag("export-full-bundle").assertExists().performScrollTo().performClick()
+        compose.waitUntil(12_000) {
+            compose.onAllNodesWithTag("bundle-export-confirm").fetchSemanticsNodes().isNotEmpty()
+        }
+        // 取消后不得执行 SAF 文件创建，也不得产生已保存的成功提示。
+        compose.onNodeWithTag("bundle-export-cancel").performClick()
+        compose.waitUntil(12_000) {
+            compose.onAllNodesWithTag("bundle-export-confirm").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("open-settings").performClick()
+        compose.onNodeWithTag("import-full-bundle").assertExists()
+        compose.onNodeWithTag("import-legacy-backup").assertExists()
+        compose.onNodeWithTag("export-legacy-backup").assertExists()
+        compose.onNodeWithTag("export-encrypted-bundle").assertExists()
+        compose.onNodeWithTag("import-encrypted-bundle").assertExists()
+        compose.onNodeWithTag("export-encrypted-bundle").performScrollTo().performClick()
+        compose.onNodeWithTag("aes-password-continue").assertIsNotEnabled()
+        // Cancel the password prompt. No SAF create-file is launched and legacy
+        // ZIP v2/JSON v1 entries are still accessible.
+        compose.onNodeWithTag("aes-password-cancel").performClick()
+        compose.onNodeWithTag("open-settings").performClick()
+        compose.onNodeWithTag("export-full-bundle").assertExists()
+        compose.onNodeWithTag("import-full-bundle").assertExists()
+    }
+
+    @Test fun debugPreviewExposesImageEntryOnlyForDebugVariant() {
+        assertTrue(BuildConfig.DEBUG)
+        assertEquals(BuildConfig.DEBUG, io.github.lihuihnu.xuaneynote.ui.ImageUiGate.USER_ENTRY_ENABLED)
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        if (compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isEmpty()) {
+            compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+            compose.waitUntil(12_000) {
+                compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isNotEmpty()
+            }
+        }
+        compose.onNodeWithTag("new-note").performClick()
+        compose.waitUntil(12_000) {
+            compose.onAllNodesWithTag("note-body").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("add-note-image").assertExists()
+    }
+
+    @Test fun imageBackedTrashUsesSafeFileCleanupFromNormalUi() {
+        compose.waitUntil(15_000) { compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty() }
+        if (compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isEmpty()) {
+            compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
+            compose.waitUntil(12_000) {
+                compose.onAllNodesWithTag("new-note").fetchSemanticsNodes().isNotEmpty()
+            }
+        }
+        compose.onNodeWithTag("new-note").performClick()
+        compose.waitUntil(12_000) {
+            compose.onAllNodesWithTag("note-title").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        val title = "B3 图片删除专项 " + System.nanoTime()
+        compose.onNodeWithTag("note-title").performTextReplacement(title)
+        compose.waitUntil(15_000) {
+            compose.onAllNodes(hasTestTag("save-state") and hasText("已保存")).fetchSemanticsNodes().isNotEmpty()
+        }
+        val data = (compose.activity.application as XuaneyApplication).data
+        val noteId = runBlocking {
+            withTimeout(15_000) {
+                data.notes.summaries.first { list -> list.any { it.title == title } }
+                    .first { it.title == title }.id
+            }
+        }
+        val bitmap = Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888)
+        val bytes = try {
+            val output = ByteArrayOutputStream()
+            assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, output))
+            output.toByteArray()
+        } finally {
+            bitmap.recycle()
+        }
+        val image = runBlocking {
+            data.attachments.importStream(noteId, ByteArrayInputStream(bytes))
+        }
+        val originalFile = runBlocking { data.attachments.verifiedFile(image.id) }
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("note-image-" + image.id).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("trash-current-note").performClick()
+        compose.onNodeWithTag("confirm-trash-move").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("open-trash").fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        compose.onNodeWithTag("open-trash").performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("trash-actions-" + noteId, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNode(
+            hasTestTag("trash-permanent") and
+                hasAnyAncestor(hasTestTag("trash-actions-" + noteId)),
+            useUnmergedTree = true
+        ).performClick()
+        compose.onNodeWithTag("confirm-permanent-delete").performClick()
+        compose.waitUntil(15_000) {
+            !originalFile.exists() &&
+                compose.onAllNodesWithTag("busy").fetchSemanticsNodes().isEmpty()
+        }
+        assertNull(runBlocking { data.notes.get(noteId) })
+        assertTrue(runCatching {
+            runBlocking { data.attachments.verifiedFile(image.id) }
+        }.isFailure)
+    }
+
     @Test fun applicationHasNoNetworkPermissionsOrAutomaticBackup() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         @Suppress("DEPRECATION")

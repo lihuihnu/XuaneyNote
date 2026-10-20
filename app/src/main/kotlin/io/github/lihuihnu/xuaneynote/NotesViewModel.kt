@@ -2,12 +2,20 @@ package io.github.lihuihnu.xuaneynote
 
 import android.app.Application
 import android.net.Uri
+import android.graphics.Bitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import io.github.lihuihnu.xuaneynote.data.BackupCodec
 import io.github.lihuihnu.xuaneynote.data.NoteBackup
+import io.github.lihuihnu.xuaneynote.data.InspectedBundle
+import io.github.lihuihnu.xuaneynote.data.BundleSnapshot
+import io.github.lihuihnu.xuaneynote.data.NoteStore
+import io.github.lihuihnu.xuaneynote.data.AttachmentEntity
+import io.github.lihuihnu.xuaneynote.data.LegacyBackupWouldOmitTrash
+import io.github.lihuihnu.xuaneynote.data.LegacyBackupWouldOmitAttachments
 import io.github.lihuihnu.xuaneynote.model.Note
+import io.github.lihuihnu.xuaneynote.model.NoteSummary
 import io.github.lihuihnu.xuaneynote.model.SaveState
 import io.github.lihuihnu.xuaneynote.model.ThemeMode
 import kotlinx.coroutines.CancellationException
@@ -16,6 +24,22 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+data class NoteListing(val keyword: String, val items: List<NoteSummary>)
+
+/** 私有 ZIP 验证沙箱仅保存在内存中，不会写入 SavedState Bundle。 */
+data class BundleRestorePreview(
+    val noteCount: Int,
+    val trashedCount: Int,
+    val imageCount: Int,
+    val linkCount: Int,
+    val exportedTheme: ThemeMode,
+    val sampleTitles: List<String>,
+    val encrypted: Boolean = false
+)
+
+
+/** B1: 防抖并取消过时查询，数据库 I/O 不进入 Compose 编辑主线程。 */
+@OptIn(kotlinx.coroutines.FlowPreview::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class NotesViewModel(application: Application, private val savedState: SavedStateHandle) : AndroidViewModel(application) {
     private val app = application as XuaneyApplication
     private val data = app.data
@@ -24,13 +48,52 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
     private val mutableBusy = MutableStateFlow(false)
     private val mutableMessage = MutableStateFlow<String?>(null)
     private val mutableImport = MutableStateFlow<NoteBackup?>(null)
+    private val mutableBundleReview = MutableStateFlow<BundleRestorePreview?>(null)
+    val pendingBundleReview = mutableBundleReview.asStateFlow()
+    private var verifiedBundle: InspectedBundle? = null
+    // Never in SavedStateHandle. Held only in ViewModel RAM during the SAF picker.
+    private var pendingEncryptedExportPassword: CharArray? = null
+
+    private fun clearPendingEncryptedExport() {
+        pendingEncryptedExportPassword?.fill('\u0000')
+        pendingEncryptedExportPassword = null
+    }
+    private val mutableSearchText = MutableStateFlow(savedState.get<String>("note_search").orEmpty())
+    val searchText = mutableSearchText.asStateFlow()
+    private val mutableTrashOpen = MutableStateFlow(savedState.get<Boolean>("trash_open") ?: false)
+    val trashOpen = mutableTrashOpen.asStateFlow()
+    val trashNotes = data.notes.trashSummaries
+        .catch { mutableMessage.value = "读取回收站失败，已有笔记仍保留在本机。" }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    // 当前笔记图片是数据库响应流；切换笔记即取消旧 Flow，避免显示前一篇图片。
+    val imageAttachments = mutableNote.map { it?.id }
+        .distinctUntilChanged()
+        .flatMapLatest { id ->
+            if (id == null) flowOf(emptyList())
+            else data.attachments.observeForNote(id)
+        }
+        .catch {
+            mutableMessage.value = "图片引用读取失败；本地原图不会被修改。"
+            emit(emptyList())
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val note = mutableNote.asStateFlow()
     val busy = mutableBusy.asStateFlow()
     val message = mutableMessage.asStateFlow()
     val pendingImport = mutableImport.asStateFlow()
     val saveStates = writes.states
-    val notes = data.notes.summaries.catch { mutableMessage.value = "读取笔记失败，请重新打开应用；原数据未被清空。" }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val listing = mutableSearchText
+        .debounce { if (it.isBlank()) 0L else 250L }
+        .map { it.trim() }
+        .distinctUntilChanged()
+        .flatMapLatest { keyword ->
+            val source = if (keyword.isEmpty()) data.notes.summaries else data.notes.search(keyword)
+            source.map { NoteListing(keyword, it) }.catch {
+                mutableMessage.value = "查询笔记失败，请稍后重试；已有笔记不会被修改。"
+                emit(NoteListing(keyword, emptyList()))
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), NoteListing("", emptyList()))
     val theme = data.preferences.theme.catch {
         mutableMessage.value = "读取外观设置失败，暂时跟随系统。"
         emit(ThemeMode.SYSTEM)
@@ -49,6 +112,8 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
         viewModelScope.launch {
             try { block() }
             catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: LegacyBackupWouldOmitTrash) { mutableMessage.value = error.message }
+            catch (error: LegacyBackupWouldOmitAttachments) { mutableMessage.value = error.message }
             catch (_: Exception) { mutableMessage.value = "操作未完成。请检查文件、权限或可用空间后重试；已有笔记不会被清空。" }
             finally { mutableBusy.value = false }
         }
@@ -63,6 +128,72 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
         savedState["selected_note"] = note?.id
         data.preferences.select(note?.id)
     }
+
+    fun updateSearchText(value: String) {
+        if (value.length > NoteStore.SEARCH_MAX_LENGTH) return
+        mutableSearchText.value = value
+        savedState["note_search"] = value
+    }
+
+    fun openTrash() = operation {
+        requireSaved()
+        select(null)
+        mutableTrashOpen.value = true
+        savedState["trash_open"] = true
+    }
+    fun leaveTrash() {
+        // 退出回收站只是展示状态更新；首次恢复 Activity 时也必须可重置。
+        mutableTrashOpen.value = false
+        savedState["trash_open"] = false
+    }
+    fun moveToTrash(id: String) = operation {
+        requireSaved()
+        check(data.notes.moveToTrash(id)) { "未找到可删除笔记" }
+        if (mutableNote.value?.id == id) select(null)
+        mutableMessage.value = "已移入回收站，仍可以恢复。"
+    }
+    fun restoreFromTrash(id: String) = operation {
+        requireSaved()
+        check(data.notes.restoreFromTrash(id)) { "笔记已恢复或不存在" }
+        mutableTrashOpen.value = false
+        savedState["trash_open"] = false
+        select(data.notes.get(id))
+        mutableMessage.value = "笔记已从回收站恢复。"
+    }
+    fun permanentlyDeleteTrashed(id: String) = operation {
+        requireSaved()
+        // 图片可能被多篇笔记共享，删除必须走 Room 事务加受控私有文件清理。
+        val result = data.attachments.permanentlyDeleteTrashed(id)
+        check(result.deleted) { "只有回收站中的笔记才能永久删除" }
+        mutableMessage.value = if (result.pendingFileCleanup == 0)
+            "本机笔记及不再被引用的图片已删除；此前导出的外部备份不会自动清除。"
+        else "笔记已从回收站删除；部分本机图片待下次启动清理。外部备份不会自动清除。"
+    }
+
+    /** B3.4：Debug 手工 Picker 测试，返回图片不可写入新选择的另一篇笔记。 */
+    fun addImage(noteId: String, uri: Uri) = operation {
+        if (mutableNote.value?.id != noteId) {
+            mutableMessage.value = "笔记已切换，此次图片未保存；请在目标笔记重新选择。"
+            return@operation
+        }
+        requireSaved()
+        val image = data.attachments.importFromUri(noteId, uri)
+        mutableMessage.value = "图片已保存在本机：" + image.mimeType +
+            "；原图可能包含拍摄地点等 EXIF 元信息，完整备份也会保留原图。"
+    }
+
+    fun removeImage(attachmentId: String) = operation {
+        requireSaved()
+        val active = mutableNote.value ?: error("请先打开正常笔记")
+        val result = data.attachments.unlink(active.id, attachmentId)
+        check(result.deleted) { "图片已解除关联或不存在" }
+        mutableMessage.value = if (result.pendingFileCleanup == 0)
+            "图片已从这篇笔记解除关联；其他笔记共享图片不会受影响。"
+        else "图片已解除关联，原图文件删除待下次启动继续清理。"
+    }
+
+    suspend fun imageThumbnail(attachmentId: String, maxEdgePx: Int): Bitmap =
+        data.attachments.thumbnail(attachmentId, maxEdgePx)
 
     fun createNote() = operation { requireSaved(); select(data.notes.create()) }
     fun openNote(id: String) = operation { requireSaved(); select(writes.draft(id) ?: data.notes.get(id)) }
@@ -89,6 +220,13 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
     fun retrySaves() { writes.states.value.filterValues { it is SaveState.Failed }.keys.forEach(writes::retry) }
     fun clearMessage() { mutableMessage.value = null }
     fun setTheme(mode: ThemeMode) = operation { data.preferences.setTheme(mode) }
+
+    // 在创建 SAF 目标文件前预检；实际写入时仍再次在一致快照事务中校验。
+    fun prepareLegacyBackup(onReady: () -> Unit) = operation {
+        requireSaved()
+        data.notes.verifyLegacyBackupAvailability()
+        onReady()
+    }
 
     fun exportBackup(uri: Uri) = operation {
         requireSaved()
@@ -123,4 +261,203 @@ class NotesViewModel(application: Application, private val savedState: SavedStat
         mutableMessage.value = "已恢复 ${result.inserts.size} 条，跳过 ${result.skipped} 条，冲突 ${result.conflicts} 条。" +
             if (settingsRestored) "" else "笔记已恢复，但主题设置失败；可再次导入重试。"
     }
+    /** 保存屏障成功后，才让系统弹出 ZIP 目标选择器。 */
+    fun prepareBundleExport(onReady: () -> Unit) = operation {
+        requireSaved()
+        onReady()
+    }
+
+    /** SAF 写入关闭后必须用同一目标重新读取并完整校验，才能反馈成功。 */
+    fun exportBundle(uri: Uri) = operation {
+        requireSaved()
+        try {
+            withContext(Dispatchers.IO) {
+                require(uri.scheme == "content") { "备份目标必须来自系统文件选择器" }
+                val resolver = app.contentResolver
+                val themeNow = data.preferences.theme.first()
+                val recorded = requireNotNull(resolver.openOutputStream(uri, "wt")) {
+                    "无法打开备份输出"
+                }.use { stream -> data.bundle.export(stream, themeNow) }
+                val verified = requireNotNull(resolver.openInputStream(uri)) {
+                    "备份文件提供者不支持读取校验"
+                }.use { input -> data.bundle.inspect(input) }
+                verified.use { bundle ->
+                    check(bundle.snapshot == recorded) { "ZIP 备份关闭后读回的资料不完整" }
+                }
+            }
+            mutableMessage.value = "ZIP v2 完整备份已关闭并读回校验。它是未加密明文，请保管好文件。"
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) {
+            mutableMessage.value =
+                "ZIP 备份未通过完整写入与回读校验，目标可能是不完整文件，请勿用其恢复。本机资料未被清除。"
+        }
+    }
+
+    /**
+     * B5.3: password only in ViewModel RAM while Android SAF is picking a target.
+     * The UI clears its editable Strings immediately after handing off a CharArray.
+     */
+    fun prepareEncryptedBundleExport(password: CharArray, onReady: () -> Unit) {
+        if (mutableBusy.value) return
+        if (password.size !in 12..1024) {
+            mutableMessage.value = "密码至少 12 个字符，请使用更长且独立的口令。"
+            return
+        }
+        val secret = password.copyOf()
+        operation {
+            var handedOff = false
+            try {
+                requireSaved()
+                clearPendingEncryptedExport()
+                pendingEncryptedExportPassword = secret
+                onReady() // Start CreateDocument only after autosave flush succeeds.
+                handedOff = true
+            } finally {
+                if (!handedOff) {
+                    if (pendingEncryptedExportPassword === secret) pendingEncryptedExportPassword = null
+                    secret.fill('\u0000')
+                }
+            }
+        }
+    }
+
+    /** Canceling SAF must zero the temporary password and must not create a file. */
+    fun exportEncryptedBundle(uri: Uri?) {
+        val secret = pendingEncryptedExportPassword
+        pendingEncryptedExportPassword = null
+        if (secret == null) {
+            if (uri != null) mutableMessage.value = "密码会话已失效；未导出文件，请重新操作。"
+            return
+        }
+        if (uri == null || mutableBusy.value) {
+            secret.fill('\u0000')
+            return
+        }
+        operation {
+            try {
+                requireSaved()
+                withContext(Dispatchers.IO) {
+                    require(uri.scheme == "content") { "加密备份目标必须来自系统文件选择器" }
+                    val resolver = app.contentResolver
+                    val themeNow = data.preferences.theme.first()
+                    val recorded = requireNotNull(resolver.openOutputStream(uri, "wt")) {
+                        "无法写入加密备份目标"
+                    }.use { stream ->
+                        data.encryptedBundles.export(stream, themeNow, secret)
+                    }
+                    // Accept SAF success only after close, re-open and authenticate
+                    // the exact same URI, then compare the complete B4 snapshot.
+                    requireNotNull(resolver.openInputStream(uri)) {
+                        "目标文件提供者不支持关闭后读取校验"
+                    }.use { stream -> data.encryptedBundles.inspect(stream, secret) }
+                        .use { verified ->
+                            check(verified.snapshot == recorded) { "加密文件读回不一致" }
+                        }
+                }
+                mutableMessage.value = "AES-256 密码备份已写入并完整读回校验。请妥善保存密码。"
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                mutableMessage.value = "加密备份未通过写入、密码认证或读回校验；目标可能不完整，请勿使用。本机资料未被清除。"
+            } finally {
+                secret.fill('\u0000')
+            }
+        }
+    }
+
+    /** Strict B4 or AES-256+B4 inspection only; no user data is restored here. */
+    fun inspectBundle(uri: Uri) = inspectBundleInternal(uri, null)
+
+    fun inspectEncryptedBundle(uri: Uri, password: CharArray) {
+        if (mutableBusy.value) return
+        // Copy before the password dialog zeroes its input CharArray.
+        inspectBundleInternal(uri, password.copyOf())
+    }
+
+    private fun inspectBundleInternal(uri: Uri, secret: CharArray?) {
+        if (mutableBusy.value) {
+            secret?.fill('\u0000')
+            return
+        }
+        operation {
+            try {
+                requireSaved()
+                // Reject stale previews even when a new candidate fails verification.
+                val previous = verifiedBundle
+                verifiedBundle = null
+                mutableBundleReview.value = null
+                if (previous != null) withContext(Dispatchers.IO) {
+                    runCatching { previous.close() }
+                }
+                val inspected = try {
+                    check(uri.scheme == "content") { "仅接受系统选择器返回的文件" }
+                    withContext(Dispatchers.IO) {
+                        requireNotNull(app.contentResolver.openInputStream(uri)) {
+                            "ZIP 文件无法读取"
+                        }.use { input ->
+                            if (secret == null) data.bundle.inspect(input)
+                            else data.encryptedBundles.inspect(input, secret)
+                        }
+                    }
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) {
+                    mutableMessage.value = if (secret == null)
+                        "ZIP 备份未通过格式、附件和完整性校验；导入已取消，本机资料未变。"
+                    else "密码错误、加密文件损坏或格式不受支持；未修改本机资料。可重新导入并输入密码。"
+                    return@operation
+                }
+                verifiedBundle = inspected
+                val snap: BundleSnapshot = inspected.snapshot
+                mutableBundleReview.value = BundleRestorePreview(
+                    noteCount = snap.notes.size,
+                    trashedCount = snap.notes.count { it.deletedAt != null },
+                    imageCount = snap.attachments.size,
+                    linkCount = snap.links.size,
+                    exportedTheme = snap.theme,
+                    sampleTitles = snap.notes.take(5).map { it.title.ifBlank { "未命名笔记" }.take(60) },
+                    encrypted = secret != null
+                )
+            } finally {
+                secret?.fill('\u0000')
+            }
+        }
+    }
+
+    /** 取消只清除本次新建沙箱，不动数据库。 */
+    fun cancelBundleRestore() {
+        if (mutableBusy.value) return
+        val old = verifiedBundle
+        verifiedBundle = null
+        mutableBundleReview.value = null
+        if (old != null) viewModelScope.launch(Dispatchers.IO) {
+            runCatching { old.close() }
+        }
+    }
+
+    fun confirmBundleRestore() = operation {
+        requireSaved()
+        val inspected = verifiedBundle ?: return@operation
+        val result = withContext(Dispatchers.IO) { data.bundle.restore(inspected) }
+        verifiedBundle = null
+        mutableBundleReview.value = null
+        withContext(Dispatchers.IO) { runCatching { inspected.close() } }
+        // Room 数据与 DataStore 主题无法跨存储原子提交，失败时单独报告。
+        val themeRestored = try {
+            data.preferences.setTheme(inspected.snapshot.theme)
+            true
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { false }
+        mutableMessage.value =
+            "ZIP 已恢复：新增 ${result.insertedNotes} 条，跳过 ${result.skippedNotes} 条，冲突 ${result.conflicts} 条，新图片 ${result.newAttachments} 张。" +
+            if (themeRestored) "" else "笔记和图片已保留，但主题设置失败；请手动重试。"
+    }
+
+    override fun onCleared() {
+        clearPendingEncryptedExport()
+        val old = verifiedBundle
+        verifiedBundle = null
+        // 强制杀死进程不执行 onCleared，Application 下次启动仍会清理受控缓存。
+        if (old != null) runCatching { old.close() }
+        super.onCleared()
+    }
+
 }

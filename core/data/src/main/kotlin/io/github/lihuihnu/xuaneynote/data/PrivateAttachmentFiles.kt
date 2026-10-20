@@ -1,0 +1,443 @@
+package io.github.lihuihnu.xuaneynote.data
+
+import android.content.Context
+import android.graphics.Bitmap
+import kotlinx.coroutines.flow.Flow
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.room.withTransaction
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.nio.file.Files
+import java.security.MessageDigest
+import java.util.UUID
+
+data class AttachmentRecovery(
+    val abandonedStagesRemoved: Int,
+    val unreferencedFilesRemoved: Int,
+    val missingReferencedFiles: Int,
+    val failedCleanups: Int
+)
+
+data class AttachmentDeletion(val deleted: Boolean, val pendingFileCleanup: Int)
+
+/**
+ * B3.2 私有文件生命周期后端，不开放图片 UI（B4 完整备份之前）。
+ *
+ * 图片先流式保存到私有 staging、fsync、解码校验，然后改名为 UUID 原图；
+ * 再在单个 Room 事务中提交元数据与引用。数据库提交失败删除新原图，
+ * 异常中断遗留的孤儿由下次 recover() 清理；数据库引用存在的图片不会被清理。
+ * 删除则先更新数据库引用，再执行文件删除，失败可以在下次启动幂等重试。
+ *
+ * 仅保证同一应用进程的 Mutex 串行化和常规 SQLite 事务，不冒称跨进程/跨文件系统原子性。
+ */
+class PrivateAttachmentFiles(
+    context: Context,
+    private val database: NoteDatabase,
+    directoryName: String = "xuaney-attachments"
+) {
+    companion object {
+        const val MAX_IMAGE_BYTES = 20L * 1024 * 1024
+        const val MAX_ATTACHMENTS_PER_NOTE = 128
+        private const val MAX_DIMENSION = 16384
+        private const val MAX_PIXELS = 100_000_000L
+        private val gate = Mutex()
+        private val imagePattern = Regex(
+            """images/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp)"""
+        )
+    }
+
+    private val appContext = context.applicationContext
+    private val root: File
+    private val images: File
+    private val staging: File
+
+    init {
+        require(directoryName.matches(Regex("[a-z][a-z0-9-]{0,63}")))
+        root = File(appContext.filesDir, directoryName)
+        images = File(root, "images")
+        staging = File(root, "staging")
+    }
+
+    private fun ensureDirs() {
+        val parent = appContext.filesDir.canonicalFile
+        require(!Files.isSymbolicLink(root.toPath())) { "非法图片目录" }
+        check(root.isDirectory || root.mkdir()) { "无法创建私有图片目录" }
+        require(root.canonicalFile.parentFile == parent) { "图片目录越界" }
+        for (dir in listOf(images, staging)) {
+            require(!Files.isSymbolicLink(dir.toPath())) { "非法图片子目录" }
+            check(dir.isDirectory || dir.mkdir()) { "无法创建私有图片子目录" }
+            require(dir.canonicalFile.parentFile == root.canonicalFile) { "图片子目录越界" }
+        }
+    }
+
+    private fun managedFile(relativePath: String): File {
+        require(imagePattern.matches(relativePath)) { "非法图片相对路径" }
+        ensureDirs()
+        val file = File(root, relativePath)
+        require(!Files.isSymbolicLink(file.toPath())) { "禁止图片符号链接" }
+        require(file.canonicalFile.parentFile == images.canonicalFile) { "图片路径越界" }
+        return file
+    }
+
+    private fun digestHex(hash: MessageDigest) =
+        hash.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
+
+    private suspend fun copyBounded(source: InputStream, target: File): Pair<Long, String> {
+        val hash = MessageDigest.getInstance("SHA-256")
+        var total = 0L
+        var emptyReads = 0
+        source.use { input ->
+            FileOutputStream(target).use { output ->
+                val buffer = ByteArray(8192)
+                while (true) {
+                    currentCoroutineContext().ensureActive()
+                    val n = input.read(buffer)
+                    if (n < 0) break
+                    if (n == 0) {
+                        check(++emptyReads < 128) { "图片来源未返回有效数据" }
+                        continue
+                    }
+                    emptyReads = 0
+                    total += n
+                    require(total <= MAX_IMAGE_BYTES) { "单张图片超过 20 MiB" }
+                    hash.update(buffer, 0, n)
+                    output.write(buffer, 0, n)
+                }
+                require(total > 0) { "图片为空" }
+                output.fd.sync()
+            }
+        }
+        return total to digestHex(hash)
+    }
+
+    private data class ImageInfo(val mime: String, val extension: String, val width: Int, val height: Int)
+
+    private fun inspectImage(file: File): ImageInfo {
+        val header = ByteArray(16)
+        val count = FileInputStream(file).use { it.read(header) }
+        require(count >= 12) { "图片头过短" }
+        val format = when {
+            (header[0].toInt() and 255) == 255 &&
+                (header[1].toInt() and 255) == 216 &&
+                (header[2].toInt() and 255) == 255 -> "image/jpeg" to "jpg"
+            header.sliceArray(0..7).contentEquals(
+                byteArrayOf(-119, 80, 78, 71, 13, 10, 26, 10)
+            ) -> "image/png" to "png"
+            String(header, 0, 4, Charsets.US_ASCII) == "RIFF" &&
+                String(header, 8, 4, Charsets.US_ASCII) == "WEBP" -> "image/webp" to "webp"
+            else -> throw IllegalArgumentException("只接受 JPEG、PNG 或 WebP")
+        }
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.absolutePath, bounds)
+        require(bounds.outWidth in 1..MAX_DIMENSION && bounds.outHeight in 1..MAX_DIMENSION &&
+            bounds.outWidth.toLong() * bounds.outHeight <= MAX_PIXELS) { "图片尺寸非法或过大" }
+        require(bounds.outMimeType == format.first) { "图片头与实际格式不一致" }
+        var sample = 1
+        while (maxOf(bounds.outWidth, bounds.outHeight) / sample > 1024) sample *= 2
+        val decoded = BitmapFactory.decodeFile(file.absolutePath,
+            BitmapFactory.Options().apply {
+                inSampleSize = sample
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            }) ?: throw IllegalArgumentException("图片不可解码")
+        decoded.recycle()
+        return ImageInfo(format.first, format.second, bounds.outWidth, bounds.outHeight)
+    }
+
+    /** Picker/SAF 返回的一次性 content URI；只读取原始字节，绝不持久化 URI。 */
+    suspend fun importFromUri(noteId: String, uri: Uri): AttachmentEntity {
+        require(uri.scheme == "content") { "仅接受系统内容提供方" }
+        return withContext(Dispatchers.IO) {
+            requireNotNull(appContext.contentResolver.openInputStream(uri)) { "图片无法读取" }
+                .use { importStream(noteId, it) }
+        }
+    }
+
+    /** 调用方移交流的所有权，本函数无论成功失败均关闭流。 */
+    suspend fun importStream(noteId: String, input: InputStream): AttachmentEntity =
+        try { withContext(Dispatchers.IO) {
+            gate.withLock {
+                ensureDirs()
+                val stage = File.createTempFile("stage-", ".part", staging)
+                var committedFile: File? = null
+                var candidate: AttachmentEntity? = null
+                try {
+                    val (size, hash) = copyBounded(input, stage)
+                    currentCoroutineContext().ensureActive()
+                    val format = inspectImage(stage)
+                    val id = UUID.randomUUID().toString()
+                    val path = "images/" + id + "." + format.extension
+                    val final = managedFile(path)
+                    check(!final.exists()) { "原图文件已存在" }
+                    check(stage.renameTo(final)) { "无法安全提交原图" }
+                    committedFile = final
+                    currentCoroutineContext().ensureActive()
+                    val record = AttachmentEntity(id, path, format.mime, size, hash,
+                        System.currentTimeMillis(), format.width, format.height)
+                    candidate = record
+                    database.withTransaction {
+                        check(database.notes().findActive(noteId) != null) { "只能向正常笔记添加图片" }
+                        val count = database.attachments().countForNote(noteId)
+                        require(count < MAX_ATTACHMENTS_PER_NOTE) { "单篇笔记图片数量超过限制" }
+                        database.attachments().insertAttachment(record)
+                        database.attachments().linkToNote(NoteAttachmentEntity(noteId, id, count))
+                    }
+                    record
+                } finally {
+                    // 即使调用方恰好在 COMMIT 后取消，也先查询数据库引用，不误删已提交文件。
+                    withContext(NonCancellable) {
+                        val file = committedFile
+                        val entry = candidate
+                        if (file != null && entry != null &&
+                            database.attachments().findAttachment(entry.id) == null) {
+                            file.delete() // 删除失败由进程重启的 recover() 幂等扫尾
+                        }
+                        stage.delete()
+                    }
+                }
+            }
+        } } finally { runCatching { input.close() } }
+
+    /** Room Flow 只含受控元数据，不返回外部 URI 或私有文件路径给界面。 */
+    fun observeForNote(noteId: String): Flow<List<AttachmentEntity>> =
+        database.attachments().observeForNote(noteId)
+
+    /**
+     * 缩略图始终由私有原图加载、核验 SHA-256 后按采样尺度解码。
+     * 不将文件 URI 发送给第三方组件，不读取整个原始位图进内存。
+     */
+    suspend fun thumbnail(attachmentId: String, maxEdgePx: Int = 256): Bitmap =
+        withContext(Dispatchers.IO) {
+            require(maxEdgePx in 64..1024)
+            gate.withLock {
+                val record = requireNotNull(database.attachments().findAttachment(attachmentId)) {
+                    "图片元数据不存在"
+                }
+                val file = validateStored(record)
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeFile(file.absolutePath, bounds)
+                check(bounds.outWidth == record.width && bounds.outHeight == record.height &&
+                    bounds.outMimeType == record.mimeType) { "图片尺寸或格式发生变化" }
+                var sample = 1
+                while (maxOf(bounds.outWidth, bounds.outHeight) / sample > maxEdgePx) {
+                    sample *= 2
+                }
+                val bitmap = BitmapFactory.decodeFile(file.absolutePath,
+                    BitmapFactory.Options().apply {
+                        inSampleSize = sample
+                        inPreferredConfig = Bitmap.Config.ARGB_8888
+                    }) ?: error("图片解码失败")
+                val larger = maxOf(bitmap.width, bitmap.height)
+                if (larger <= maxEdgePx) bitmap
+                else {
+                    val ratio = maxEdgePx.toFloat() / larger
+                    val scaled = Bitmap.createScaledBitmap(
+                        bitmap,
+                        maxOf(1, (bitmap.width * ratio).toInt()),
+                        maxOf(1, (bitmap.height * ratio).toInt()),
+                        true
+                    )
+                    if (scaled !== bitmap) bitmap.recycle()
+                    scaled
+                }
+            }
+        }
+
+    /** 将同一原图关联到第二篇正常笔记；不复制原图。 */
+    suspend fun linkExisting(noteId: String, attachmentId: String) =
+        withContext(Dispatchers.IO) {
+            gate.withLock {
+                val item = requireNotNull(database.attachments().findAttachment(attachmentId))
+                validateStored(item)
+                database.withTransaction {
+                    check(database.notes().findActive(noteId) != null) { "笔记已删除或不存在" }
+                    check(database.attachments().forNote(noteId).none { it.id == attachmentId }) {
+                        "图片已关联到此笔记"
+                    }
+                    val count = database.attachments().countForNote(noteId)
+                    require(count < MAX_ATTACHMENTS_PER_NOTE) { "单篇笔记图片数量超过限制" }
+                    database.attachments().linkToNote(NoteAttachmentEntity(noteId, attachmentId, count))
+                }
+            }
+        }
+
+    private fun validateStored(item: AttachmentEntity): File {
+        val file = managedFile(item.relativePath)
+        require(file.isFile && !Files.isSymbolicLink(file.toPath())) { "原图已缺失" }
+        val digest = MessageDigest.getInstance("SHA-256")
+        var size = 0L
+        FileInputStream(file).use { input ->
+            val buf = ByteArray(8192)
+            while (true) {
+                val n = input.read(buf)
+                if (n < 0) break
+                size += n
+                require(size <= MAX_IMAGE_BYTES) { "原图超过大小限制" }
+                digest.update(buf, 0, n)
+            }
+        }
+        require(size == item.byteSize && digestHex(digest) == item.sha256) {
+            "图片字节校验失败"
+        }
+        return file
+    }
+
+    /**
+     * B4.2 仅内部使用：跨 Room 逻辑快照、导出流和文件写入的私有目录锁。
+     * 与本类的普通导入/删除/recover 共用同一 Mutex，回调不可再次调用加锁接口。
+     */
+    internal suspend fun <T> withLockedFiles(block: suspend () -> T): T =
+        withContext(Dispatchers.IO) {
+            gate.lock()
+            try {
+                ensureDirs()
+                block()
+            } finally {
+                gate.unlock()
+            }
+        }
+
+    /** 调用方必须持有 withLockedFiles 锁，不允许把这个 File 暴露给外部内容提供者。 */
+    internal fun verifiedExistingUnderLock(item: AttachmentEntity): File = validateStored(item)
+
+    /**
+     * B4.2 恢复时：从已预检的 bundle 沙箱再次分块校验哈希、尺寸、MIME，
+     * 同一私有文件系统先原子改名成不可变原图，随后才能做 Room 事务。
+     */
+    internal suspend fun installVerifiedUnderLock(
+        metadata: AttachmentEntity, verifiedSource: File
+    ): File {
+        check(verifiedSource.isFile && !Files.isSymbolicLink(verifiedSource.toPath())) {
+            "备份中的原图已经失效"
+        }
+        val destination = managedFile(metadata.relativePath)
+        check(!destination.exists()) { "恢复目标已有文件，不允许覆盖" }
+        val stage = File.createTempFile("stage-", ".part", staging)
+        try {
+            val (size, sha) = copyBounded(FileInputStream(verifiedSource), stage)
+            require(size == metadata.byteSize && sha == metadata.sha256) {
+                "恢复期间图片字节发生变化"
+            }
+            val info = inspectImage(stage)
+            require(info.mime == metadata.mimeType && info.width == metadata.width &&
+                info.height == metadata.height) { "恢复时图片 MIME 或尺寸不一致" }
+            check(stage.renameTo(destination)) { "图片无法完成私有目录提交" }
+            return destination
+        } finally {
+            stage.delete()
+        }
+    }
+
+    /** 在 Room 事务回滚或取消后，仅移除确定没有元数据的本次新增文件。 */
+    internal suspend fun cleanupAbortedUnderLock(items: List<AttachmentEntity>) {
+        for (item in items) {
+            if (database.attachments().findAttachment(item.id) == null) {
+                runCatching { managedFile(item.relativePath).delete() }
+            }
+        }
+    }
+
+    /** 取消单篇正常笔记的图片关联，保留其他笔记的共享引用和原图。 */
+    suspend fun unlink(noteId: String, attachmentId: String): AttachmentDeletion =
+        withContext(Dispatchers.IO) {
+            gate.withLock {
+                val released = database.withTransaction {
+                    val active = database.notes().findActive(noteId)
+                        ?: return@withTransaction null
+                    val record = database.attachments().findAttachment(attachmentId)
+                        ?: return@withTransaction null
+                    if (database.attachments().forNote(active.id).none { it.id == attachmentId }) {
+                        return@withTransaction null
+                    }
+                    managedFile(record.relativePath)
+                    check(database.attachments().unlink(noteId, attachmentId) == 1)
+                    if (database.attachments().countReferences(attachmentId) == 0) {
+                        check(database.attachments().deleteUnreferenced(attachmentId) == 1)
+                        record.relativePath
+                    } else ""
+                }
+                if (released == null) AttachmentDeletion(false, 0)
+                else {
+                    val pending = if (released.isNotEmpty()) {
+                        val file = managedFile(released)
+                        if (file.exists() && !file.delete()) 1 else 0
+                    } else 0
+                    AttachmentDeletion(true, pending)
+                }
+            }
+        }
+
+    /** B4 备份层可以取得验证过的受控 File，并自行流式读取。 */
+    suspend fun verifiedFile(attachmentId: String): File = withContext(Dispatchers.IO) {
+        gate.withLock {
+            val item = requireNotNull(database.attachments().findAttachment(attachmentId))
+            validateStored(item)
+        }
+    }
+
+    /** 删除 Room 状态优先于文件操作；中断时残留的无引用文件由 recover() 清理。 */
+    suspend fun permanentlyDeleteTrashed(noteId: String): AttachmentDeletion =
+        withContext(Dispatchers.IO) {
+            gate.withLock {
+                ensureDirs()
+                val released = database.withTransaction {
+                    val note = database.notes().find(noteId)
+                    if (note?.deletedAt == null) return@withTransaction null
+                    val attachments = database.attachments().forNote(noteId)
+                    attachments.forEach { managedFile(it.relativePath) }
+                    check(database.notes().permanentlyDeleteTrashed(noteId) == 1)
+                    attachments.filter { database.attachments().countReferences(it.id) == 0 }
+                        .onEach { check(database.attachments().deleteUnreferenced(it.id) == 1) }
+                        .map { it.relativePath }
+                }
+                if (released == null) AttachmentDeletion(false, 0)
+                else {
+                    val failures = released.count { relative ->
+                        val file = managedFile(relative)
+                        file.exists() && !file.delete()
+                    }
+                    AttachmentDeletion(true, failures)
+                }
+            }
+        }
+
+    /** 只清理私有目录受控文件名；被数据库引用但遗失的文件必须报告。 */
+    suspend fun recover(): AttachmentRecovery = withContext(Dispatchers.IO) {
+        gate.withLock {
+            ensureDirs()
+            val references = database.attachments().allAttachments()
+            val known = references.map { managedFile(it.relativePath).canonicalPath }.toSet()
+            var stages = 0
+            var orphans = 0
+            var failed = 0
+            for (file in staging.listFiles() ?: error("无法枚举暂存目录")) {
+                if (file.name.startsWith("stage-") && file.name.endsWith(".part") &&
+                    file.isFile && !Files.isSymbolicLink(file.toPath())) {
+                    if (file.delete()) stages++ else failed++
+                }
+            }
+            for (file in images.listFiles() ?: error("无法枚举图片目录")) {
+                val relative = "images/" + file.name
+                if (!imagePattern.matches(relative) || !file.isFile ||
+                    Files.isSymbolicLink(file.toPath())) continue
+                if (file.canonicalPath !in known) {
+                    if (file.delete()) orphans++ else failed++
+                }
+            }
+            val missing = references.count {
+                val file = managedFile(it.relativePath)
+                !file.isFile || Files.isSymbolicLink(file.toPath())
+            }
+            AttachmentRecovery(stages, orphans, missing, failed)
+        }
+    }
+}

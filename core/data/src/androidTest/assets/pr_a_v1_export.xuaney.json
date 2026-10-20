@@ -1,0 +1,7 @@
+{
+  "format": "XuaneyNote.text-backup",
+  "version": 1,
+  "payload_bytes": 617,
+  "sha256": "1c2573cd0c4e1cdec13eb7bcc01044139fa414f832c4169df83cfddb31090c0f",
+  "payload": "{\"app_version\":\"0.1.0-pr-a\",\"database_version\":1,\"exported_at\":1710010000000,\"theme\":\"DARK\",\"attachments\":[],\"notes\":[{\"id\":\"00000000-0000-0000-0000-000000000101\",\"type\":\"NOTE\",\"title\":\"旧版合成日记\",\"body\":\"PR-A 导出的正文\\n第一行🙂，第二行含英文 Room\",\"created_at\":1710000000000,\"updated_at\":1710000060000,\"revision\":3,\"body_format\":\"plain\",\"body_version\":1},{\"id\":\"00000000-0000-0000-0000-000000000102\",\"type\":\"NOTE\",\"title\":\"备份兼容 markdown\",\"body\":\"# 标题\\n**内容**\",\"created_at\":1710000000010,\"updated_at\":1710000060100,\"revision\":11,\"body_format\":\"markdown\",\"body_version\":1}]}"
+}

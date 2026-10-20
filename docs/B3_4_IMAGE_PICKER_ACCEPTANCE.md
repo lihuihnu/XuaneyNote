@@ -1,0 +1,37 @@
+# B3.4：Debug-only Photo Picker 真机专项验收
+
+**发起依据（2026-10-17）**：维护者报告 PR-B 手机端 SAF/ZIP v2 验证通过，但未提供机型/Android 版本、逐项测试结果和签名详情。此报告仅用于进入下一轮图片验收，**不代表**图片添加、异常处理、同签名升级或正式发布已通过。
+
+## 功能边界
+
+- `ImageUiGate.USER_ENTRY_ENABLED=BuildConfig.DEBUG`：测试 Debug APK 可新增/移除图片，Release APK 仍只读预览；PR #2 保持 Draft。
+- AndroidX Photo Picker 只选择本机图片一次性 `content:` URI；发起时锁定笔记 ID，返回时拒绝写入已切换的笔记。每张 ≤20 MiB，后端验证 JPEG/PNG/WebP 内容、采样解码、SHA-256、私有文件及 Room 关联。
+- 含图笔记永久删除走 `PrivateAttachmentFiles.permanentlyDeleteTrashed`；与其他笔记共享的图片绝不误删，最后引用解除后再清理原图。文件清理失败必须明确提示。
+- 不修改 Room Schema v1/v2/v3、ZIP v2 备份、旧 JSON v1 兼容、网络权限、广告/遥测/账户或正式发布签名。
+
+## 本轮官方 CI 验收（仅能在本轮成功后勾选）
+
+- [ ] Debug 新建笔记出现添加入口；只读图片预览和删除二次确认原测试继续通过。
+- [ ] 含图笔记从正常 UI 进入回收站，经确认永久删除后私有原图与引用安全清理；共享图片专项继续成功。
+- [ ] Photo Picker 结果携带目标笔记 ID，笔记切换或取消时不能错误关联。
+- [ ] B0–B4 Room 迁移、中文搜索、回收站、ZIP v2 安全和恢复回归成功，手机/平板窗口、重开及隐私检查通过。
+- [ ] 静态门禁保证 Release 不开启图片编辑，合并 Manifest 不声明网络权限/广泛存储权限。
+- [ ] 新的 Debug APK 只由所有者、同仓库 PR #2 的一次性受信任 CI 交付，核对 Run/attempt、source/tested SHA、签名、SHA-256 后独立归档；旧 APK 不可复用。
+
+## 维护者真实手机 Photo Picker 测试（仅合成资料）
+
+- [ ] 在可清空的 Debug 环境中新建中文笔记，分别添加 JPEG、PNG、WebP，缩略图和放大预览可用；取消选择无新增记录。
+- [ ] 添加图片后后台、旋转与强制停止再重开，原文与图片均存在；在选择器期间切换笔记不得将图片放到另一篇。
+- [ ] 移除图片先取消再确认，原文字不变、其他图片还可预览；含图笔记在回收站永久删除后不存在仍被引用的原图误删。
+- [ ] ZIP v2 导出→关闭读回→预览→确认导入能恢复图片哈希/字节、回收站状态和主题；重复导入幂等。
+- [ ] 对无效图片、读取权限失败、低空间、损坏 ZIP 和取消等至少覆盖可重现失败情形；原有笔记不丢失。
+- [ ] 界面明确提醒 EXIF 和明文 ZIP 风险。记录机型、Android 版本、SAF 文件提供者及同签名升级是否实际测试。
+
+**安装安全**：不同 GitHub Runner 的临时 Debug 签名一般不能覆盖先前安装包，严禁卸载保存唯一重要笔记副本的应用。此版本尚无 B5 加密备份，只能使用合成/可再生测试数据。人工图片闭环成功后才讨论解除 Release 门禁和实施 B5。
+
+## 2026-10-18 人工验收状态回填
+
+- **维护者在对话中确认：B3.4 新 Debug APK 的手机端图片功能已验收。** 这里记录的是维护者整体通过声明，不擅自将上面的未核实逐项复选框全部改为勾选。
+- 对应软件源码 `236c322852b914a748dbd9f5b2a7b64e558ec0bf`，官方 [Run 39043407435](https://github.com/lihuihnu/XuaneyNote/actions/runs/39043407435) 为 completed/success，实际 tested merge `22a29b630d85e12f477ae799b57922950215c851`。模型 10/10、Room 38/38、模拟手机/平板分别 9/9；[可读证据](https://github.com/lihuihnu/XuaneyNote/tree/8d667f21f0c403b992a4cd85ab535093fb0b882a/evidence) 和 [测试包](https://github.com/lihuihnu/XuaneyNote/tree/5be48a612a3478f49c3d555e9ad0c0932b434dd0) 已另行归档。
+- 用户未提交手机型号、Android 版本、每种照片格式的逐项记录、低存储与签名覆盖升级证据；因此**不将这些额外条件记为独立实测通过**。
+- **允许推进 B5 的安全审查和后续实现**，但此声明不等于 PR-B 完成、Release 图片编辑门禁解除、正式签名可升级或 B5 已有任何测试证据。B5 的审查入口见 [B5 安全评审](B5_ENCRYPTED_BACKUP_SECURITY_REVIEW.md)。

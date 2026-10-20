@@ -18,6 +18,16 @@ class ModelTest {
         assertEquals(note.body, first.inserts.single().body)
         assertTrue(planRestore(listOf(edited) + first.inserts, listOf(note)).inserts.isEmpty())
     }
+    @Test fun trashedRecordImportMakesVisibleIdempotentCopy() {
+        // 身份相同的已删除原笔记，导入旧 v1 备份时不得静默跳过，也不能偷偷取消删除。
+        val first = planRestore(listOf(note), listOf(note), forceCopyIds = setOf(note.id))
+        assertEquals(1, first.conflicts)
+        assertEquals(1, first.inserts.size)
+        assertNotEquals(note.id, first.inserts.single().id)
+        val second = planRestore(listOf(note) + first.inserts, listOf(note), forceCopyIds = setOf(note.id))
+        assertTrue(second.inserts.isEmpty())
+        assertEquals(1, second.skipped)
+    }
     @Test(expected = IllegalArgumentException::class)
     fun duplicateIdsFail() { planRestore(emptyList(), listOf(note, note)) }
     @Test(expected = IllegalArgumentException::class)
