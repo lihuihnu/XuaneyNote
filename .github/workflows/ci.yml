@@ -72,12 +72,12 @@ jobs:
             :core:model:test :core:data:assembleDebugAndroidTest :app:assembleDebug \
             :app:assembleDebugAndroidTest :app:lintDebug :app:processReleaseMainManifest
           bash tools/run_gate.sh privacy python3 tools/check_repo.py --merged
-      - name: Phone, tablet window, Room backup and real process restart
-        if: steps.scope.outputs.android == 'true'
-        run: bash tools/run_gate.sh devices bash tools/device_gate.sh
       - name: B5.1 Android API26 crypto-only device gate
         if: steps.scope.outputs.android == 'true'
         run: bash tools/run_gate.sh b5-api26 bash tools/b5/api26_gate.sh
+      - name: Phone, tablet window, Room backup and real process restart
+        if: steps.scope.outputs.android == 'true'
+        run: bash tools/run_gate.sh devices bash tools/device_gate.sh
       - name: Trusted one-time debug APK handoff (read-only)
         if: >-
           ${{

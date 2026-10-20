@@ -122,7 +122,16 @@ assert 'vm.exportEncryptedBundle(uri)' in app_ui
 assert 'importEncryptedBundle.launch(' in app_ui
 assert 'fun inspectBundle(uri: Uri) = inspectBundleInternal(uri, null)' in vm
 assert '5f1eb1e9d67cfee200a695e4079751b49e73a226b154193e13f7c602efbe72fb' in (root / 'tools/b5/run_interop.sh').read_text(), 'Pinned candidate hash missing'
-print('PASS source/privacy / frozen Room schemas / Debug image gate / B5.3 SAF + AES full readback / read-only CI')
+# API26 must run before the larger API35 full device suite to protect
+# resource headroom when the official Runner installs a second SDK image.
+assert workflow.index('B5.1 Android API26 crypto-only device gate') < workflow.index(
+    'Phone, tablet window, Room backup and real process restart')
+for avd_script in ('tools/b5/api26_gate.sh', 'tools/device_gate.sh'):
+    avd_code = (root / avd_script).read_text()
+    assert not re.search(r'(?m)^\s*echo no\s*\|\s*avdmanager', avd_code)
+    assert '<<< "no"' in avd_code, 'AVD prompt must use a here-string'
+assert 'b5-api26-avd-create.log' in (root / 'tools/b5/api26_gate.sh').read_text()
+print('PASS source/privacy / frozen Room schemas / Debug image gate / B5.3 SAF + AES full readback / deterministic AVD startup / read-only CI')
 if '--merged' in sys.argv:
     manifests = list((root / 'app/build/intermediates').glob('**/AndroidManifest.xml'))
     assert any('release' in str(p).lower() for p in manifests), 'No release merged manifest'

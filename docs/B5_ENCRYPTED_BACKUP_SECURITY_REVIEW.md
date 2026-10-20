@@ -127,3 +127,11 @@ B5.3 实施边界：
 - 密码丢失不可找回；标准 WinZip AES 使用弱 PBKDF2 1000 次，建议使用**高熵长口令**，不能宣称抵御离线猜测。含中文/Emoji 的密码可在 Zip4j/pyzipper 下使用，但不是所有外部 7-Zip/系统解压工具都保证同样处理；外层大小、时间等元数据仍可见。
 - 本轮新增受控密码对话框、合成 Compose 入口和密码校验测试、MediaStore 合成文件提供方**写入关闭—重开读回**测试；原数据库/图片/备份回归继续运行。真实 Android SAF 文件提供方及安装签名升级测试仍需维护者单独验收。
 - **B5.3 当前为源码候选，新提交的官方 CI 未执行完成前不得宣称密码备份已可安全使用。** 保持 PR #2 Draft、`main` 不变；下一阶段要提供新的受信任测试 APK，继续按此前固定 Run、source/tested SHA、签名与分块 SHA-256 身份交付。验收清单：[B5.3 手机专项](B5_3_SAF_ACCEPTANCE.md)。
+
+## 10. B5.3 首轮 CI 失败与 API26 AVD 创建专项修正（2026-10-20）
+
+- [Run 39096198378](https://github.com/lihuihnu/XuaneyNote/actions/runs/39096198378)：source `afed087450c1be8a558f2fdc56904fd282ec1c93`、tested merge `afd8c627adab188e59705987ae0e09fb28081605`，最终 **completed/failure**。B5.1 AES/Zip4j/7-Zip/pyzipper、Gradle 构建/Lint/隐私和 API35 手机平板全部通过；测试 XML：模型 10/10、Room/备份 44/44、模拟手机与平板 UI 各 11/11，零失败/错误。
+- 失败发生在**执行 Android API26 测试之前**。安装 API26 系统镜像后，`avdmanager create avd` 输出 `Auto-selecting single ABI x86_64` 便以退出码 1 终止；未执行三项 API26 加密测试。现有日志没有精确定位到底层退出原因，不能认定数值或加密算法失败，也不能把本轮 API26 记为通过。
+- 原有 `set -euo pipefail` 配合 `echo no | avdmanager create avd`，当创建器不读取输入时，生产者可能因 SIGPIPE 使管道误报失败；此外先完成 API35 手机/平板大套件再安装 API26 SDK 会增加磁盘空间紧张的风险。**以上均为待验证的可能原因**，不将推测写成确定根因。
+- 本轮仅调整两份 AVD 创建脚本，改用 Bash here-string `<<< "no"` 消除单独输入进程及 pipefail 竞态；将 API26 专项安排在基础 Android 构建之后、API35 常规手机/平板测试之前，并记录 `df -h`、镜像 `system.img` 存在性、AVD 创建输出和 `config.ini` 检查。**原 AES、B4、Room、手机平板及 API26 门禁全部保留，未更改加密或业务源码。**
+- 修订版必须由新的 GitHub-hosted `ubuntu-24.04` PR CI 完整重跑，只有真实 `Run/source/tested SHA` 成功后才能归档新签名 APK、进入真机 SAF 验收。PR #2 仍是 Draft，不能合并 main。
