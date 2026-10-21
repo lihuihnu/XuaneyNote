@@ -2,7 +2,7 @@
 
 **专注当下，记录生活。** 面向 Android 手机和平板的完全本地、免费、无需登录的笔记、日记、手账、备忘录与番茄专注应用。
 
-> **当前状态（2026-10-17）**：PR-A [#1](https://github.com/lihuihnu/XuaneyNote/pull/1) 已合并至 `main`（`b85e27d5c004f978850badc4865dea821c0b44d1`），交付最小原生笔记闭环。PR-B 数据安全与资料管理已在 `feat/pr-b-data-safety` **冻结目标，B0 已完成最终 CI 验收；B1 中文搜索已通过官方 CI，B2 回收站已通过官方 CI；B3.1/B3.2/B4.1/B4.2a/B4.2b 均通过官方自动化 CI；B3.3 只读图片预览已通过官方 CI；受信任的 SAF 测试 APK 已归档；维护者报告手机 SAF 验收通过（未附逐项记录）；下一轮仅在 Debug 构建开放 Photo Picker/移除预览，正式 Release 仍关闭图片编辑，B3.4 真机图片功能已获维护者通过声明、仍缺逐项记录；B5.0 安全审查已通过，B5.1 Run 39090837334、B5.2 Run 39093609921 已通过；B5.3 首轮 CI 39096198378 因 API26 模拟器创建失败而结束（其余 AES/Room/手机/平板测试已通过）；正在独立修正 AVD 创建和执行顺序，尚待新 CI 与真机 SAF 验收；尚未实现生产密码备份**。这仍不是正式 V1 发布。
+> **当前状态（2026-10-21）**：PR-A 与 PR-B 均已合并 `main`；PR-B [#2](https://github.com/lihuihnu/XuaneyNote/pull/2) squash 合并 `f513b8a`，其最终源码官方 [Run 39422300056](https://github.com/lihuihnu/XuaneyNote/actions/runs/39422300056) 成功。B5.3 真实手机 SAF 密码备份及同签名覆盖升级 **尚待验收**，故不是正式发布。当前开发 PR-C0：本地单调时钟番茄钟与简洁专注页。
 
 ## 已实现：PR-A 基础笔记
 
@@ -11,11 +11,18 @@
 - 系统文件选择器（SAF）手动导出/验证与冲突保留式 JSON v1 恢复；此格式**未加密，且不支持附件**；
 - 完全离线、免登录，没有应用运行时 INTERNET / ACCESS_NETWORK_STATE、广告或遥测。
 
-## 开发中：PR-B 冻结目标
+## 已集成：PR-B 数据安全与资料管理
 
-[**PR-B 目标与数据合同（docs/PR_B.md）**](docs/PR_B.md) 固定六项闭环：Room v1→v2 显式安全迁移、中文/英文搜索、回收站、私有图片附件、包含附件的备份 v2、可选密码保护的加密备份。**B0 [Run 39001250626](https://github.com/lihuihnu/XuaneyNote/actions/runs/39001250626)、B1 [Run 39002603730](https://github.com/lihuihnu/XuaneyNote/actions/runs/39002603730) 已通过；B2 [Run 39005974577](https://github.com/lihuihnu/XuaneyNote/actions/runs/39005974577) 已通过；B3.1 最终 [Run 39009835439](https://github.com/lihuihnu/XuaneyNote/actions/runs/39009835439) success；B3.2 [Run 39012222967](https://github.com/lihuihnu/XuaneyNote/actions/runs/39012222967) 已通过；B4.1 [Run 39018703459](https://github.com/lihuihnu/XuaneyNote/actions/runs/39018703459) 已通过；B4.2a [Run 39021083940](https://github.com/lihuihnu/XuaneyNote/actions/runs/39021083940) 已通过；B4.2b [Run 39032360669](https://github.com/lihuihnu/XuaneyNote/actions/runs/39032360669) 自动化已通过；B3.3 只读图片组件已通过 CI；维护者报告手机 SAF 通过，B3.4 Debug 图片功能已通过 [Run 39043407435](https://github.com/lihuihnu/XuaneyNote/actions/runs/39043407435) 并经维护者报告真机通过（无逐项设备记录）；Release 入口仍关闭，B5 正在安全评审。JSON v1 仍兼容。** 见 [B1 搜索](docs/B1_SEARCH.md)、[B2 回收站](docs/B2_TRASH.md)、[B3 图片](docs/B3_ATTACHMENTS.md)、[B3.3 受控图片面板](docs/B3_3_IMAGE_UI.md)和[B4 ZIP 备份合同](docs/B4_BUNDLE_V2.md)。
+- 显式 Room v1→v3 数据迁移、中文/英文笔记搜索、回收站、私有本地图片、ZIP v2 完整备份和可选 AES-256 ZIP 密码保护。
+- 笔记和附件只保存在设备上，不申请网络权限；Release 版图片添加/移除入口仍按既定安全闸门关闭。
+- B5.3 的原始 CI [Run 39422300056](https://github.com/lihuihnu/XuaneyNote/actions/runs/39422300056) 完整成功，但未进行真实手机加密 SAF 全链路和相同签名覆盖升级验收。WinZip AES 的密码派生较弱，建议使用高熵长密码，不能把其宣传为通用强口令保护。
+- 数据合同与验收边界见 [PR-B](docs/PR_B.md)、[B5 安全审查](docs/B5_ENCRYPTED_BACKUP_SECURITY_REVIEW.md)、[B5.3 实机清单](docs/B5_3_SAF_ACCEPTANCE.md)。
 
-计划顺序：B0 数据迁移 → B1 搜索 → B2 回收站 → B3 图片 → B4 完整备份 → B5 密码备份。每一步单独补齐验证，最后以最新源码 SHA 的官方 CI 与手工文件选择器回归验收。此阶段不提前开发番茄钟、日记或手账画布。
+## 正在开发：PR-C0 番茄钟
+
+- 新增 25/5/15 分钟专注/休息、开始/暂停/继续/重置、清晰的手机与平板专注页面。
+- 使用 `SystemClock.elapsedRealtime()` 与开机次数判断同一设备启动；同次开机进程退出后按原始剩余时间恢复，设备重启不会错误补记完成。
+- 只保存设备临时计时状态；无通知/铃声、提醒、统计和待办，不添加网络权限。详见 [C0 开发合同](docs/PR_C0.md)。
 
 ## 最新 PR-A 验证记录与边界
 
@@ -24,16 +31,14 @@
 - 一次性测试 APK 已归档为**校验后可拼接的分片**，独立于 `main`；查看 [测试包 README](https://github.com/lihuihnu/XuaneyNote/tree/testing-apks/pr-a-19532a929475)。临时 CI 调试证书不等于正式可更新签名；不要用该调试版承载资料唯一副本。
 - 官方 Wrapper、Room v1 schema 和成功/受控失败 CI 证据已按原始 SHA 固定；具体历史见 [PR-A 归档](docs/PR_A.md) 与 [CI 证据规范](docs/CI_EVIDENCE.md)。
 
-## 当前 PR-B 真机测试进度
+## 真机与发布边界
 
-- [B4.2b SAF 手机验收清单](docs/B4_2B_SAF_ACCEPTANCE.md)：维护者口头报告通过，未提供机型/逐项证据；不视为同签名升级或其他 ROM 验收。
-- [B3.4 Photo Picker 专项](docs/B3_4_IMAGE_PICKER_ACCEPTANCE.md)：官方 Debug CI 已成功，维护者 2026-10-18 报告真机验收通过；机型、逐项异常及签名升级尚无单独证据。**Release 图片编辑仍关闭**。
-- [B5 AES-256 ZIP 安全审查](docs/B5_ENCRYPTED_BACKUP_SECURITY_REVIEW.md)：B5.0 官方 CI 已通过，B5.1 [Run 39090837334](https://github.com/lihuihnu/XuaneyNote/actions/runs/39090837334) 和 B5.2 [Run 39093609921](https://github.com/lihuihnu/XuaneyNote/actions/runs/39093609921) 成功；B5.3 已接入密码输入及系统 SAF 导出/导入候选，**尚待本轮 CI 与真实手机 SAF 验收**。参见 [B5.3 验收清单](docs/B5_3_SAF_ACCEPTANCE.md)；生产 APK 不包含加密库或用户入口。
-- [PR-B 测试 APK 来源与签名限制](docs/PR_B_TEST_APK.md)：旧 SAF 测试包不可冒充新的图片测试包；临时签名不可保证覆盖旧安装。
+此前 PR-A 基础笔记和 PR-B 图片、明文 SAF 有维护者通过反馈，但没有逐项型号和异常路径记录。**B5.3 新增的密码备份真机验收未完成**，发布前应按 [B5.3 清单](docs/B5_3_SAF_ACCEPTANCE.md) 验证错误密码、取消、异常 provider、文件损坏与同签名升级；不要卸载保存唯一私人笔记的旧版。新 PR-C0 的熄屏/重启计时也需要真实手机单独验收。
 
 ## 文档导航
 
 - [项目完整规划基线](docs/PROJECT_PLAN.md)
+- [PR-C0 单调时钟计时合同](docs/PR_C0.md)
 - [PR-B 目标冻结及全部验收门禁](docs/PR_B.md)
 - [PR-A 历史与合并记录](docs/PR_A.md)
 - [JSON 文本备份 v1 合同](docs/BACKUP_V1.md)

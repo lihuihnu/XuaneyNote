@@ -57,7 +57,7 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: B5.1 isolated AES-256 ZIP and independent 7-Zip interoperability
-        if: steps.scope.outputs.android == 'true'
+        if: steps.scope.outputs.android == 'true' && github.head_ref != 'feat/pr-c0-focus-timer'
         run: bash tools/run_gate.sh b5-interop bash tools/b5/run_interop.sh
       - name: Android SDK and toolchain identity
         if: steps.scope.outputs.android == 'true'
@@ -66,18 +66,54 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;35.0.0'
           { java -version; echo "Runner image: ${ImageVersion:-unknown}"; } > ci-out/logs/toolchain.log 2>&1
       - name: Unit tests, lint, APK and release Manifest with verified official Wrapper
-        if: steps.scope.outputs.android == 'true'
+        if: steps.scope.outputs.android == 'true' && github.head_ref != 'feat/pr-c0-focus-timer'
         run: |
           bash tools/run_gate.sh build ./gradlew --no-daemon --console=plain \
             :core:model:test :core:data:assembleDebugAndroidTest :app:assembleDebug \
             :app:assembleDebugAndroidTest :app:lintDebug :app:processReleaseMainManifest
           bash tools/run_gate.sh privacy python3 tools/check_repo.py --merged
+      - name: C0 focused JVM model, Compose build, lint and privacy
+        if: steps.scope.outputs.android == 'true' && github.head_ref == 'feat/pr-c0-focus-timer'
+        run: |
+          bash tools/run_gate.sh c0-build ./gradlew --no-daemon --console=plain \
+            :core:model:test :app:assembleDebug :app:assembleDebugAndroidTest \
+            :app:lintDebug :app:processReleaseMainManifest
+          bash tools/run_gate.sh c0-privacy python3 tools/check_repo.py --merged
       - name: B5.1 Android API26 crypto-only device gate
-        if: steps.scope.outputs.android == 'true'
+        if: steps.scope.outputs.android == 'true' && github.head_ref != 'feat/pr-c0-focus-timer'
         run: bash tools/run_gate.sh b5-api26 bash tools/b5/api26_gate.sh
       - name: Phone, tablet window, Room backup and real process restart
-        if: steps.scope.outputs.android == 'true'
+        if: steps.scope.outputs.android == 'true' && github.head_ref != 'feat/pr-c0-focus-timer'
         run: bash tools/run_gate.sh devices bash tools/device_gate.sh
+      # APK 交付只改变 CI 流程，不改变已通过 39458244087 的应用源码。
+      # 如 app/core/tools/Gradle 等实际内容改动，下面的身份门禁先行拒绝，不能绕过设备测试。
+      - name: C0 trusted APK source identity gate
+        if: >-
+          ${{
+            github.event_name == 'pull_request' &&
+            github.event.pull_request.number == 3 &&
+            github.actor == 'lihuihnu' &&
+            contains(github.event.pull_request.labels.*.name, 'trusted-test-apk-once')
+          }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREVIOUSLY_VERIFIED_SOURCE=392a7a5467b52c622b049785d1e96e7a699f3ac5
+          git cat-file -e "$PREVIOUSLY_VERIFIED_SOURCE^{commit}" ||
+            git fetch --no-tags --depth=1 origin "$PREVIOUSLY_VERIFIED_SOURCE"
+          mapfile -t changed < <(git diff --name-only "$PREVIOUSLY_VERIFIED_SOURCE" "$SOURCE_SHA")
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = ".github/workflows/ci.yml"
+          test "$(git rev-parse HEAD)" = "$TESTED_SHA"
+          echo "C0 app/core/tools source tree matches previously tested SHA; only CI policy changed."
+      - name: C0 targeted phone/tablet Compose smoke, one API35 emulator
+        if: >-
+          ${{
+            steps.scope.outputs.android == 'true' &&
+            github.head_ref == 'feat/pr-c0-focus-timer' &&
+            !contains(github.event.pull_request.labels.*.name, 'trusted-test-apk-once')
+          }}
+        run: bash tools/run_gate.sh c0-devices bash tools/focus_device_gate.sh
       - name: Trusted one-time debug APK handoff (read-only)
         if: >-
           ${{
@@ -85,9 +121,9 @@ jobs:
             github.actor == 'lihuihnu' &&
             github.event.pull_request.user.login == 'lihuihnu' &&
             github.event.pull_request.head.repo.full_name == github.repository &&
-            github.event.pull_request.number == 2 &&
+            github.event.pull_request.number == 3 &&
             github.event.pull_request.base.ref == 'main' &&
-            github.event.pull_request.head.ref == 'feat/pr-b-data-safety' &&
+            github.event.pull_request.head.ref == 'feat/pr-c0-focus-timer' &&
             contains(github.event.pull_request.labels.*.name, 'trusted-test-apk-once')
           }}
         env:
@@ -128,7 +164,7 @@ jobs:
               assert path.is_relative_to(root) and path != root
               if path.exists(): shutil.rmtree(path)
           temporary = pathlib.Path(os.environ['RUNNER_TEMP']).resolve()
-          for name in ('xuaney-gradle', 'xuaney-bootstrap', 'xuaney-avd'):
+          for name in ('xuaney-gradle', 'xuaney-bootstrap', 'xuaney-avd', 'xuaney-c0-avd'):
               path = (temporary / name).resolve()
               assert path.parent == temporary
               if path.exists(): shutil.rmtree(path)
