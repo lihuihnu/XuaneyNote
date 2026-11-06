@@ -1,0 +1,103 @@
+{
+  "protocol": "XuaneyNote.test-apk-handoff-v1",
+  "archive_kind": "verified-split-zlib-debug-apk",
+  "archive_status": "compressed-pieces-uploaded; offline APK assembly + final SHA-256 verification required",
+  "run_id": "42138103656",
+  "run_attempt": "1",
+  "source_sha": "05abc54228880eca4c8e4d2dfa801befa273a633",
+  "tested_sha": "a123f13f6f3c570028b6513f4e13a197263ea0c1",
+  "apk_filename": "XuaneyNote-0.3.0-pr-c0-05abc5422888-debug.apk",
+  "apk_size": 11365265,
+  "apk_sha256": "5ab90bb2c08d301947c3109f8a1904ebf949aab2d3bbf68a6c86fc500285b4f8",
+  "application_id": "io.github.lihuihnu.xuaneynote.debug",
+  "version_code": 3,
+  "version_name": "0.3.0-pr-c0-debug",
+  "min_sdk": 26,
+  "target_sdk": 36,
+  "signer_certificate_sha256": "3c3d7f109e8f86b5e785f29f81177dda0a071be4e9a4fa7c52c18dda8b02b3a9",
+  "verified_signature_schemes": [
+    "v2"
+  ],
+  "signing_policy": "ephemeral-runner-debug-key; not stable for upgrades; synthetic test data only",
+  "compression": "zlib",
+  "compressed_size": 10822436,
+  "compressed_sha256": "aebff81b16416a0b4dc735cc03394428bdc606f3b7581a01b34800f955203256",
+  "part_group_size_transport_chunks": 320,
+  "transport_chunks": 3523,
+  "part_count": 12,
+  "parts": [
+    {
+      "path": "parts/apk.zlib.part-00",
+      "size": 983040,
+      "sha256": "c09bc13b975e5c814dedcbd90889139ce4346c7b95b1392cf4167c413177b2c2",
+      "git_sha1": "0b0daa64199d8524302d54a0d600c1c3068af299"
+    },
+    {
+      "path": "parts/apk.zlib.part-01",
+      "size": 983040,
+      "sha256": "dfc6fc51ac8174c25eaef8f1e300ab2231f36db10ab568661eaee80574b4cefb",
+      "git_sha1": "d04b0a7c5496279c0cb73853ffa990634d35158e"
+    },
+    {
+      "path": "parts/apk.zlib.part-02",
+      "size": 983040,
+      "sha256": "4733beef785cca5d9debda72a18f239168a23ec6c952eac07b30b37dbd67cfd2",
+      "git_sha1": "e183fb93071b73bb2368b5078f683fc7a8dfd7ea"
+    },
+    {
+      "path": "parts/apk.zlib.part-03",
+      "size": 983040,
+      "sha256": "408426ad06693b60642d5ab9b5437b69464140d5677d8b4a2939dcba673d1551",
+      "git_sha1": "66821d52323a2c3d0c0c3b4bdad420b1d3f48ac6"
+    },
+    {
+      "path": "parts/apk.zlib.part-04",
+      "size": 983040,
+      "sha256": "3ec4c57ee32a344199442a785b77cbfca62694f85da53578c3a2e11eedf82eb8",
+      "git_sha1": "1afe27f79736c5678a5a2266542ec5126b729f88"
+    },
+    {
+      "path": "parts/apk.zlib.part-05",
+      "size": 983040,
+      "sha256": "0b0dddfc62d0b2942a9be854b81876756ed40cb8f568032a2231447358ee3761",
+      "git_sha1": "2b2bedebd66d1a771cf2989d6c3c330ecd058c62"
+    },
+    {
+      "path": "parts/apk.zlib.part-06",
+      "size": 983040,
+      "sha256": "b6407436d04c60afcd5616895a70b639023f6a6f35c25ef5b6c27c98acbfe44d",
+      "git_sha1": "f49a2a8c46c7dba7065992d1245b7a231a31d4e1"
+    },
+    {
+      "path": "parts/apk.zlib.part-07",
+      "size": 983040,
+      "sha256": "d2da5677728e75f1ee79c036d36afa79549ddc118ff5cf71e08c3fff3ebbae22",
+      "git_sha1": "4a74e4763d5a82fb58f989e83479b123fea5e5f4"
+    },
+    {
+      "path": "parts/apk.zlib.part-08",
+      "size": 983040,
+      "sha256": "142e9d2cb02ab2857ad7c048c5c926e9249ecfde2e1c542c23dd62ddf3640f64",
+      "git_sha1": "87f1cfab7bdecc2ded68c774d5cbd143ce493bd2"
+    },
+    {
+      "path": "parts/apk.zlib.part-09",
+      "size": 983040,
+      "sha256": "91c37b2c9d2342e83fc7a1b3d8d713cd844d5f78dda812a069de9b41ada80b72",
+      "git_sha1": "834c711ffb1a86ac00e9481813010a7257850efa"
+    },
+    {
+      "path": "parts/apk.zlib.part-10",
+      "size": 983040,
+      "sha256": "1f0c3de9a6ade2a44e62bdbb82b022d7d84cff5e56503fa266bbb77f66b3b56b",
+      "git_sha1": "d843e839ba7873d75b61dce9d7fd1828a8bbc21e"
+    },
+    {
+      "path": "parts/apk.zlib.part-11",
+      "size": 8996,
+      "sha256": "0c206c69e001c19cfd55d9be3734fc3aac7857c87d20cdd1b6878293af3bd923",
+      "git_sha1": "a2b2c829ca239305dc2f525e40b86006053323f0"
+    }
+  ],
+  "notes": "Official GitHub-hosted CI Run 42138103656, attempt 1 (2026-11-06), success. Complete compressed stream was independently hashed against CI metadata. Original signed APK and certificate hashes are attested in verified transport logs. Offline scripts verify each part, reconstructed compressed stream, exact APK SHA-256 and APK ZIP CRC. Do not overwrite/remove personal notes with ephemeral debug signer; PR-C0 physical device acceptance remains pending."
+}
