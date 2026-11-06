@@ -13,3 +13,7 @@
 PR-A 已于 2026-10-17 合并。PR-B #2 于 2026-10-21 按维护者指令集成为 main `f513b8a`，其最终 HEAD `22778b18` 的官方 Run 39422300056 成功；但 B5.3 真实手机加密 SAF/异常 provider/同签名升级仍待验收，不得将合并冒充正式发布。AES ZIP 弱 PBKDF2 KDF 风险与 Release 图片编辑门禁不得解除。
 
 当前活动 PR-C0 分支 `feat/pr-c0-focus-timer`。只做单调时钟计时状态机、独立本地临时状态及手机/平板专注页；不加入通知、历史、任务、数据迁移或新权限，参见 `docs/PR_C0.md`。C0 使用专门的轻量 Kotlin/JVM 单元测试 + API35 手机/平板聚焦 Compose smoke（单模拟器），不重复触发 B5 AES 跨工具/Room 全量/API26 矩阵；通过后需独立真实手机熄屏、重启与系统时间变化验收。仍仅官方 ubuntu-24.04 Runner，禁止自行轮询长 CI。
+
+## CI 与网络巡检规范（2026-10-23，已从 main 集成）
+
+每次根据具体问题重写对应测试流，优先采用小范围、明确超时、真实结果的验证，不机械重复完整矩阵。详见 [CI 规范](docs/CI_POLICY.md) 和 [网络状态](docs/NETWORK_STATUS.md)。保留官方 GitHub-hosted Runner、只读权限、隐私及现有科学/数据安全门禁。GitHub、网站与超算的通用使用和故障记录见 [网络使用方法](docs/NETWORK_USAGE.md)，本公开仓库不得保存私有地址或凭据。

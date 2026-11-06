@@ -106,13 +106,17 @@ jobs:
           # Only the CI policy and the exact APK transport implementation + regression test may change.
           mapfile -t expected < <(printf '%s\n' \
             .github/workflows/ci.yml \
+            AGENTS.md \
+            docs/CI_POLICY.md \
+            docs/NETWORK_STATUS.md \
+            docs/NETWORK_USAGE.md \
             tools/test_trusted_apk_transport.py \
             tools/trusted_apk_transport.py | LC_ALL=C sort)
           test "${#changed[@]}" -eq "${#expected[@]}"
           mapfile -t ordered < <(printf '%s\n' "${changed[@]}" | LC_ALL=C sort)
           [[ "${ordered[*]}" == "${expected[*]}" ]]
           test "$(git rev-parse HEAD)" = "$TESTED_SHA"
-          echo "C0 runtime source unchanged; only CI + APK version allowlist and regression test differ."
+          echo "C0 runtime source unchanged; only CI/transport plus documented main governance changes differ."
       - name: C0 targeted phone/tablet Compose smoke, one API35 emulator
         if: >-
           ${{
