@@ -100,7 +100,7 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
     }
     LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it); vm.clearMessage() } }
     LaunchedEffect(page) { if (page == 0) { vm.updateSearchText(""); vm.leaveTrash() } }
-    BackHandler(enabled = note != null && !settings && backup == null && bundleReview == null && !exportWarning && !bundleExportWarning &&
+    BackHandler(enabled = page != 2 && note != null && !settings && backup == null && bundleReview == null && !exportWarning && !bundleExportWarning &&
         !encryptedExportPasswordDialog && !encryptedImportPasswordDialog) {
         if (!busy) vm.closeNote()
     }
@@ -112,7 +112,7 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
     XuaneyTheme(theme) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val wide = maxWidth >= 840.dp
-            val labels = listOf(R.string.today, R.string.records, R.string.focus_later, R.string.journal_later)
+            val labels = listOf(R.string.today, R.string.records, R.string.focus_title, R.string.journal_later)
             val icons = listOf(Icons.Default.Home, Icons.AutoMirrored.Filled.List, Icons.Default.Info, Icons.Default.DateRange)
             Scaffold(
                 topBar = {
@@ -123,7 +123,7 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }, navigationIcon = {
-                        if (!wide && note != null) IconButton(onClick = vm::closeNote, enabled = !busy) {
+                        if (!wide && page != 2 && note != null) IconButton(onClick = vm::closeNote, enabled = !busy) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                         }
                     }, actions = {
@@ -134,10 +134,12 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
                     })
                 },
                 bottomBar = {
-                    if (!wide && note == null) NavigationBar {
+                    if (!wide && (note == null || page == 2)) NavigationBar {
                         labels.forEachIndexed { index, label ->
-                            NavigationBarItem(selected = page == index, enabled = index < 2 && !busy,
-                                onClick = { page = index }, icon = { Icon(icons[index], null) },
+                            NavigationBarItem(selected = page == index, enabled = index < 3 && !busy,
+                                onClick = { page = index },
+                                modifier = if (index == 2) Modifier.testTag("focus-nav") else Modifier,
+                                icon = { Icon(icons[index], null) },
                                 label = { Text(stringResource(label), maxLines = 1) })
                         }
                     }
@@ -154,60 +156,66 @@ fun NoteApp(vm: NotesViewModel = viewModel()) {
                     Row(Modifier.weight(1f).testTag(if (wide) "two-pane" else "single-pane")) {
                         if (wide) NavigationRail {
                             labels.forEachIndexed { index, label ->
-                                NavigationRailItem(selected = page == index, enabled = index < 2 && !busy,
-                                    onClick = { page = index }, icon = { Icon(icons[index], null) },
+                                NavigationRailItem(selected = page == index, enabled = index < 3 && !busy,
+                                    onClick = { page = index },
+                                    modifier = if (index == 2) Modifier.testTag("focus-nav") else Modifier,
+                                    icon = { Icon(icons[index], null) },
                                     label = { Text(stringResource(label)) })
                             }
                         }
-                        if (wide || note == null) {
-                            val panelModifier = if (wide) Modifier.width(320.dp) else Modifier.weight(1f)
-                            if (trashOpen && page == 1) {
-                                TrashList(trashNotes, busy, vm::leaveTrash, vm::restoreFromTrash,
-                                    { permanentDeleteRequest = it }, panelModifier)
-                            } else {
-                                NoteList(
-                                    notes = if (page == 1 && searchPending) emptyList() else listing.items,
-                                    selected = note?.id, busy = busy, today = page == 0,
-                                    searchText = searchText, searchPending = page == 1 && searchPending,
-                                    onSearchChange = vm::updateSearchText,
-                                    onClearSearch = { vm.updateSearchText("") },
-                                    onCreate = { vm.updateSearchText(""); vm.createNote() },
-                                    onOpen = vm::openNote, trashCount = trashNotes.size,
-                                    onOpenTrash = vm::openTrash,
-                                    modifier = panelModifier
-                                )
+                        if (page == 2) {
+                            FocusScreen(Modifier.weight(1f))
+                        } else {
+                            if (wide || note == null) {
+                                val panelModifier = if (wide) Modifier.width(320.dp) else Modifier.weight(1f)
+                                if (trashOpen && page == 1) {
+                                    TrashList(trashNotes, busy, vm::leaveTrash, vm::restoreFromTrash,
+                                        { permanentDeleteRequest = it }, panelModifier)
+                                } else {
+                                    NoteList(
+                                        notes = if (page == 1 && searchPending) emptyList() else listing.items,
+                                        selected = note?.id, busy = busy, today = page == 0,
+                                        searchText = searchText, searchPending = page == 1 && searchPending,
+                                        onSearchChange = vm::updateSearchText,
+                                        onClearSearch = { vm.updateSearchText("") },
+                                        onCreate = { vm.updateSearchText(""); vm.createNote() },
+                                        onOpen = vm::openNote, trashCount = trashNotes.size,
+                                        onOpenTrash = vm::openTrash,
+                                        modifier = panelModifier
+                                    )
+                                }
                             }
-                        }
-                        if (wide) VerticalDivider()
-                        val selected = note
-                        if (selected != null && !trashOpen) {
-                            NoteEditor(selected, states[selected.id] ?: SaveState.Saved(selected.revision), busy,
-                                vm::editTitle, vm::editBody, vm::retrySaves,
-                                { moveToTrashRequest = selected.id }, Modifier.weight(1f),
-                                imageContent = if (notePictures.isNotEmpty() ||
-                                    ImageUiGate.USER_ENTRY_ENABLED) {
-                                    {
-                                        NoteImageStrip(
-                                            attachments = notePictures,
-                                            busy = busy,
-                                            allowEdit = ImageUiGate.USER_ENTRY_ENABLED,
-                                            onAdd = {
-                                                if (!busy) {
-                                                    pendingPictureNoteId = selected.id
-                                                    pickPicture.launch(PickVisualMediaRequest(
-                                                        ActivityResultContracts.PickVisualMedia.ImageOnly
-                                                    ))
-                                                }
-                                            },
-                                            onRemove = vm::removeImage,
-                                            loadImage = vm::imageThumbnail
-                                        )
-                                    }
-                                } else null)
-                        } else if (wide) {
-                            Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
-                                Text(stringResource(if (trashOpen) R.string.trash_detail_hint else R.string.pick_note),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (wide) VerticalDivider()
+                            val selected = note
+                            if (selected != null && !trashOpen) {
+                                NoteEditor(selected, states[selected.id] ?: SaveState.Saved(selected.revision), busy,
+                                    vm::editTitle, vm::editBody, vm::retrySaves,
+                                    { moveToTrashRequest = selected.id }, Modifier.weight(1f),
+                                    imageContent = if (notePictures.isNotEmpty() ||
+                                        ImageUiGate.USER_ENTRY_ENABLED) {
+                                        {
+                                            NoteImageStrip(
+                                                attachments = notePictures,
+                                                busy = busy,
+                                                allowEdit = ImageUiGate.USER_ENTRY_ENABLED,
+                                                onAdd = {
+                                                    if (!busy) {
+                                                        pendingPictureNoteId = selected.id
+                                                        pickPicture.launch(PickVisualMediaRequest(
+                                                            ActivityResultContracts.PickVisualMedia.ImageOnly
+                                                        ))
+                                                    }
+                                                },
+                                                onRemove = vm::removeImage,
+                                                loadImage = vm::imageThumbnail
+                                            )
+                                        }
+                                    } else null)
+                            } else if (wide) {
+                                Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                                    Text(stringResource(if (trashOpen) R.string.trash_detail_hint else R.string.pick_note),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                             }
                         }
                     }

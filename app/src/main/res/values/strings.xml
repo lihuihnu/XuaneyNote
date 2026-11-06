@@ -88,4 +88,22 @@
   <string name="trash_permanent">永久删除</string>
   <string name="trash_permanent_title">确定永久删除？</string>
   <string name="trash_permanent_notice">这会删除本机这条笔记，无法从回收站恢复。此前导出的外部备份不会被自动清除。</string>
+  <string name="focus_title">专注</string>
+  <string name="focus_subtitle">把注意力留给眼前这一件事</string>
+  <string name="focus_period_work">专注 25 分钟</string>
+  <string name="focus_period_short">短休息 5 分钟</string>
+  <string name="focus_period_long">长休息 15 分钟</string>
+  <string name="focus_ready">准备开始</string>
+  <string name="focus_running">专注进行中</string>
+  <string name="focus_paused">已暂停</string>
+  <string name="focus_completed">本段已完成</string>
+  <string name="focus_interrupted">设备重启或计时异常，本段已中断</string>
+  <string name="focus_start">开始</string>
+  <string name="focus_start_over">重新开始</string>
+  <string name="focus_pause">暂停</string>
+  <string name="focus_resume">继续</string>
+  <string name="focus_reset">重置</string>
+  <string name="focus_reset_title">重置这一段计时？</string>
+  <string name="focus_reset_notice">当前剩余时间会重置为预设时长；未记录的专注不会计入历史。</string>
+  <string name="focus_no_alarm_notice">C0 仅前台展示计时，没有通知和铃声。熄屏时间仍计入当前开机内的剩余时长；设备重启不会自动补记完成。</string>
 </resources>
