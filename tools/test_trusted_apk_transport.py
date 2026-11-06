@@ -20,6 +20,9 @@ SIGNER = ('Verified\nVerified using v1 scheme (JAR signing): false\n'
 BADGING = ("package: name='io.github.lihuihnu.xuaneynote.debug' versionCode='2' "
            "versionName='0.2.0-pr-b-debug' compileSdkVersion='36'\n"
            "sdkVersion:'26'\ntargetSdkVersion:'36'\n")
+BADGING_C0 = ("package: name='io.github.lihuihnu.xuaneynote.debug' versionCode='3' "
+              "versionName='0.3.0-pr-c0-debug' compileSdkVersion='36'\n"
+              "sdkVersion:'26'\ntargetSdkVersion:'36'\n")
 
 
 def synthetic_zip():
@@ -52,6 +55,42 @@ class TransportTest(unittest.TestCase):
         self.assertEqual(manifest['apk_sha256'], digest(self.fake_apk))
         self.assertEqual(manifest['application_id'], 'io.github.lihuihnu.xuaneynote.debug')
         self.assertEqual(manifest['verified_signature_schemes'], ['v2', 'v3'])
+
+    def test_c0_roundtrip_with_exact_version_and_safe_filename(self):
+        bundle = build_bundle(self.fake_apk, SIGNER, BADGING_C0, SOURCE, TESTED, '12345', '1')
+        manifest, restored = unpack_lines(emit_lines(bundle), SOURCE, TESTED, '12345', '1')
+        self.assertEqual(restored, self.fake_apk)
+        self.assertEqual(manifest['version_code'], 3)
+        self.assertEqual(manifest['version_name'], '0.3.0-pr-c0-debug')
+        self.assertEqual(manifest['apk_filename'], 'XuaneyNote-0.3.0-pr-c0-aaaaaaaaaaaa-debug.apk')
+
+    def test_reject_unknown_or_mismatched_versions(self):
+        for invalid in (
+            BADGING_C0.replace("versionCode='3'", "versionCode='2'"),
+            BADGING_C0.replace("versionName='0.3.0-pr-c0-debug'", "versionName='0.3.1-pr-c0-debug'"),
+            BADGING_C0.replace("targetSdkVersion:'36'", "targetSdkVersion:'34'"),
+            BADGING_C0.replace(".debug", ".release"),
+        ):
+            with self.subTest(invalid=invalid.splitlines()[0]):
+                with self.assertRaises(ValueError):
+                    parse_badging(invalid)
+
+    def test_reject_manifest_version_and_filename_tampering(self):
+        import json
+        bundle = build_bundle(self.fake_apk, SIGNER, BADGING_C0, SOURCE, TESTED, '12345', '1')
+        for changed in (
+            {'version_code': 2},
+            {'version_name': '0.2.0-pr-b-debug'},
+            {'apk_filename': '../unsafe.apk'},
+            {'apk_filename': 'XuaneyNote-0.3.0-pr-c0-bbbbbbbbbbbb-debug.apk'},
+        ):
+            lines = emit_lines(bundle)
+            meta = json.loads(lines[1].split('_META ', 1)[1])
+            meta.update(changed)
+            lines[1] = 'XUANEY_TRUSTED_APK_META ' + json.dumps(meta)
+            with self.subTest(changed=changed):
+                with self.assertRaises(ValueError):
+                    unpack_lines(lines, SOURCE, TESTED, '12345', '1')
 
     def test_reject_wrong_run_or_source(self):
         for source, run in [(TESTED, '12345'), (SOURCE, '999')]:

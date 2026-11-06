@@ -85,8 +85,8 @@ jobs:
       - name: Phone, tablet window, Room backup and real process restart
         if: steps.scope.outputs.android == 'true' && github.head_ref != 'feat/pr-c0-focus-timer'
         run: bash tools/run_gate.sh devices bash tools/device_gate.sh
-      # APK 交付只改变 CI 流程，不改变已通过 39458244087 的应用源码。
-      # 如 app/core/tools/Gradle 等实际内容改动，下面的身份门禁先行拒绝，不能绕过设备测试。
+      # Only allow the reviewed CI + APK transport fix atop previously validated C0 app/core.
+      # Any unreviewed app/core change blocks the one-shot delivery path; device gate remains for regular PR runs.
       - name: C0 trusted APK source identity gate
         if: >-
           ${{
@@ -99,13 +99,20 @@ jobs:
         run: |
           set -euo pipefail
           PREVIOUSLY_VERIFIED_SOURCE=392a7a5467b52c622b049785d1e96e7a699f3ac5
-          git cat-file -e "$PREVIOUSLY_VERIFIED_SOURCE^{commit}" ||
+          git cat-file -e "$PREVIOUSLY_VERIFIED_SOURCE^{commit}" 2>/dev/null ||
             git fetch --no-tags --depth=1 origin "$PREVIOUSLY_VERIFIED_SOURCE"
           mapfile -t changed < <(git diff --name-only "$PREVIOUSLY_VERIFIED_SOURCE" "$SOURCE_SHA")
-          test "${#changed[@]}" -eq 1
-          test "${changed[0]}" = ".github/workflows/ci.yml"
+          # C0 app/core and runtime tools stay identical to the successful source.
+          # Only the CI policy and the exact APK transport implementation + regression test may change.
+          mapfile -t expected < <(printf '%s\n' \
+            .github/workflows/ci.yml \
+            tools/test_trusted_apk_transport.py \
+            tools/trusted_apk_transport.py | LC_ALL=C sort)
+          test "${#changed[@]}" -eq "${#expected[@]}"
+          mapfile -t ordered < <(printf '%s\n' "${changed[@]}" | LC_ALL=C sort)
+          [[ "${ordered[*]}" == "${expected[*]}" ]]
           test "$(git rev-parse HEAD)" = "$TESTED_SHA"
-          echo "C0 app/core/tools source tree matches previously tested SHA; only CI policy changed."
+          echo "C0 runtime source unchanged; only CI + APK version allowlist and regression test differ."
       - name: C0 targeted phone/tablet Compose smoke, one API35 emulator
         if: >-
           ${{
